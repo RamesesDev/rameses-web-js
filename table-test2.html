@@ -72,12 +72,12 @@
 				<th>Remarks</th>
 			</thead>
 			<tbody>
-				<tr visibleWhen="${stat.prevItem.category != item.category}">
+				<tr style="${stat.prevItem.category != item.category? '' : 'display: none'}">
 					<td colspan="4" style="background: #d4d4d4">${item.category}</td>
 				</tr>
 				<tr class="${stat.index%2==0? 'even' : 'odd'}">
 					<td width="50" align="center" name="item.id">
-					<td name="item.firstname"></td>
+					<td name="item.firstname" style=""></td>
 					<td name="item.lastname"></td>
 					<td name="item.remarks"></td>
 				</tr>

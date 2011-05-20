@@ -56,7 +56,7 @@ String.prototype.evaluate = function( ctx ) {
     } 
  
     function _evaluate(str) { 
-        var match = str.match(/[a-zA-Z_\$]+[a-zA-Z_\$\d\.]+|'[^']+'|"[^"]+"/g); 
+        var match = str.match(/[a-zA-Z_\$]+[a-zA-Z_\$\d\.]*|'[^']*'|"[^"]*"/g); 
         for(var i=0; i<match.length; ++i) { 
             var o = ''; 
             if( match[i].charAt(0) === "'" || match[i].charAt(0) === '"' ) { 
@@ -77,8 +77,8 @@ String.prototype.evaluate = function( ctx ) {
                     o = "'[object]'"; 
             } 
             str = str.replace( match[i], o); 
-        } 
-         
+        }
+                 
         return str? eval( str )+'' : ''; 
     } 
 }; 
@@ -889,47 +889,50 @@ function DataTable( table, bean, controller ) {
 	}
 	
 	function createRow(i, item) {
-		var tr = tpl.clone().data('index', i).each(
-			function(i,e) { 
-				evalAttr(i,e,item);
-				if( $(e).attr('visibleWhen') ) {
-					var visible = $(e).attr('visibleWhen').evaluate( function(n) { return resolve(n, item); } );
-					if( visible != 'true' ) $(e).css('display', 'none');
-				}					
-			}
-		);
-		
-		var td = tr.find('td').mousedown( td_mousedown );
-		
-		if( !item ) {
-			td.html('&nbsp;');
-		}
-		else {
-			td.each(function(idx,e){
-				var td = $(e);
-				var value;
-				if( td.attr('name') )
-					value = resolve( td.attr('name'), item );
-				else if ( td.attr('expression') )
-					value = td.attr('expression').evaluate(  function(n) { return resolve(n, item); }  );
-				else
-					value = unescape(td.html()).evaluate(  function(n) { return resolve(n, item); }  );
+		return tpl.clone()
+		 .data('index', i)
+		 .each(function(i,e) 
+		  {
+			var tr = $(e);
+			var origTr = $(tpl[i]);
 
-				td.html( value? value+'' : '&nbsp;' );
-				
-				if( td.attr('editable') == 'true' ) {
-					td.attr('tabindex', tabIdx++)
-					  .keydown(td_keydown)
-					  .focus(function(e) { td_edit(e, this); })
-					  .dblclick(td_edit);
-				}
-				
-				evalAttr(idx,e,item);
-			});
-		}
-		
-		return tr;
-	}
+			evalAttr(origTr[0],e,item);
+			if( $(e).attr('visibleWhen') ) {
+				var visible = $(e).attr('visibleWhen').evaluate( function(n) { return resolve(n, item); } );
+				if( visible != 'true' ) $(e).css('display', 'none');
+			}
+
+			var td = tr.find('td').mousedown( td_mousedown );
+			var origTd = origTr.find('td');
+
+			if( !item ) {
+				td.html('&nbsp;');
+			}
+			else {
+				td.each(function(idx,e){
+					var td = $(e);
+					var value;
+					if( td.attr('name') )
+						value = resolve( td.attr('name'), item );
+					else if ( td.attr('expression') )
+						value = td.attr('expression').evaluate(  function(n) { return resolve(n, item); }  );
+					else
+						value = unescape(td.html()).evaluate(  function(n) { return resolve(n, item); }  );
+
+					td.html( value? value+'' : '&nbsp;' );
+
+					if( td.attr('editable') == 'true' ) {
+						td.attr('tabindex', tabIdx++)
+						  .keydown(td_keydown)
+						  .focus(function(e) { td_edit(e, this); })
+						  .dblclick(td_edit);
+					}
+
+					evalAttr(origTd[idx],e,item);
+				});
+			}		 	
+		 }); //-- end of each function
+	}//-- end of createRow function
 	
 	var prevRow;
 	var prevTd;
@@ -981,13 +984,15 @@ function DataTable( table, bean, controller ) {
 		editor.show( td );
 	}
 			
-	function evalAttr(i, elm, ctx) {
-		var attrs = elm.attributes;
+	function evalAttr(origElem, cloneElem, ctx) {
+		var attrs = origElem.attributes;
 		for(var i=0; i<attrs.length; ++i) {
 			var attr = attrs[i];
 			if( !attr.value || attr.value === 'null' ) return;
 			if( $.browser.msie && !$(elm).attr(attr.name) ) return;
-			attr.value = attr.value.evaluate( function(n) { return resolve(n, ctx); } );
+			
+			var attrValue = attr.value.evaluate( function(n) { return resolve(n, ctx); } );
+			$(cloneElem).attr(attr.name, attrValue);
 		}
 	}
 		
