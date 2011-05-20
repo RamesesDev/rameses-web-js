@@ -78,7 +78,7 @@ String.prototype.evaluate = function( ctx ) {
             } 
             str = str.replace( match[i], o); 
         }
-                 
+
         return str? eval( str )+'' : ''; 
     } 
 }; 
@@ -988,11 +988,17 @@ function DataTable( table, bean, controller ) {
 		var attrs = origElem.attributes;
 		for(var i=0; i<attrs.length; ++i) {
 			var attr = attrs[i];
-			if( !attr.value || attr.value === 'null' ) return;
-			if( $.browser.msie && !$(elm).attr(attr.name) ) return;
+			if( !attr.specified || !attr.value ) continue;
 			
-			var attrValue = attr.value.evaluate( function(n) { return resolve(n, ctx); } );
-			$(cloneElem).attr(attr.name, attrValue);
+			try {
+				var attrName = attr.name.toLowerCase();
+				var attrValue = $(origElem).attr(attrName).evaluate( function(n) { return resolve(n, ctx); } );				
+				if( attrName.endsWith('expr') ) {
+					attrName = attrName.replace(/expr$/, '');
+				}
+				$(cloneElem).attr(attrName, attrValue);
+			}
+			catch(e) {;}
 		}
 	}
 		

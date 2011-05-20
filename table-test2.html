@@ -1,8 +1,5 @@
 <html>
 	<head>
-		<script type="text/javascript">
-			if( !window.console ) window.console = { log: function(msg){  }};
-		</script>
 		<script src="js/jquery-all.js"></script>
 		<script src="js/rameses-lib.js"></script>
 
@@ -11,7 +8,22 @@
 			th { background: gray; color: #fff; }
 			tr.odd td { background: #e3e3e3; }
 		</style>
-		<script type="text/javascript">		
+		
+		<script type="text/javascript">
+			//--- console support for IE
+			if( !window.console ) {
+				var div = $('<div></div>');
+				$(function(){ div.appendTo('body').before('<hr/>'); });
+				
+				window.console = { 
+					log: function(msg){ 
+						//$('<pre></pre>').text(msg).appendTo(div).after('<hr/>'); 
+					}
+				};
+			}
+		</script>
+		
+		<script type="text/javascript">			
 			$put( "profile",
 				new function() {
 				
@@ -72,10 +84,10 @@
 				<th>Remarks</th>
 			</thead>
 			<tbody>
-				<tr style="${stat.prevItem.category != item.category? '' : 'display: none'}">
-					<td colspan="4" style="background: #d4d4d4">${item.category}</td>
+				<tr styleExpr="#{stat.prevItem.category != item.category? '' : 'display: none'}; background: #369; color: #fff;">
+					<td colspan="4" >${item.category}</td>
 				</tr>
-				<tr class="${stat.index%2==0? 'even' : 'odd'}">
+				<tr class="#{stat.index%2==0? 'even' : 'odd'}">
 					<td width="50" align="center" name="item.id">
 					<td name="item.firstname" style=""></td>
 					<td name="item.lastname"></td>
