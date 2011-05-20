@@ -1,0 +1,200 @@
+<html>
+	<head>
+		<script type="text/javascript">
+			if( !window.console ) window.console = { log: function(msg){  }};
+		</script>
+		<script src="js/jquery-all.js"></script>
+		<script src="js/rameses-lib.js"></script>
+
+		<style>
+			body, table { font: 10pt/145% 'arial', 'verdana'; }
+		
+			table { border: solid 1px gray; }
+			table th { text-align: left; }
+			table tr.even td { 
+				background: #ddd; 
+				border-top: solid 1px #ddd; border-bottom: solid 1px #ddd; 
+			}
+			table tr.odd td  { 
+				background: #fff; 
+				border-top: solid 1px #fff; border-bottom: solid 1px #fff; 
+			}
+			table tr.selected td { background: navy; color: #fff; }
+			table tr.selected td * { color: #fff; }
+			
+			table tr.selected td.selected,
+			table tr.selected td.selected * { 
+				background: yellow; color: #000; 
+			}
+
+			.present { border: solid 1px green !important; };
+			.absent { border: solid 1px red !important; };
+
+		</style>
+		<script>
+			$put( "profile",
+				new function() {
+				
+					this.entry = {};
+					
+					this.addRecord = function() {
+						studentList.push( this.entry );
+						this.entry = {};
+						this.model.refresh( true );
+					};
+				
+					this.username = "Jayrome";
+
+					var studentList = [
+						{id: '001', firstname:"elmo", lastname:"nazareno", checked: true},
+						{id: '002', firstname:"jess", lastname:"zamora", checked: true},
+						{id: '003', firstname:"worgie", lastname:"flores"},
+						{id: '004', firstname:"michael", lastname:"ramos"},
+						{id: '005', firstname:"johana", lastname:"cardona"},
+						{id: '006', firstname:"chariss", lastname:"villarosa", checked: true},
+						{id: '007', firstname:"rojean", lastname:"vergara"},
+						{id: '008', firstname:"robert", lastname:"yap"},
+						{id: '009', firstname:"james", lastname:"yap", checked: true},
+						{id: '010', firstname:"loren", lastname:"pedrito"}
+					];
+					
+					this.model = {
+						rows: 8,
+						fetchList: function( p ) {
+							return studentList.slice(p._start, p._start + p._limit);
+						}
+					};
+					
+					var studentList2 = [
+						{id: '001', firstname:"elmo", lastname:"nazareno", checked: true},
+						{id: '002', firstname:"jess", lastname:"zamora", checked: true},
+						{id: '003', firstname:"worgie", lastname:"flores"},
+						{id: '004', firstname:"michael", lastname:"ramos"},
+						{id: '005', firstname:"johana", lastname:"cardona"}
+					];
+					
+					this.model2 = {
+						fetchList: function( p ) {
+							return studentList2;
+						}
+					};					
+
+					this.next = function() { 
+						this.model.moveNext(); 
+					};
+					
+					this.back = function() { 
+						this.model.movePrev(); 
+					};
+					
+					this.showSelected = function() {
+						alert( this.model.getSelectedItem().firstname );
+					};
+					
+					this.showSelectedList = function() {
+						var names = [];
+						$( this.model.getSelectedItems() ).each(function(i,e){ names.push( e.firstname); });
+						alert( names.join(', ') );
+					}
+					
+					this.markPresent = function() {
+						$( this.model.getSelectedItems() ).each(function(i,e){ e.remarks = 'present'; });
+						this.model.refresh(true);
+					}
+					
+					this.markAbsent = function() {
+						$( this.model.getSelectedItems() ).each(function(i,e){ e.remarks = 'absent'; });
+						this.model.refresh(true);
+					}
+
+				}
+			);
+		</script>
+
+	</head>
+	<body>
+		<label context="profile">
+			Welcome <b>${username}</b>
+		</label>
+		
+		<table>
+			<tr>
+				<td valign="top">
+		
+					<table id="list_1" context="profile" model="model" varName="item" varStatus="stat" cellpadding="3" 
+						   cellspacing="0" width="400">
+						<thead>
+							<th>&nbsp;</th>
+							<th style="text-align: center">Id</th>
+							<th>First Name</th>
+							<th>Last Name</th>
+							<th>Remarks</th>
+						</thead>
+						<tbody>
+							<tr class="${stat.index%2==0? 'even' : 'odd'}">
+								<td width="30">
+									<input type="checkbox" />
+								</td>
+								<td width="50" align="center">
+									<a href="view.php?id=${item.id}">${item.id}</a>
+								</td>
+								<td name="item.firstname" editable="true"></td>
+								<td name="item.lastname" editable="true"></td>
+								<td name="item.remarks" class="${item.remarks}"></td>
+							</tr>
+						</tbody>
+					</table>
+		
+				</td>
+				<td valign="top">
+		
+					<table id="list_2" context="profile" model="model2" varName="item" varStatus="stat" cellpadding="3" 
+						   cellspacing="0" width="400">
+						<thead>
+							<th>&nbsp;</th>
+							<th style="text-align: center">Id</th>
+							<th>First Name</th>
+							<th>Last Name</th>
+							<th>Remarks</th>
+						</thead>
+						<tbody>
+							<tr class="${stat.index%2==0? 'even' : 'odd'}">
+								<td width="30">
+									<input type="checkbox" />
+								</td>
+								<td width="50" align="center">
+									<a href="view.php?id=${item.id}">${item.id}</a>
+								</td>
+								<td name="item.firstname" editable="true"></td>
+								<td name="item.lastname" editable="true"></td>
+								<td name="item.remarks" class="${item.remarks}"></td>
+							</tr>
+						</tbody>
+					</table>
+					
+				</td>
+			</tr>
+		</table>
+		
+		<br/>
+		<input type="button" context="profile"  name="back" value="Back"/>
+		<input type="button" context="profile"  name="next" value="Next"/>
+		<br/>
+		
+		<input type="button" context="profile"  name="markPresent" value="Mark Present"/>
+		<input type="button" context="profile"  name="markAbsent" value="Mark Absent"/>
+		<br/>
+		
+		<input type="button" context="profile" name="showSelected" value="Show Selected"/>
+		<input type="button" context="profile" name="showSelectedList" value="Show Selected List"/>
+		<br/>
+		<br/>
+
+		ID: <input type="text" context="profile" name="entry.id" /><br/>
+		Firstname: <input type="text" context="profile" name="entry.firstname" /><br/>
+		Lastname: <input type="text" context="profile" name="entry.lastname" /><br/>
+		<input type="button" context="profile" name="addRecord" value="Add Item"/>
+		
+	</body>
+
+</html>

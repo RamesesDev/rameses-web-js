@@ -1,0 +1,100 @@
+<html>
+	<head>
+		<link rel="stylesheet" href="js1/jq_dialog/jquery-ui.custom.css"/>
+		<script src="js1/jquery.js"></script>
+		<script src="js1/jq_dialog/jquery-ui.js"></script>
+		
+		<style>
+			.file-uploader {
+				display: inline;
+			}
+			.file-uploader .file {
+				border: solid 1px lightgrey;
+				padding: 5px;
+				margin-bottom: 2px;
+			}
+			.file-uploader .bar {
+				width: 200px;
+				clear: both;
+				border: solid 1px #336699;
+				margin-top: 3px;
+			}
+			.file-uploader .bar .progress {
+				width: 0%;
+				height: 10px;
+				font-size: 0;
+				clear: both;
+				background: #369;
+			}
+			.file-uploader .bar .moz {
+				background: -moz-linear-gradient( top, #036, #58b );
+			}
+			.file-uploader .bar .webk {
+				background: -webkit-gradient( linear, left top, left bottom, color-stop(0, #036), color-stop(1, #58b) );
+			}
+		</style>
+		
+		<script>
+			$(function() {			
+				$('div[inputType="file"]').each(function(i, e){
+					var div = $(e).addClass('file-uploader');
+					var listBox = $('<div class="files"></div>').appendTo(div);
+					var lbl = $('<a href="#">' + div.attr('caption') + '</a>');
+					var inputWrapper = $('<div style="overflow: hidden; position: relative;"></div>');
+						
+					$('<div class="selector"></div>')
+					 .appendTo( div )
+					 .append( lbl )
+					 .append( inputWrapper );
+					
+					var lblWidth = lbl[0].offsetWidth;
+					var lblHeight = lbl[0].offsetHeight;
+					inputWrapper.css({left: 0, top: -lblHeight, width: lblWidth});
+					
+					attachInput();
+										
+					function file_change(e) {
+						var b = $.browser;
+                        $('<div class="file"></div>')
+						 .appendTo( listBox )
+						 .append( $(this).remove().hide() )
+						 .append('<div>' + this.value + '</div>')
+						 .append('<div class="bar"><div class="progress"></div></div>')
+						 .find('div.progress')
+						  .addClass( b.msie? '' : b.webkit? 'webk' : 'moz' )
+						  .animate({width: '100%'}, {duration: 8000, complete: function(){
+							$(this).parent().animate({opacity: 0}, {duration: 800, complete: function(){
+								$(this).hide('fast');
+							}})
+						  }});
+						 
+						attachInput();
+					}
+					
+					function attachInput() {
+						var input = $('<input type="file" style="position: relative; opacity: 0; filter: alpha(opacity=0)"/>')
+						             .attr('name', div.attr('name'))
+						             .appendTo( inputWrapper )
+						             .change(file_change);
+						 
+						var w = input[0].offsetWidth;
+						input.css({left: -(w - lblWidth)});
+					}
+				});
+			});
+
+		</script>
+	</head>
+	<body>
+		<table width="800px" align="center">
+			<tr>
+				<td valign="center">
+					<div inputType="file" name="file" caption="Select File"></div>
+					<div>
+						bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla 
+					</div>
+				</td>
+			</tr>
+		</table>
+	</body>
+</html>

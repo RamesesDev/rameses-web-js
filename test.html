@@ -1,0 +1,43 @@
+<html>
+	<head>
+		<script src="js/jquery-all.js"></script>
+		<script src="js/rameses-lib.js"></script>
+
+		<script>
+			var ExprUtil = {
+				eval: function(expr, context) {
+					var match = expr.match(/(?:\$|#)\{[^\{]+\}/g);
+					$(match).each(function(i,s){
+						expr = expr.replace( match[i], ExprUtil.__doEval(s, context) );
+					});
+					return expr;
+				},
+				__doEval: function(expr, context) {
+					with(context? context : window) {
+						try {
+							return eval( expr.replace(/(?:\$|#)\{([^\{]+)\}/, '$1') );
+						}
+						catch(e) {
+							return 'null';
+						}
+					}
+				}
+			};
+			
+			var country = 'PH';
+			
+			var student = {
+				age: 11,
+				name: 'jayrome',
+				address: 'cebu city'
+			};
+						
+			alert( ExprUtil.eval('Hello #{name}, you are from #{address}, ${country}, ${age > 10? "in good age" : "very young"}') );
+			alert( 'Hello #{name}, you are from #{address}, ${country}  ${age > 10? "in good age" : "very young"}'.evaluate(student) );
+		</script>
+	</head>
+	
+	<body>
+	</body>
+
+</html>

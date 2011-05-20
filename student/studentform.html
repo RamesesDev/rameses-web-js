@@ -1,0 +1,43 @@
+<h1>Student Form</h1>
+
+
+<table>
+	<tr>
+		<td>Student No :</td>
+		<td>
+			<input type="text" context="student" name="entity.studentno" required="true" caption="Student No"/><br/>
+		</td>
+	</tr>
+	<tr>
+		<td>First Name :</td>
+		<td>
+			<input type="text" context="student" name="entity.firstname" required="true" caption="First Name"/><br/>
+		</td>
+	</tr>
+	<tr>
+		<td>Last Name :</td>
+		<td>
+			<input type="text" context="student" name="entity.lastname" required="true" caption="Last Name"/><br/>
+		</td>
+	</tr>
+	<tr>
+		<td>Comment :</td>
+		<td>
+			<textarea context="student" required="true" name="entity.comment"></textarea>
+		</td>
+	</tr>
+	<tr>
+		<td>RoomList :</td>
+		<td>
+			<select context="student" required="true" name="entity.room" items="roomList"></select>
+		</td>
+	</tr>
+	<tr>
+		<td colspan="2">
+			<input value="Save" type="button" context="student" name="save" />
+		</td>
+	</tr>
+</table>
+
+
+

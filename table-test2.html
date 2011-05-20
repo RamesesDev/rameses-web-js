@@ -1,0 +1,89 @@
+<html>
+	<head>
+		<script type="text/javascript">
+			if( !window.console ) window.console = { log: function(msg){  }};
+		</script>
+		<script src="js/jquery-all.js"></script>
+		<script src="js/rameses-lib.js"></script>
+
+		<style>
+			body, table { font: 10pt/145% 'arial', 'verdana'; }
+			th { background: gray; color: #fff; }
+			tr.odd td { background: #e3e3e3; }
+		</style>
+		<script type="text/javascript">		
+			$put( "profile",
+				new function() {
+				
+					var _this = this;
+
+					this.list = [
+						{id: '001', firstname:"elmo", lastname:"nazareno", category: 'A'},
+						{id: '002', firstname:"jess", lastname:"zamora", category: 'A'},
+						{id: '003', firstname:"worgie", lastname:"flores", category: 'A'},
+						{id: '004', firstname:"michael", lastname:"ramos", category: 'B'},
+						{id: '005', firstname:"johana", lastname:"cardona", category: 'B'},
+						{id: '006', firstname:"chariss", lastname:"villarosa", category: 'B'},
+						{id: '007', firstname:"rojean", lastname:"vergara", category: 'C'},
+						{id: '008', firstname:"robert", lastname:"yap", category: 'C'},
+						{id: '009', firstname:"james", lastname:"yap", category: 'C'},
+						{id: '010', firstname:"loren", lastname:"pedrito", category: 'D'}
+					];
+					
+					this.cityList;
+					
+					this.countryList = [
+						'PH', 'US', 'JP'
+					];
+					
+					this.propertyChangeListener = {
+						'country' : function(o) {
+							_this.cityList = [];
+							if( o == 'PH' )
+								_this.cityList = ['Cebu', 'Talisay', 'Manila'];
+							else if( o == 'US' )
+								_this.cityList = ['Covina', 'Vallejo'];
+						}
+					};
+					
+					this.save = function() {
+						alert('Record posted successfully.');
+					};
+					
+				}
+			);
+		</script>
+
+	</head>
+	<body>
+		<select name="country" context="profile" items="countryList" emptyText="Select Country" allowNull="true" required="true"></select>
+		<select name="city" context="profile" items="cityList" depends="country" emptyText="Select City" allowNull="true" required="true"></select>
+		<br/>
+		<input type="button" context="profile" name="save" value="Save"/>
+		<br/>
+		<br/>
+		<table context="profile" items="list" varName="item" varStatus="stat"
+		       border="1" cellpadding="3" cellspacing="0" width="400"
+		       script="">
+			<thead>
+				<th style="text-align: center">Id</th>
+				<th>First Name</th>
+				<th>Last Name</th>
+				<th>Remarks</th>
+			</thead>
+			<tbody>
+				<tr visibleWhen="${stat.prevItem.category != item.category}">
+					<td colspan="4" style="background: #d4d4d4">${item.category}</td>
+				</tr>
+				<tr class="${stat.index%2==0? 'even' : 'odd'}">
+					<td width="50" align="center" name="item.id">
+					<td name="item.firstname"></td>
+					<td name="item.lastname"></td>
+					<td name="item.remarks"></td>
+				</tr>
+			</tbody>
+		</table>
+		
+	</body>
+
+</html>
