@@ -1,5 +1,5 @@
 /*** 
-    version 1.5.20
+    version 1.5.22
     resources in the js script: 
 	NumberUtils
     DynamicProxy 
@@ -20,7 +20,6 @@
      
     //handlers are injected at the bottom. 
 **/ 
- 
  
 //****************************************************************************************************************** 
 // String extensions 
@@ -260,6 +259,10 @@ var BindingUtils = new function() {
         else if( dtype=="integer") { 
             elem.onblur = function () { $get(controller.name).set(fldName, NumberUtils.toInteger(this.value) ); } 
         } 
+        else if( dtype == "date" ){
+			o.datepicker({dateFormat:"yy-mm-dd"});
+            elem.onblur = function () { $get(controller.name).set(fldName, this.value ); } 
+        }     
         else { 
             elem.onblur = function () { $get(controller.name).set(fldName, this.value ); } 
         }     
@@ -384,7 +387,7 @@ function Controller( code, pages ) {
     this.invoke = function( control, action, args, immed  ) { 
         if( action.startsWith("_") ) { 
             action = action.substring(1); 
-            this.navigate( action ); 
+            this.navigate( action, control ); 
         } 
         else { 
             try { 
@@ -400,13 +403,13 @@ function Controller( code, pages ) {
                         target = control.getAttribute("target"); 
                     } 
                 } 
-                if(immediate==false) this.validate(); 
+                if(immediate=="false" || immediate==false) this.validate(); 
                 if(this.code == null) throw new Error( "Code not set"); 
                 var outcome = action; 
                 if( !outcome.startsWith("_")) { 
                     outcome = BeanUtils.invokeMethod( this.code, action, args ); 
                 }     
-                this.navigate( outcome ); 
+                this.navigate( outcome, control ); 
             } 
             catch(e) { 
                 alert( e.message, "ERROR!" ); 
@@ -414,12 +417,13 @@ function Controller( code, pages ) {
         }     
     } 
  
-    this.navigate = function(outcome) { 
+    this.navigate = function(outcome, control) { 
         if(outcome==null) { 
             this.refresh(); 
         } 
         else if(outcome.classname == 'opener' ) { 
 			outcome.parent = this.name;
+			outcome.source = control;
             outcome.load(); 
         } 
         else if( outcome == "_close" ) { 
@@ -484,7 +488,7 @@ var ContextManager = new function() {
             throw new Error("Please indicate a name"); 
         var c = new Controller( code, pages ); 
         if(code.onload!=null) { 
-            code.onload(); 
+            BindingUtils.loaders.push( function() { code.onload() } ); 
         } 
 		if(code._controller!=null) {
 			code._controller = c;
@@ -1276,6 +1280,7 @@ function PopupOpener( page, name, params, target ) {
     this.params = params; 
 	this.parent;
 	this.title;
+	this.source;
 	this.options = {};
 	
     this.load = function() { 
@@ -1311,6 +1316,86 @@ function PopupOpener( page, name, params, target ) {
         .dialog(this.options); 
     } 
 } 
+ 
+
+function DropdownOpener( page, name, params, target ) {
+	this.classname = "opener"; 
+    this.name = name; 
+    this.page = page; 
+    this.target = target;
+    this.params = params; 
+	this.parent;
+	this.title;
+	this.source;
+	this.options = {};
+	
+    this.load = function() { 
+        var n = this.name;
+        var p = this.params; 
+        
+		var w = new DropdownWindow(this.source, this.options);
+        w.show(this.page, function(div) { 
+            BindingUtils.bind( null, div); 
+            BindingUtils.loadViews( null, div);
+            if(p!=null) {
+                for( var key in p ) {
+                    $ctx(n)[key] = p[key];
+                }
+            }     
+        }); 
+    };
+	
+	//--- DropdownWindow class ----
+	function DropdownWindow( source, options ) {
+
+		var div = $('<div class="dropdown-window" style="position: absolute; z-index: 200000; top: 0; left: 0;"></div>');
+
+		this.show = function( page, callback ) {
+			var pos = options.position || {};
+			if( typeof page == 'string' ) {
+				div.hide().load( page, function(){ 
+					div.appendTo('body')
+					 .position({ of: $(source), my: pos.my ? pos.my : 'left top', at: pos.at ? pos.at : 'left bottom'})
+					 .show('fade');
+					
+					bindWindowEvt();
+					callback(div); 
+				});
+			}
+			else {
+				setTimeout( function(){}, 100 );
+				div.html( page.html() )
+				 .appendTo('body')
+				 .position({ of: $(source), my: pos.my ? pos.my : 'left top', at: pos.at ? pos.at : 'left bottom'})
+				 .show('fade', null, function(){
+					bindWindowEvt();
+					callback(div); 
+				 });
+			}			
+		};
+		
+		this.close = function() { doHide(); };
+		
+		function hide() {
+			div.hide('fade', null, function() { $(this).remove(); });
+			$(document).unbind('mouseup', onWindowClicked);
+		}
+		
+		function bindWindowEvt() {
+			$(document).bind('mouseup', onWindowClicked);
+		}
+		
+		function onWindowClicked(evt) {
+			var target = $(evt.target).closest('div.dropdown-window');
+			if( target.length == 0 ) {
+				hide();
+			}
+		}
+
+	}//-- end of DropdownWindow class
+	
+}//-- end of DropdownOpener
+ 
  
 var InvokerUtil = new function() { 
     this.invoke = function( name, page, target ) { 
