@@ -339,7 +339,10 @@ var BeanUtils = new function(){
     } 
  
     this.getProperty = function( bean, fieldName ) {  
-        return eval( 'bean.' + fieldName ); 
+		try {
+        	return eval( 'bean.' + fieldName ); 
+        }
+        catch(e) {;}
     } 
 	
 	this.invokeMethod = function( bean, action, args ) {
@@ -875,7 +878,7 @@ function DataTable( table, bean, controller ) {
 	var tabIdx;
 		
 	function doRender() {
-		tbody.empty();
+		tbody.hide().empty();
 		tabIdx = table.data('index');
 		status.index = 0;
 		var list = model.getList();
@@ -899,6 +902,8 @@ function DataTable( table, bean, controller ) {
 				status.index++;
 			}
 		}
+		
+		tbody.show('fade');
 		
 		BindingUtils.bind( null, table );
 	}
