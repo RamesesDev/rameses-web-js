@@ -104,63 +104,64 @@ var NumberUtils = new function() {
     } 
 }  
  
-/* DynamicProxy */ 
-function _DynamicProxyService( name, context ) { 
-    this.name = name; 
-    this.context = context; 
-    this.env = {}; 
-     
-    var convertResult = function( result ) { 
-        if(result!=null) { 
-            //alert( result ); 
-            if( result.trim().substring(0,1) == "["  || result.trim().substring(0,1) == "{"  ) { 
-                return $.parseJSON(result);     
-            } 
-            else { 
-                return eval(result); 
-            }     
-        } 
-        return null; 
-    } 
-     
-    this.invoke = function( action, args, handler ) { 
-        jargs = null; 
-        if(args!=null) { jargs = $.toJSON( args ); } 
-        var contextPath = window.location.pathname.substring(1); 
-        contextPath = contextPath.substring(0,contextPath.indexOf('/'));  
-        var urlaction = "/" + contextPath + "/jsinvoker/"+this.context+"/"+this.name+ "."+action; 
-        var err = null; 
-        if(handler==null) { 
-            var result = $.ajax( {  
-                url:urlaction,  
-                type:"POST",  
-                error: function( xhr ) { err = xhr.responseText }, 
-                data: {args: jargs},  
-                async : false }).responseText; 
-             
-            if( err!=null ) { 
-                throw new Error(err); 
-            } 
-            return convertResult( result ); 
-        } 
-        else { 
-            $.ajax( {  
-                url: urlaction,  
-                type: "POST",  
-                error: function( xhr ) { err = xhr.responseText }, 
-                data: {args: jargs},  
-                async: true, 
-                success: function( data) { handler( convertResult(data)); } 
-            }); 
-        } 
-    } 
-} 
- 
+
 function DynamicProxy( context ) { 
     this.context = context; 
     this.create = function( svcName ) { 
         return new _DynamicProxyService( svcName, this.context );     
     } 
+	
+		/* DynamicProxy */ 
+	function _DynamicProxyService( name, context ) { 
+		this.name = name; 
+		this.context = context; 
+		this.env = {}; 
+		 
+		var convertResult = function( result ) { 
+			if(result!=null) { 
+				//alert( result ); 
+				if( result.trim().substring(0,1) == "["  || result.trim().substring(0,1) == "{"  ) { 
+					return $.parseJSON(result);     
+				} 
+				else { 
+					return eval(result); 
+				}     
+			} 
+			return null; 
+		} 
+		 
+		this.invoke = function( action, args, handler ) { 
+			jargs = null; 
+			if(args!=null) { jargs = $.toJSON( args ); } 
+			var contextPath = window.location.pathname.substring(1); 
+			contextPath = contextPath.substring(0,contextPath.indexOf('/'));  
+			var urlaction = "/" + contextPath + "/jsinvoker/"+this.context+"/"+this.name+ "."+action; 
+			var err = null; 
+			if(handler==null) { 
+				var result = $.ajax( {  
+					url:urlaction,  
+					type:"POST",  
+					error: function( xhr ) { err = xhr.responseText }, 
+					data: {args: jargs},  
+					async : false }).responseText; 
+				 
+				if( err!=null ) { 
+					throw new Error(err); 
+				} 
+				return convertResult( result ); 
+			} 
+			else { 
+				$.ajax( {  
+					url: urlaction,  
+					type: "POST",  
+					error: function( xhr ) { err = xhr.responseText }, 
+					data: {args: jargs},  
+					async: true, 
+					success: function( data) { handler( convertResult(data)); } 
+				}); 
+			} 
+		} 
+	} 
 } 
  
  
@@ -313,6 +314,15 @@ var BindingUtils = new function() {
 		$(filter).each( controlLoader );
 	}
      
+	 
+	this.load = function(selector) {
+		for( var i=0; i < this.loaders.length; i++ ) { 
+            this.loaders[i]();   
+        } 
+        this.loaders = []; 
+        this.bind(null,selector); 
+        this.loadViews(null,selector); 
+	}	
 } 
  
  
@@ -510,12 +520,7 @@ var ContextManager = new function() {
 //load binding immediately 
 $(window).load (  
     function() { 
-        for( var i=0; i < BindingUtils.loaders.length; i++ ) { 
-            BindingUtils.loaders[i]();   
-        } 
-        BindingUtils.loaded = []; 
-        BindingUtils.bind(); 
-        BindingUtils.loadViews(); 
+        BindingUtils.load();
     } 
 ); 
  
@@ -609,6 +614,12 @@ BindingUtils.handlers.input_button = function( elem, controller, idx ) {
     if(action==null || action == '') return; 
     elem.onclick = function() { $get(controller.name).invoke( this, action );  }     
 }; 
+
+BindingUtils.handlers.a = function( elem, controller, idx ) {
+    var action = elem.getAttribute("name"); 
+    if(action==null || action == '') return; 
+    elem.onclick = function() { $get(controller.name).invoke( this, action ); return false; } 
+}
  
 BindingUtils.handlers.input_submit = function( elem, controller, idx ) { 
     var action = elem.getAttribute("name"); 
@@ -1304,8 +1315,7 @@ function PopupOpener( page, name, params, target ) {
 		this.options.title = this.title;
 		
         div.load(this.page, function() { 
-            BindingUtils.bind( null, div); 
-            BindingUtils.loadViews( null, div);
+            BindingUtils.load( div); 
             if(p!=null) {
                 for( var key in p ) {
                     $ctx(n)[key] = p[key];    
@@ -1317,7 +1327,6 @@ function PopupOpener( page, name, params, target ) {
     } 
 } 
  
-
 function DropdownOpener( page, name, params, target ) {
 	this.classname = "opener"; 
     this.name = name; 
@@ -1335,8 +1344,7 @@ function DropdownOpener( page, name, params, target ) {
         
 		var w = new DropdownWindow(this.source, this.options);
         w.show(this.page, function(div) { 
-            BindingUtils.bind( null, div); 
-            BindingUtils.loadViews( null, div);
+            BindingUtils.load( div); 
             if(p!=null) {
                 for( var key in p ) {
                     $ctx(n)[key] = p[key];
@@ -1344,6 +1352,7 @@ function DropdownOpener( page, name, params, target ) {
             }     
         }); 
     };
+	
 	
 	//--- DropdownWindow class ----
 	function DropdownWindow( source, options ) {
@@ -1363,11 +1372,10 @@ function DropdownOpener( page, name, params, target ) {
 				});
 			}
 			else {
-				setTimeout( function(){}, 100 );
 				div.html( page.html() )
 				 .appendTo('body')
 				 .position({ of: $(source), my: pos.my ? pos.my : 'left top', at: pos.at ? pos.at : 'left bottom'})
-				 .show('fade', null, function(){
+				 .show('slide',{direction:"up"}, function(){
 					bindWindowEvt();
 					callback(div); 
 				 });
@@ -1377,7 +1385,7 @@ function DropdownOpener( page, name, params, target ) {
 		this.close = function() { doHide(); };
 		
 		function hide() {
-			div.hide('fade', null, function() { $(this).remove(); });
+			div.hide('slide', {direction:"up"}, function() { $(this).remove(); });
 			$(document).unbind('mouseup', onWindowClicked);
 		}
 		
@@ -1400,8 +1408,7 @@ function DropdownOpener( page, name, params, target ) {
 var InvokerUtil = new function() { 
     this.invoke = function( name, page, target ) { 
 		$( "#"+target ).load(page, function() { 
-			BindingUtils.bind( null, "#"+target); 
-			BindingUtils.loadViews( null, "#"+target); 
+			BindingUtils.load("#"+target); 
 		}); 
     }     
 } 
@@ -1418,10 +1425,9 @@ var WindowUtil = new function() {
 		window.location.search = (qry!="") ? "?"+qry : "";
 	}
 	
-	this.load = function( name, page, target ) { 
+	this.load = function( page, target, options ) { 
 		$( "#"+target ).load(page, function() { 
-			BindingUtils.bind( null, "#"+target); 
-			BindingUtils.loadViews( null, "#"+target); 
+			BindingUtils.load( "#"+target); 
 		}); 
     } 
     
