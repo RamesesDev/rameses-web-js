@@ -952,9 +952,7 @@ function DataTable( table, bean, controller ) {
 	var prevRow;
 	var prevTd;
 	
-	function td_mousedown(e) {
-		if( !model.getDataModel() ) return;
-		
+	function td_mousedown(e) {		
 		var td = e.tagName? $(e) : $(this);
 		
 		if( prevTd ) prevTd.removeClass('selected');
@@ -974,11 +972,13 @@ function DataTable( table, bean, controller ) {
 		var tr = td.parent();
 		if( tr.hasClass('selected') ) {
 			tr.removeClass('selected');
-			model.unselect( tr.data('index') );
+			if( model.getDataModel() ) 
+				model.unselect( tr.data('index') );
 		}
 		else {
 			tr.addClass('selected');
-			model.select( tr.data('index') );
+			if( model.getDataModel() ) 
+				model.select( tr.data('index') );
 		}
 			
 		prevRow = tr;
