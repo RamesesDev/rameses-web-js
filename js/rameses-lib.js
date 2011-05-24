@@ -128,7 +128,7 @@ String.prototype.evaluate = function( ctx ) {
         return str? eval( str )+'' : ''; 
     } 
 }; 
- 
+
 var NumberUtils = new function() { 
     this.toNumber = function( val ) { 
         if(val==null || val=="") return null; 
@@ -317,31 +317,7 @@ var BindingUtils = new function() {
 		
 		//add hints
 		if( $(elem).attr("hint")!=null ) {
-			var isPassword = (elem.type == "password");
-		
-			var hintStyle = {color: "gray"};
-			var oldColor = $(elem).css("color");
-			if(c==null || c == "" ) {
-				elem.value  = $(elem).attr("hint");
-				$(elem).css(hintStyle);
-				//if(isPassword) elem.type = "text";
-			}	
-			var lostFocus = function() { 
-				if(this.value==null || this.value == "") {
-					this.value = $(this).attr('hint'); 
-					$(this).css(hintStyle); 
-					//if(isPassword) elem.type = "text";
-				}
-			};
-			$(elem).bind( 'blur', lostFocus );
-			var gotFocus = function() { 
-				if($get(controller.name).get(fldName)==null ||$get(controller.name).get(fldName)=="") {
-					this.value="";
-					$(this).css({color:oldColor}); 
-					if(isPassword) elem.type = "password";
-				}
-			};
-			$(elem).bind( 'focus', gotFocus );
+			new InputHintDecorator( elem );
 		}
 		 
         //add additional input behaviors 
@@ -369,11 +345,110 @@ var BindingUtils = new function() {
         this.loaders = []; 
         this.bind(null,selector); 
         this.loadViews(null,selector); 
-	}	
-} 
+	}
+	
+
+	/**---------------------------------------------------*
+	 * input hint support (InputHintDecorator class)
+	 *
+	 * @author jaycverg
+	 *----------------------------------------------------*/
+	function InputHintDecorator( inp ) {
+		var input = $(inp);
+		if( input.data('hint_decorator') ) {
+			input.data('hint_decorator').refresh();
+			return;
+		}				
+	
+		input.keyup(input_keyup)
+		 .keypress(input_keypress)
+		 .focus(input_focus)
+		 .blur(input_blur)
+		 .data('hint_decorator', this);
+
+		var span = $('<span class="hint" style="position:absolute; z-index:300000"></span>')
+		 .html( input.attr('hint') )
+		 .hide()
+		 .disableSelection()
+		 .appendTo( 'body' )
+		 .click(onClick);
+		 
+		this.refresh = refresh;
+	
+		//refresh
+		refresh();
+		
+		//reposition span on window resize
+		$(window).bind('resize', position);
+	
+		function refresh(){
+			if( !input.val() ) 
+				showHint();
+			else
+				hideHint();
+		}
+		
+		var isPositioned;
+		
+		function position() {
+			var pos = {};
+			var left = parseInt( input.css('paddingLeft') ) + 5;
+			if( inp.type == 'text' || inp.type == 'password' ) {
+				pos = {my: 'left center', at: 'left center', offset: (left + ' 0')};
+			}
+			else {
+				var top = parseInt( input.css('paddingTop') );
+				pos = {my: 'left top', at: 'left top', offset: (left + ' ' + top)};
+			}
+			pos.of = input;
+			span.position(pos);
+			isPositioned = true;
+		}
+	
+		function showHint() {
+			if( !isPositioned ) position();
+			span.show();
+		}
+	
+		function hideHint() {
+			span.hide();
+		}
+	
+		function onClick(){ 
+			input.focus();
+		}
+	
+		function input_focus() { 
+			span.addClass('hint-hover'); 
+		}
+		
+		function input_blur()  { 
+			span.removeClass('hint-hover');
+			refresh();
+		}
+	
+		function input_keyup() {
+			if( !input.val() ) showHint();
+		}
+	
+		function input_keypress(evt) {
+			if( isCharacterPressed(evt) ) hideHint();
+		}
+	
+		function isCharacterPressed(evt) {
+			if (typeof evt.which == "undefined") {
+				return true;
+			} else if (typeof evt.which == "number" && evt.which > 0) {
+				return !evt.ctrlKey && !evt.metaKey && !evt.altKey && evt.which != 8;
+			}
+			return false;
+		}
+					
+	}//-- end of InputHintDecorator class
+	
+} //-- end of BindingUtils class
  
- 
- 
+
 //BeanUtils is for managing nested beans 
 var BeanUtils = new function(){ 
     this.setProperty = function( bean, fieldName, value ) { 
