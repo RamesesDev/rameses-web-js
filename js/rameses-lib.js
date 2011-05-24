@@ -1,5 +1,5 @@
 /*** 
-    version 1.5.22.1
+    version 1.5.22.2
     resources in the js script: 
 	NumberUtils
     DynamicProxy 
@@ -128,7 +128,7 @@ String.prototype.evaluate = function( ctx ) {
         return str? eval( str )+'' : ''; 
     } 
 }; 
-
+ 
 var NumberUtils = new function() { 
     this.toNumber = function( val ) { 
         if(val==null || val=="") return null; 
@@ -286,7 +286,7 @@ var BindingUtils = new function() {
     * applicable for text boxes, option boxes, list. 
     * assumptions:  
     *     all controls have required,  
-    *     all controls set a single value during onblur 
+    *     all controls set a single value during on change
     *     all controls get the value from bean during load 
     *     all will broadcast to to reset dependent controls values, (those with depends attribute) 
     * customFunc = refers to the custom function for additional decorations 
@@ -302,19 +302,17 @@ var BindingUtils = new function() {
         elem.value = (c ? c : "" ); 
         var dtype = o.attr("datatype"); 
         if(dtype=="decimal") { 
-            elem.onblur = function () { $get(controller.name).set(fldName, NumberUtils.toDecimal(this.value) ); } 
+            elem.onchange = function () { $get(controller.name).set(fldName, NumberUtils.toDecimal(this.value) ); } 
         } 
         else if( dtype=="integer") { 
-            elem.onblur = function () { $get(controller.name).set(fldName, NumberUtils.toInteger(this.value) ); } 
+            elem.onchange = function () { $get(controller.name).set(fldName, NumberUtils.toInteger(this.value) ); } 
         } 
         else if( dtype == "date" ){
-			o.datepicker({dateFormat:"yy-mm-dd", onSelect: function(date){ 
-				$get(controller.name).set(fldName, this.value ); 
-			}});
-            elem.onblur = function () { $get(controller.name).set(fldName, this.value ); } 
+			o.datepicker({dateFormat:"yy-mm-dd"});
+            elem.onchange = function () { $get(controller.name).set(fldName, this.value ); } 
         }     
         else { 
-            elem.onblur = function () { $get(controller.name).set(fldName, this.value ); } 
+            elem.onchange = function () { $get(controller.name).set(fldName, this.value ); } 
         }     
 		
 		//add hints
@@ -347,9 +345,8 @@ var BindingUtils = new function() {
         this.loaders = []; 
         this.bind(null,selector); 
         this.loadViews(null,selector); 
-	}
+	}	
 	
-
 	/**---------------------------------------------------*
 	 * input hint support (InputHintDecorator class)
 	 *
@@ -450,7 +447,8 @@ var BindingUtils = new function() {
 	
 } //-- end of BindingUtils class
  
-
+ 
+ 
 //BeanUtils is for managing nested beans 
 var BeanUtils = new function(){ 
     this.setProperty = function( bean, fieldName, value ) { 
@@ -720,24 +718,28 @@ BindingUtils.handlers.input_radio = function(elem, controller, idx ) {
 BindingUtils.handlers.input_checkbox = function(elem, controller, idx ) { 
 	var c = controller.get(elem.name);
 	if( $(elem).attr("mode") == "set" ) {
-		var checkedValue = $(elem).attr("checkedValue");
-		if( c.find( function(o) { return (o==checkedValue ) } ) !=null) {
-			elem.checked = true;
-		}	
-		else {
-			elem.checked = false;
-		}
-		elem.onclick = function () { 
-			var _list = $get(controller.name).get(this.name);
-			var v = $(this).attr( "checkedValue" );
-			if( v == null ) alert( "checkedValue in checkbox must be specified" );
-			if(this.checked) {
-				_list.push( v );		
-			}
-			else {
-				_list.remove( function(o) { return (o == v) } );
+		try {
+			var checkedValue = $(elem).attr("checkedValue");
+			
+			if( c.find( function(o) { return (o==checkedValue ) } ) !=null) {
+				elem.checked = true;
 			}	
-		} 
+			else {
+				elem.checked = false;
+			}
+			elem.onclick = function () { 
+				var _list = $get(controller.name).get(this.name);
+				var v = $(this).attr( "checkedValue" );
+				if( v == null ) alert( "checkedValue in checkbox must be specified" );
+				if(this.checked) {
+					_list.push( v );		
+				}
+				else {
+					_list.remove( function(o) { return (o == v) } );
+				}	
+			} 
+		}
+		catch(e) {}	
 	}	
 	else {
 		var isChecked = false;
@@ -1471,7 +1473,7 @@ function PopupOpener( page, name, params, target ) {
         div.load(this.page, function() { 
         	if(p!=null) {
                 for( var key in p ) {
-                    $ctx(n)[key] = p[key];    
+                    try{ $ctx(n)[key] = p[key]; }catch(e){;} 
                 }
             }
             BindingUtils.load( div);
@@ -1504,7 +1506,7 @@ function DropdownOpener( page, name, params, target ) {
         w.show(this.page, function(div) { 
         	if(p!=null) {
                 for( var key in p ) {
-                    $ctx(n)[key] = p[key];
+                    try{ $ctx(n)[key] = p[key]; }catch(e){;}
                 }
             }
             BindingUtils.load( div);     
