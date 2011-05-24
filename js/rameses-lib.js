@@ -1,5 +1,5 @@
 /*** 
-    version 1.5.22
+    version 1.5.22.1
     resources in the js script: 
 	NumberUtils
     DynamicProxy 
@@ -23,10 +23,57 @@
  
 //****************************************************************************************************************** 
 // String extensions 
-//****************************************************************************************************************** 
+//******************************************************************************************************************
 String.prototype.trim = function(){ return (this.replace(/^[\s\xA0]+/, "").replace(/[\s\xA0]+$/, ""))}; 
 String.prototype.startsWith = function(str) {return (this.match("^"+str)==str)}; 
 String.prototype.endsWith = function(str) {return (this.match(str+"$")==str)}; 
+Array.prototype.remove = function( from, to ) {
+	if( $.isFunction(from) ) {
+		var _arr = [];
+		for( var i=0; i<this.length; i++ ) {
+			var item = this[i];
+			if( !from(item) == true ) {
+				_arr.push( item );
+			}	
+		}
+		this.length = 0;
+		return this.push.apply(this, _arr);
+	}
+	else {
+		var rest = this.slice((to || from) + 1 || this.length);
+		this.length = from < 0 ? this.length + from : from;
+		return this.push.apply(this, rest);
+	}
+};	
+Array.prototype.find = function( func) {
+	if( $.isFunction(func) ) {
+		for( var i=0; i<this.length; i++ ) {
+			var item = this[i];
+			if( func(item) == true ) {
+				return item;
+			}	
+		}
+		return null;
+	}
+	else {
+		alert("Please pass a function when using find" );
+	}
+};	
+Array.prototype.findAll = function( func ) {
+	if( $.isFunction(func) ) {
+		var _arr = [];
+		for( var i=0; i<this.length; i++ ) {
+			var item = this[i];
+			if( func(item) == true ) {
+				_arr.push(item);
+			}	
+		}
+		return _arr;
+	}
+	else {
+		alert("Please pass a function when using findAll" );
+	}
+};	
  
 /** 
  * string expression support 
@@ -81,18 +128,7 @@ String.prototype.evaluate = function( ctx ) {
         return str? eval( str )+'' : ''; 
     } 
 }; 
-
-//****************************************************************************************************************** 
-// Array extension(s)
-//****************************************************************************************************************** 
-Array.prototype.remove = function(from, to) {
-  var rest = this.slice((to || from) + 1 || this.length);
-  this.length = from < 0 ? this.length + from : from;
-  return this.push.apply(this, rest);
-};
-
-
-
+ 
 var NumberUtils = new function() { 
     this.toNumber = function( val ) { 
         if(val==null || val=="") return null; 
@@ -353,7 +389,7 @@ var BeanUtils = new function(){
 		try {
         	return eval( 'bean.' + fieldName ); 
         }
-        catch(e) {;}
+        catch(e) {;}	
     } 
 	
 	this.invokeMethod = function( bean, action, args ) {
@@ -606,21 +642,42 @@ BindingUtils.handlers.input_radio = function(elem, controller, idx ) {
 
 BindingUtils.handlers.input_checkbox = function(elem, controller, idx ) { 
 	var c = controller.get(elem.name);
-	var isChecked = false;
-	var checkedValue = $(elem).attr("checkedValue");
-	if( checkedValue !=null && checkedValue == c ) {
-		isChecked = true;
+	if( $(elem).attr("mode") == "set" ) {
+		var checkedValue = $(elem).attr("checkedValue");
+		if( c.find( function(o) { return (o==checkedValue ) } ) !=null) {
+			elem.checked = true;
+		}	
+		else {
+			elem.checked = false;
+		}
+		elem.onclick = function () { 
+			var _list = $get(controller.name).get(this.name);
+			var v = $(this).attr( "checkedValue" );
+			if( v == null ) alert( "checkedValue in checkbox must be specified" );
+			if(this.checked) {
+				_list.push( v );		
+			}
+			else {
+				_list.remove( function(o) { return (o == v) } );
+			}	
+		} 
 	}	
-	else if( c == true || c == "true" ) {
-		isChecked = true;	
+	else {
+		var isChecked = false;
+		var checkedValue = $(elem).attr("checkedValue");
+		if( checkedValue !=null && checkedValue == c ) {
+			isChecked = true;
+		}	
+		else if( c == true || c == "true" ) {
+			isChecked = true;	
+		}	
+		elem.checked = isChecked;
+		elem.onclick = function () { 
+			var v = ($(this).attr( "checkedValue" )==null) ? true : $(this).attr( "checkedValue" );
+			var uv = ($(this).attr( "uncheckedValue" )==null) ? false : $(this).attr( "uncheckedValue" );
+			$get(controller.name).set(this.name, (this.checked) ? v : uv );
+		} 
 	}	
-	elem.checked = isChecked;
-	
-	elem.onclick = function () { 
-		var v = ($(this).attr( "checkedValue" )==null) ? true : $(this).attr( "checkedValue" );
-		var uv = ($(this).attr( "uncheckedValue" )==null) ? false : $(this).attr( "uncheckedValue" );
-		$get(controller.name).set(this.name, (this.checked) ? v : uv );
-	} 
 } 
  
 BindingUtils.handlers.input_button = function( elem, controller, idx ) { 

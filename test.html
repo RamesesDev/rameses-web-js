@@ -31,9 +31,16 @@
 				name: 'jayrome',
 				address: 'cebu city'
 			};
-						
-			alert( ExprUtil.eval('Hello #{name}, you are from #{address}, ${country}, ${age > 10? "in good age" : "very young"}') );
-			alert( 'Hello #{name}, you are from #{address}, ${country}  ${age > 10? "in good age" : "very young"}'.evaluate(student) );
+
+			print_r( student );
+			delete student.age;
+			print_r( student );
+			
+			function print_r( obj ) {
+				for(var i in obj) {
+					console.log(i + '=' + student[i]);
+				}
+			}
 		</script>
 	</head>
 	
