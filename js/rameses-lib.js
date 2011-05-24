@@ -308,7 +308,9 @@ var BindingUtils = new function() {
             elem.onblur = function () { $get(controller.name).set(fldName, NumberUtils.toInteger(this.value) ); } 
         } 
         else if( dtype == "date" ){
-			o.datepicker({dateFormat:"yy-mm-dd"});
+			o.datepicker({dateFormat:"yy-mm-dd", onSelect: function(date){ 
+				$get(controller.name).set(fldName, this.value ); 
+			}});
             elem.onblur = function () { $get(controller.name).set(fldName, this.value ); } 
         }     
         else { 
@@ -1442,6 +1444,8 @@ function PopupOpener( page, name, params, target ) {
 	this.source;
 	this.options = {};
 	
+	var defaultOptions = {show: 'fade', hide: 'fade', height: 'auto'};
+	
     this.load = function() { 
         var n = this.name;
         var p = this.params; 
@@ -1462,19 +1466,24 @@ function PopupOpener( page, name, params, target ) {
 		this.options.modal = true;
 		this.options.title = this.title;
 		
+		var options = $.extend(defaultOptions, this.options);
+		
         div.load(this.page, function() { 
-            BindingUtils.load( div); 
-            if(p!=null) {
+        	if(p!=null) {
                 for( var key in p ) {
                     $ctx(n)[key] = p[key];    
                 }
-            }     
-            ContextManager.modalStack.push( {target: div.attr('id'), parent: parent} ); 
-        })
-        .dialog(this.options); 
+            }
+            BindingUtils.load( div);
+            ContextManager.modalStack.push( {target: div.attr('id'), parent: parent} );
+                                                            
+            //make into a dialog after the content is loaded.
+            div.dialog(options);
+        }); 
     } 
 } 
  
+//-- DropdownOpener class
 function DropdownOpener( page, name, params, target ) {
 	this.classname = "opener"; 
     this.name = name; 
@@ -1485,34 +1494,41 @@ function DropdownOpener( page, name, params, target ) {
 	this.title;
 	this.source;
 	this.options = {};
+	this.styleClass;
 	
     this.load = function() { 
         var n = this.name;
         var p = this.params; 
         
-		var w = new DropdownWindow(this.source, this.options);
+		var w = new DropdownWindow(this.source, this.options, this.styleClass);
         w.show(this.page, function(div) { 
-            BindingUtils.load( div); 
-            if(p!=null) {
+        	if(p!=null) {
                 for( var key in p ) {
                     $ctx(n)[key] = p[key];
                 }
-            }     
+            }
+            BindingUtils.load( div);     
         }); 
     };
 	
 	
 	//--- DropdownWindow class ----
-	function DropdownWindow( source, options ) {
+	function DropdownWindow( source, options, styleClass ) {
 
 		var div = $('<div class="dropdown-window" style="position: absolute; z-index: 200000; top: 0; left: 0;"></div>');
+		
+		var defaultConfig = { my: 'left top', at: 'left bottom' };
+		
+		if( styleClass ) div.addClass( styleClass );
 
 		this.show = function( page, callback ) {
-			var pos = options.position || {};
+			var posConfig = $.extend(defaultConfig, options.position || {});
+			posConfig.of = $(source);
+			
 			if( typeof page == 'string' ) {
 				div.hide().load( page, function(){ 
 					div.appendTo('body')
-					 .position({ of: $(source), my: pos.my ? pos.my : 'left top', at: pos.at ? pos.at : 'left bottom'})
+					 .position( posConfig )
 					 .show('fade');
 					
 					bindWindowEvt();
@@ -1522,7 +1538,7 @@ function DropdownOpener( page, name, params, target ) {
 			else {
 				div.html( page.html() )
 				 .appendTo('body')
-				 .position({ of: $(source), my: pos.my ? pos.my : 'left top', at: pos.at ? pos.at : 'left bottom'})
+				 .position( posConfig )
 				 .show('slide',{direction:"up"}, function(){
 					bindWindowEvt();
 					callback(div); 
@@ -1554,12 +1570,17 @@ function DropdownOpener( page, name, params, target ) {
  
  
 var InvokerUtil = new function() { 
-    this.invoke = function( name, page, target ) { 
-		$( "#"+target ).load(page, function() { 
-			BindingUtils.load("#"+target); 
+    this.invoke = function( name, page, target ) {
+    	var dummy = $('<div><div>');
+    	var target = $("#"+target);
+    	
+    	//load the page first then bind, before appending it to the target
+    	dummy.load(page, function() {
+    		BindingUtils.load( dummy );
+    		target.empty().append( dummy.children() );
 		}); 
     }     
-} 
+};
 
 var WindowUtil = new function() {
 	this.reload = function(args) {
@@ -1590,7 +1611,7 @@ var WindowUtil = new function() {
 		return decodeURIComponent(results[1].replace(/\+/g, " "));
 	}
 
-}
+};
 
 var ProxyService = new function() {
 	this.services = {}
@@ -1612,7 +1633,35 @@ var ProxyService = new function() {
 		}
 		return this.services[name];
 	}
-}
+};
+
+var AjaxStatus = function( msg ) {
+	var div = $('<div class="ajax-status" style="position:absolute; z-index:300000"></div>')
+	 .html( msg )
+	 .hide();
+
+	$(function(){ div.appendTo('body'); });
+	
+	this.show = function() {
+		position();
+		div.show();
+	};
+	
+	this.hide = function() {
+		div.hide('fade');
+	};
+	
+	function position() {
+		div.css({
+			'top': '0px', 'left': '0px'
+		});
+	}
+};
+
+$(function(){
+	//var ajxStat = new AjaxStatus('Processing ...');
+	//$(document).ajaxStart( ajxStat.show ).ajaxStop( ajxStat.hide );
+});
 
 
 
