@@ -1,0 +1,87 @@
+import com.rameses.annotations.*;
+
+class UserGroupService{
+    
+    @PersistenceContext("main")
+    def em;		
+    
+    @ProxyMethod
+    public def create( def o ) {         
+        o.objid = "UG"+ new java.rmi.server.UID();
+		if(o.parentid!=null){
+			o.parentcode = em.read("usergroup", [objid:o.parentid]).code;
+		}
+        return em.create("usergroup", o );
+    }			
+
+    @ProxyMethod
+    public def remove( def o ) {
+	    return em.delete("usergroup", o );
+    }	
+    
+    @ProxyMethod
+    public def read( def o ) {
+	    return em.read("usergroup", o );
+    }	
+        
+    @ProxyMethod
+    public def update(def o){
+	if(o.parentid!=null)
+		o.parentcode = em.read("usergroup", [objid:o.parentid]).code;
+        return em.update("usergroup", o);
+    }
+	
+    @ProxyMethod  	
+    public def getList( def params ) {				
+        def sb = new StringBuffer("select * from usergroup");
+        def filter = new StringBuffer();
+
+		if(params.search.type){
+			filter.append(' type like $P{type} ');
+		}
+		
+        if(params.search.parentid){		
+		if(filter.length()>0) filter.append(" and ");			
+                params.search.parentcode=em.read("usergroup", [objid:params.search.parentid]).code;
+                filter.append(' parentcode like $P{parentcode} ');
+        }
+        
+        if(params.search.name){
+            if(filter.length()>0) filter.append(" and ");
+            
+            filter.append(' name like $P{name} ');
+        }
+
+        if(filter.length()>0){
+            sb.append(" where "+filter.toString());
+        }
+
+	    def qry= em.sqlContext.createQuery(sb.toString()).setParameters(params.search); 	    	  				
+		qry.setFirstResult(params._start);
+		qry.setMaxResults(params._limit);
+		return qry.resultList;
+    }
+    
+    @ProxyMethod
+    public def getParentCodeList(){
+	    return em.sqlContext.createQuery("select distinct objid, code from usergroup where ucase(type) = 'COLLEGE/DIVISION'").resultList; 	  
+    }
+	
+    @ProxyMethod
+    public def getName( def params ){
+            if(params.type=='Department')
+	        return em.sqlContext.createQuery("select distinct name from usergroup where type = 'Department'").resultList; 	  
+	    else
+	        return em.sqlContext.createQuery("select distinct name from usergroup where type = 'College/Division'").resultList; 	  
+    }
+
+    @ProxyMethod
+	public def getOrgType() {
+		return em.sqlContext.createQuery( "SELECT DISTINCT type FROM usergroup" ).resultList;
+	}
+	
+	@ProxyMethod
+	public def getOrgName( params ) {
+		return em.sqlContext.createQuery('select distinct objid,name from usergroup where type = $P{type}').setParameters(params).resultList; 	
+	}
+}

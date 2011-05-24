@@ -1,0 +1,17 @@
+<div width="300px">
+	<table width="100%">
+		<tr>
+			<td>Building:</td>
+			<td>
+				<select context="room" items="bldgList" itemKey="building" itemLabel="building" allowNull="true" emptyText="Please Select" name="searchParam.building" style="width:180px"> </select>			
+			</td>
+		</tr>
+		<tr>
+			<td>Room No:</td>
+			<td><input context="room" type="text" name="searchParam.room_num" style="width:180px" /></td>
+		</tr>		
+		<tr>
+			<td colspan="2"><input type="button" context="room" value="Search" name="show"></td>
+		</tr>
+	</table>
+</div>

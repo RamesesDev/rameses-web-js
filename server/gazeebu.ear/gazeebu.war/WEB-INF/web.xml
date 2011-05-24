@@ -1,0 +1,48 @@
+<web-app version="2.4" 
+		xmlns="http://java.sun.com/xml/ns/j2ee" 
+		xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+		xsi:schemaLocation="http://java.sun.com/xml/ns/j2ee http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd">
+	
+	<context-param>
+		<param-name>app.host</param-name>
+		<param-value>localhost:8080</param-value>
+	</context-param>
+	<context-param>
+		<param-name>app.context</param-name>
+		<param-value>gazeebu</param-value>
+	</context-param>
+	
+    <servlet>
+		<servlet-name>JSInvoker</servlet-name>
+        <servlet-class>com.rameses.web.support.JsonInvoker</servlet-class>
+	</servlet>
+	
+	<servlet>
+		<servlet-name>remoteJS</servlet-name>
+        <servlet-class>com.rameses.web.support.RemoteJSProxyService</servlet-class>
+    </servlet>
+	
+    <servlet-mapping>
+        <servlet-name>JSInvoker</servlet-name>
+        <url-pattern>/jsinvoker/gazeebu/*</url-pattern>
+		
+    </servlet-mapping>
+	
+    <servlet-mapping>
+        <servlet-name>remoteJS</servlet-name>
+        <url-pattern>/remote-proxy/*</url-pattern>
+    </servlet-mapping>
+ 
+ 
+    <!-- UploadFilter Configuration  -->
+    <filter>
+        <filter-name>UploadFilter</filter-name>
+        <filter-class>com.rameses.web.fileupload.Filter</filter-class>
+    </filter>
+	
+    <filter-mapping>
+        <filter-name>UploadFilter</filter-name>
+        <url-pattern>/*</url-pattern>
+    </filter-mapping>  
+ 
+</web-app>

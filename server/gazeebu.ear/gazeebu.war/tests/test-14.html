@@ -1,0 +1,49 @@
+<html>
+	<head>
+		<link rel="stylesheet" href="js/lib/css/jquery-ui/jquery.css" type="text/css" />
+		<script src="js/lib/jquery-all.js"></script>
+		<script src="js/lib/rameses-lib.js"></script>
+		
+		<script>
+			$put("test",
+				new function() {
+					this.checkAll = false;
+					this.list = [
+									{code:"cs", name:"computer science", selected: false},
+									{code:"chem", name:"chemistry", selected: false}
+								];
+					
+					this.propertyChangeListener = {checkAll:function(o){
+							for(var n=0;n<$ctx('test').list.length;n++) {
+								$ctx('test').list[n].selected = o;
+								$ctx('test').list[n].name = "dummy";  
+							}
+						} 
+					};
+					
+				}	
+			);
+		</script>
+    </head>
+    
+    <body>
+    	<table context="test" items="list" varStatus="stat">
+    		<thead>
+				<tr>
+					<td><input type="checkbox" context="test" name="checkAll">
+					</td>
+					<td>Code</td>
+					<td>Title</td>
+				</tr>
+				
+    		</thead>
+    		<tbody>
+				<tr>
+					<td><input type="checkbox" context="test" name="list[#{stat.index}].selected" depends="checkAll"></td>
+					<td><input type="text" context="test" name="list[#{stat.index}].name" depends="checkAll"/></td>
+					<td name="name"></td>
+				</tr>
+			</tbody>
+    	</table>
+    </body>
+</html>

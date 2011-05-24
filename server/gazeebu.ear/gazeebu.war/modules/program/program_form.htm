@@ -1,0 +1,29 @@
+<div width="550px">
+	<table width="100%" style="border-collapse:collapse;">			
+		<tr>
+			<td>Code:</td>		
+			<td><input type="text" context="program" name="entity.code" size="40px"></td>
+		</tr>
+		<tr>
+			<td>Name:</td>
+			<td><input type="text" context="program" name="entity.name" size="40px"></td>
+		</tr>
+		<tr>
+			<td>Dept. Code</td>
+			<td>
+				<select context="program" items="deptList" itemKey="objid" itemLabel="code" allowNull="true" emptyText="Please Select" name="entity.deptid"> </select>				
+			</td>
+		</tr>
+		<tr>
+			<td>Years:</td>
+			<select context="program" items="yearList" itemKey="years" itemLabel="years" allowNull="true" emptyText="Please Select" name="entity.years"> </select>
+		</tr>
+		<tr>
+			<td>Status:</td>
+			<select context="program" items="statList" itemKey="stat" itemLabel="stat" allowNull="true" emptyText="Please Select" name="entity.recstat"> </select>
+		</tr>
+		<tr>
+			<td colspan="2"><input type="button" context="program" name="save" value="Save" style="width:100px;"/></td>
+		</tr>
+	</table>
+</div>

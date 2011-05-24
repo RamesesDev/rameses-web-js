@@ -1,0 +1,10 @@
+<schema>
+   <element name="room" tablename="room">
+	<field  name="objid" primary="true"/>
+	<field  name="room_num"/>
+	<field  name="building"/>
+	<field  name="geocode"/>
+	<field name="orgunit_id"/>
+	<field name="use_type"/>		
+   </element>	
+</schema>

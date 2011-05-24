@@ -1,0 +1,25 @@
+<div width="300px">
+	<table width="100%">
+                <tr>
+			<td>Type:</td>
+			<td>
+				<select name="searchParam.type" context="orgunit" items="typeList" itemKey="type" itemLabel="type" allowNull="true" emptyText="Please Select"></select>
+			</td>
+		</tr>
+		<tr>
+			<td>Parent:</td>
+			<td>
+				<select depends="searchParam.type" name="searchParam.parentid" context="orgunit" items="showParent()" itemKey="objid" itemLabel="code" allowNull="true" emptyText="Please Select"></select>
+			</td>
+		</tr>
+		<tr>
+			<td>Name:</td>
+			<td>
+				<select depends="searchParam.type" name="searchParam.name" context="orgunit" items="showName()" itemKey="name" itemLabel="name" allowNull="true" emptyText="Please Select"></select>
+			</td>
+		</tr>		
+		<tr>
+			<td colspan="2"><input type="button" context = "orgunit" value="Search" name="show"></td>
+		</tr>
+	</table>
+</div>

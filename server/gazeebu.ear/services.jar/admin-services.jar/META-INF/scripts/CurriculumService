@@ -1,0 +1,51 @@
+import com.rameses.annotations.*;
+
+class CurriculumService {
+
+    @PersistenceContext("main")
+    def em;		
+    
+    @ProxyMethod
+    public def create( def o ) {	
+		o.objid="CUR"+new java.rmi.server.UID();
+		return em.create("curriculum", o );				
+    }			
+ 
+    @ProxyMethod
+    public def read( def o ){  	
+		return em.read("curriculum", o );
+    }
+	
+    @ProxyMethod
+	public def update( def o ) {
+		return em.update("curriculum", o );
+    }		
+
+    @ProxyMethod
+	public def delete( def o ) {
+		em.delete("curriculum", o );
+    }	
+
+    @ProxyMethod  	
+	public def getList(def params) {
+        def sb = new StringBuffer("select * from curriculum");
+        def filter = new StringBuffer();
+        
+        if(params.progcode){
+            filter.append(' progcode like $P{progcode} ');
+        }
+        
+        if(params.revyear){
+            if(filter.length()>0) filter.append(" and ");
+            
+            filter.append(' revyear like $P{revyear} ');
+        }
+        
+        if(filter.length()>0){
+            sb.append(" where "+filter.toString());
+        }
+	    return em.sqlContext.createQuery(sb.toString()).setParameters(params).resultList; 	    	  
+    }	
+	
+}
+

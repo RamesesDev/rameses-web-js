@@ -1,0 +1,41 @@
+<html>
+	<head>
+		<link rel="stylesheet" href="TimeWeekCalendar.css"/>
+		<script  src="../js/lib/jquery-all.js"></script>
+		<script  src="../js/lib/rameses-lib.js"></script>
+		<script  src="TimeWeekCalendar.js"></script>
+		<script>
+				$put("test", new function(){
+						var sched = new TimeWeekCalendar("cont");                
+						 
+						this.onload= function(){ 									
+							sched.init();
+							this.addSched();
+							sched.load();
+						}                              			
+						this.addSched = function(){					
+							var list = [
+								{days:["mon","wed","fri"], from:"730", to:"830", content:'<div align="center"><font style="color:red; font-family:Arial; font-weight:bold">IT 111</font></div>', color:"lightyellow"},
+								{days:["tue","thu","sat"], from:"930", to:"1030", content:'<div align="center"><font style="color:red; font-family:Arial; font-weight:bold">IT 112</font></div>', color:"green"},
+								{days:["mon","wed","fri"], from:"1230", to:"1330", content:'<div align="center"><font style="color:red; font-family:Arial; font-weight:bold">IT 110</font></div>', color:"blue"}
+							];
+							sched.addList(list, false);                    
+						}
+						this.display = function(){
+							sched.load();
+						}	
+						this.clear = function(){
+							sched.clear();
+							sched.load();
+						}
+				});
+		</script>
+	</head>
+	<body>
+		<input type="button" context="test" name="addSched" value="Add Schedule"></input>
+		<input type="button" context="test" name="display" value="Display Schedule"></input>
+		<input type="button" context="test" name="clear" value="Clear Table"></input>
+		<div id="cont"></div>
+	</body>
+
+</html>

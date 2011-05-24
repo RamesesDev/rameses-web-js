@@ -1,0 +1,34 @@
+<style>
+.th-permissions{background-color: #800000 ; color:white ; font-weight:bold}
+</style>
+<div style="width:400px ; font-family:arial">
+
+	Select Permissions<br />
+	<span style="font-size: 11px ; font-style:italic">Select a set permissions or actions that this newly created role can do.</span><hr />
+	<span style="font-size:12px">Role Name:</span>
+	<label style="font-family: Trebuchet MS ; font-size:20px ; color:#333333" context="role">#{entity.name}</label>
+	<br />
+	<br />
+	<table context="role" model="permissionListModel" varName="disallowed" border="1" width="100%"
+	       style="font-size: 12px">
+		<thead>
+			<tr>
+				<th class="th-permissions" align="center" width="6%"></th>
+				<th class="th-permissions" align="center">Available Permissions</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td><input type="checkbox" onchange="$ctx('role').selectPermission('#{disallowed.action}', '#{disallowed.caption}' ,this.checked)"></td>
+				<td name="disallowed.caption"></td>
+			</tr>
+		</tbody>
+	<table>
+	
+	<br />
+	<input style="float:right ; font-style=helvetica ; font-size:12px ; height:30px ; width:80px" 
+	       type="button" name="_default" context="role" value="Back">&nbsp;
+	<input style="float:right ; font-style=helvetica ; font-size:12px ; height:30px ; width:80px"
+	       type="button" name="save" context="role" value="Save">
+		   
+</div>

@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<application xmlns="http://java.sun.com/xml/ns/javaee"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/application_5.xsd"
+             version="5">
+
+    <display-name>Gazeebu J2EE Framework</display-name>
+	
+	<module>
+		<java>rameses-common.jar</java>
+	</module>
+	<module>
+		<java>rameses-scripting.jar</java>
+	</module>
+	<module>
+		<ejb>async-impl.jar</ejb>
+	</module>
+	<module>
+		<java>services.jar</java>
+	</module>
+	<module>
+		<ejb>rameses-eserver.jar</ejb>
+	</module>
+	<module>
+		<web>
+			<web-uri>http-invoker-server.war</web-uri>
+			<context-root>gazeebu</context-root>
+		</web>
+	</module>
+	<module>
+		<web>
+			<web-uri>gazeebu.war</web-uri>
+			<context-root>gazeebu-web</context-root>
+		</web>
+	</module>
+
+</application>

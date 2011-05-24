@@ -1,0 +1,9 @@
+<schema>
+    <element tablename="userrole">
+        <field name="objid" primary="true" />
+        <field name="role" />
+        <field name="usergroup"/>
+        <field name="userid" />
+        <field name="disallowed" />
+    </element>
+</schema>

@@ -1,0 +1,11 @@
+import com.rameses.annotations.*;
+import gazeebu.util.*;
+
+class TestService {
+	@ProxyMethod
+	public def underscore(o) {
+		StringUtils s = new StringUtils();
+		return s.underscore(o.name);
+	}
+}
+

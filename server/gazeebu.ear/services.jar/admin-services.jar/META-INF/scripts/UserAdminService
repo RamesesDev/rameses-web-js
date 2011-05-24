@@ -1,0 +1,91 @@
+import com.rameses.annotations.*;
+
+class UserAdminService {
+	
+    @PersistenceContext("main")
+    def em;
+    
+	
+    @ProxyMethod
+    public def create(o) {
+        print "save";
+        o.objid="USER"+new java.rmi.server.UID();
+        return em.create("user", o);
+    }    
+	
+	@ProxyMethod
+    public def read(o) {
+        print o;
+        return em.read("user", o);
+    }
+    
+    @ProxyMethod
+    public def update(o) {
+        return em.update("user", o);
+    }
+
+    @ProxyMethod
+    public def remove(o) {
+        return em.delete("user", o);
+    }
+    
+    @ProxyMethod
+    public def getList(param) {
+    	print param;
+    	def s = 'select * from user';
+    	if(param.search) {
+    		s += ' where username like $P{search}';
+    	}
+    	
+    	return em.sqlContext.createQuery(s).setFirstResult(param._start).setMaxResults(param._limit).setParameters(param).resultList;
+    }
+    
+    
+    
+    @ProxyMethod
+    public def createLogin( o ) {
+    	o.objid = "LOGIN" + new java.rmi.server.UID();
+    	return em.create("login", o);
+    }
+    
+    @ProxyMethod
+    public def updateLogin( o ) {
+    	return em.update("login", o);
+    }
+    
+    @ProxyMethod
+    public def readLogin( o ) {
+    	return em.read("login", o);
+    }
+    
+    
+    // role methods
+    @ProxyMethod
+    public def createRole( o ) {
+        o.objid = "UR" + new java.rmi.server.UID();
+        
+        def obj = getRoleId( o );
+        o.role = obj.objid;
+        
+        return em.create( "userrole", o );
+    }
+    
+    @ProxyMethod
+    public def updateRole( o ) {
+    	return em.update( "userrole", o );
+    }
+    
+    
+    @ProxyMethod
+    public def getRoleId( o ) {
+        return em.sqlContext.createQuery('SELECT objid FROM role WHERE name=?').setParameter(1,'FACULTY').singleResult;;
+    }
+    
+    
+    @ProxyMethod
+    public def searchSuggest( param ) {
+    	param.type += '%';
+    	return em.sqlContext.createQuery('select * from user where username like $P{type}').setMaxResults(5).setParameters(param).resultList*.username;
+    }
+}
+

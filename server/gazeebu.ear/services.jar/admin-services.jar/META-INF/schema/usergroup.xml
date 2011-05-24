@@ -1,0 +1,10 @@
+<schema>
+   <element name="usergroup" tablename="usergroup">
+	<field  name="objid" primary="true"/>
+	<field  name="code"/>
+	<field  name="name"/>
+	<field  name="type"/>
+	<field name="parentid"/>
+	<field name="parentrole"/>		
+   </element>	
+</schema>

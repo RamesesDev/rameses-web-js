@@ -1,0 +1,114 @@
+<script type="text/javascript">
+    $put("user", 
+        new function() {
+             
+            var svc = ProxyService.lookup('CourseService');
+            this.list = [];
+            this.entity = {};
+            this.mode = "create";
+            
+            this.onload = function() {
+				// alert( "loading fields" );
+                this.list = svc.getList();
+            }
+			
+			// new
+            // call new user dialog form
+            this.createCourse = function() {
+				// name -> user -> context name
+				// page -> user_form.html -> form page
+				// target -> dialog-form -> div id
+				this.entity = {};
+				return new PopupOpener("course", "course_form.html", "dialog-form" );
+				//$( "#dialog-form" ).load("user_form.html", function() {
+				 //	$get('user').refresh();
+				//}
+				//).dialog();
+            }
+            // new				
+            // create
+			this.save = function() {
+				if(this.mode == "create") {
+                    svc.create(this.entity);
+                    this.list.push(this.entity);
+                }
+                else {
+                    svc.update(this.entity);
+                    this.onload();
+                }
+                
+                alert("record saved");
+                this.entity = {};
+                return "_close";
+			}
+
+			// new
+            // update
+            this.edit = function(objid) {
+                // alert("objid: "+objid);
+                // {objid:objid}
+                //   key  value
+                alert("edit");
+                this.mode = "edit";
+                this.entity = svc.read({"objid" : objid});
+                
+                //$( "#dialog-form" ).load("user_form.html", function() {
+				 //	$get('user').refresh();
+				//}
+				//).dialog();
+				alert("before");
+				$get('course').navigate( new PopupOpener("course", "course_form.html", "dialog-form" ));
+            }
+            
+            // delete
+            this.delete = function(objid) {
+                if(confirm("Please confirm to delete this record.")) {
+                    svc.delete({"objid" : objid});  
+                    this.onload();
+                    $get('course').refresh();
+                }
+            }
+        }
+    );
+</script>
+
+<input type="button" context="course" name="createCourse" value="Create new course">  
+<div id="courses-contain" class="ui-widget">           
+                
+    <table context="course" items="list" varStatus="status" class="ui-widget ui-widget-content">
+        <thead>
+            <tr class="ui-widget-header ">
+                <th>#</th>
+                <th>Username</th>
+                <th>Fullname</th>   
+                <th>Email</th>
+                <th>Info</th>
+                <th> </th>
+                <th> </th>
+            </tr>                 
+        </thead>
+        <tbody>
+            <tr class="${status.index%2==0?'even':'odd'}">
+                <td>${status.index}</td>
+                <td name="code"></td>
+                <td name="name"></td>
+                <td name="deptid"></td>
+				<td name="deptcode"></td>
+				<td name="defaultunit"></td>
+                <td>
+                    <a href="#" onclick="$ctx('course').edit('${objid}')">
+                        <img src="images/edit_16x16.png" alt="Edit" title="Edit" width="16" height="16"/>
+                    </a>
+                </td>
+                <td>
+                    <a href="#" onclick="$ctx('course').delete('${objid}')">
+                        <img src="images/delete_16x16.jpg" alt="Delete" title="Delete" width="16" height="16" />
+                    </a>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    
+</div>
+<div id="dialog-form" title="Create new course"></div>
+

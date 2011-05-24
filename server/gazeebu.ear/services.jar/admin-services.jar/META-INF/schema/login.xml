@@ -1,0 +1,9 @@
+<schema>
+    <element name="login" tablename="login">
+        <field name="objid" primary="true" />
+        <field name="username" />
+        <field name="password" />
+        <field name="userid" />
+        <field name="email" />        
+    </element>
+</schema>

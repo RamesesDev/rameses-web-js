@@ -1,0 +1,6 @@
+<schema>
+    <element tablename="usersession">
+        <field name="sessionid" primary="true"/>
+        <complex name="info" serializer="default" merge="true"/>
+    </element>
+</schema>

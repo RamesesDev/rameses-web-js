@@ -1,0 +1,82 @@
+import com.rameses.annotations.*;
+
+class RoleAdminService {
+
+	@PersistenceContext("main")
+	def em;
+
+	@ProxyMethod
+	public def create(o) {
+	o.objid="ROLE"+new java.rmi.server.UID();
+	return em.create("role", o);
+	} 
+
+	@ProxyMethod
+	public def read(o) {
+	return em.read("role", o);
+	}
+
+	@ProxyMethod
+	public def update(o) {
+	return em.update("role", o);
+	}
+
+	@ProxyMethod
+	public def remove(o) {
+	return em.delete("role", o);
+	}
+
+	@ProxyMethod 
+	public def getList(param) {	
+	def qry = em.sqlContext.createQuery("SELECT * FROM role");
+	qry.setFirstResult(param._start);
+	qry.setMaxResults(param._limit);
+	return qry.resultList;
+
+	/*def buff = new StringBuffer("select * from role");
+	def filter = new StringBuffer();
+
+	if(param.name) {
+	if (param.name.contains('%'))
+	filter.append('name like $P{name}');
+	else
+	filter.append('name = $P{name}');
+	}
+
+	if(param.masterrole) {
+	if(filter.length() > 0)
+	filter.append( " and ");
+
+	if(param.masterrole.contains('%'))
+	filter.append('masterrole like $P{masterrole}');
+	else
+	filter.append('masterrole = $P{masterrole}');
+	}
+
+	if(filter.length() > 0) {
+	buff.append(" where " + filter.toString());
+	}
+
+	return em.sqlContext.createQuery(buff.toString()).setParameters(param).resultList;*/
+	}
+
+	@ProxyMethod
+	public def getMasterRoles(){
+		return em.sqlContext.createQuery("SELECT name FROM role WHERE name=masterrole").resultList;
+	}
+
+	@ProxyMethod
+	public def getPermissionSet(o){
+		return em.read("permission", o).permissionset;
+	}
+
+	@ProxyMethod
+	public def getName(o){
+		return em.read("role", o).name;
+	}
+	
+	@ProxyMethod
+	public def getRoleName() {
+		return em.sqlContext.createQuery( "SELECT DISTINCT name FROM role" ).resultList;
+	}
+}

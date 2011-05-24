@@ -1,0 +1,111 @@
+<script>								
+	$put( "program",
+		new function(){
+			var svc = ProxyService.lookup("ProgramService");
+			var name = "program";
+			this.deptList=[];//stores the dept. code for the combo box
+			this.entity = {};
+			this.searchParam = {};
+			this.yearList = [{years:"1"},{years:"2"},{years:"3"},{years:"4"},{years:"5"}];
+			this.statList = [{stat:"Active"},{stat:"Inactive"}];
+			this.mode = "create";					
+			
+			this.listModel = {
+				rows:5,				
+				fetchList:function(p){
+					p.search = $ctx(name).searchParam;					
+					return svc.getList(p);
+				}				
+			};
+			
+			this.onload = function(){								
+				this.deptList=svc.getCodeList();       				
+			};
+			
+			this.create=function(){
+				this.entity={};
+				this.mode="create";
+				return new PopupOpener(name, "modules/program/program_form.htm", "popup");
+			};
+			
+			this.save = function(){					
+				if(this.mode == "create"){svc.create(this.entity);}
+				else{svc.update(this.entity);}
+				
+				alert("Record Saved"); 
+				this.mode = "create";
+				this.entity = {};
+				this.listModel.refresh(true);
+				return"_close";					
+			};
+
+			this.edit = function(objid){
+				this.entity = svc.read({"objid":objid});										
+				this.mode = "edit";				
+				$get(name).navigate(new PopupOpener(name, "modules/program/program_form.htm", "popup")); 
+			};
+
+			this.delete = function(objid){
+				if(confirm('Are you sure you want to delete this record?')){
+					svc.delete({"objid":objid});					
+					$get(name).refresh();
+					this.listModel.refresh(true);
+				}
+			};			
+
+			this.search=function(){
+				this.searchParam = {};
+				return new PopupOpener(name, "modules/program/program_search.htm", "popup"); 
+			};			
+			
+			this.displayAll=function(){
+				this.searchParam={};
+				this.show();
+			};
+			
+			this.show=function(){
+				this.listModel.refresh(true);				
+			};
+	});
+</script>
+
+<input type="button" context="program" name="create" value="Add Record" />			
+<input type="button" context="program" name="search" value="Search Record" />	
+<input type="button" context="program" name="displayAll" value="Display Records" />
+
+<div style="height:20px"></div>
+
+<table class="list" context="program" model="listModel" varStatus="status" varName="row" width="100%">
+	<thead align="left">
+		<tr>
+			<th class="list-column-first">No.</th>
+			<th class="list-column">Program Code</th>	            
+			<th class="list-column">Program Name</th>
+			<th class="list-column">Dept. Code</th>
+			<th class="list-column">Years</th>
+			<th class="list-column">Status</th>
+			<th class="list-column-last">Actions</th>	
+		</tr>
+	</thead>
+	<tbody>
+		<tr class="#{status.index%2==0?'list-row-even':'list-row-odd'}">
+			<td>${status.index+1}</td>
+			<td name="row.code"></td>
+			<td name="row.name"></td>
+			<td name="row.deptcode"></td>
+			<td name="row.years"></td>
+			<td name="row.recstat"></td>
+			<td>
+				<a href="#" onclick="$ctx('program').edit('#{row.objid}'); return false;"><img  style="border: 0px; height:25px;" src="imgs/pics/edit.png" title="Edit"></a>
+				<a href="#" onclick="$ctx('program').delete('#{row.objid}'); return false;"><img style="border: 0px; height:25px;" src="imgs/pics/delete.png" title="Delete"></a>
+			</td>	            
+		</tr>
+	</tbody>
+</table>
+
+<div style="height:20px"></div>
+<input type="button" value="Previous" context="program" name="listModel.movePrev" style="width:100px;">
+<input type="button" value="Next" context="program" name="listModel.moveNext" style="width:100px;">
+
+<div id="popup" title="Programs"><div>
+

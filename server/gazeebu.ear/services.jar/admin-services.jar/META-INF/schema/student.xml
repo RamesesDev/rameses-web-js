@@ -1,0 +1,9 @@
+<schema>
+    <element tablename="student">
+        <field name="objid" primary="true" />
+        <field name="firstname" />
+        <field name="lastname"/>
+        <field name="studentno" />
+		<field name="birthdate" />
+    </element>
+</schema>

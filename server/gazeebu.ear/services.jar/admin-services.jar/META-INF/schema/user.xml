@@ -1,0 +1,9 @@
+<schema>
+    <element name="user" tablename="user">
+        <field name="objid" primary="true" />
+        <field name="username" />
+        <field name="fullname" />
+        <field name="email" />        
+        <complex name="info" serializer="default" merge="true"/>
+    </element>
+</schema>

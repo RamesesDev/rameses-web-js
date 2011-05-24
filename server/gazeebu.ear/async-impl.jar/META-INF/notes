@@ -1,0 +1,24 @@
+This is for remote JMS scripting. This is 
+added only if you want this server to participate
+in parallel execution of transactions.
+
+To setup you must have an entry in a -service.xml
+for a provider adapter jndi.
+suggested file name remote-jms-scripting-service.xml.
+
+
+entry is as follows:
+
+<server>
+    <mbean code="org.jboss.jms.jndi.JMSProviderLoader" name="jboss.mq:service=JMSProviderLoader,name=RemoteScriptJMSProvider,server=${host}">
+        <attribute name="ProviderName">RemoteScriptJMSProvider</attribute>
+        <attribute name="ProviderAdapterClass">org.jboss.jms.jndi.JNDIProviderAdapter</attribute>
+        <attribute name="QueueFactoryRef">XAConnectionFactory</attribute>
+        <attribute name="TopicFactoryRef">XAConnectionFactory</attribute>
+        <attribute name="Properties">
+           java.naming.factory.initial=org.jnp.interfaces.NamingContextFactory
+           java.naming.factory.url.pkgs=org.jnp.interfaces
+           java.naming.provider.url=${host}:1099
+        </attribute>
+      </mbean>
+</server>

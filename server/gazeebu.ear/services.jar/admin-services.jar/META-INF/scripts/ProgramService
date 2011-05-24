@@ -1,0 +1,65 @@
+import com.rameses.annotations.*;
+
+class ProgramService {
+
+    @PersistenceContext("main")
+    def em;		
+    
+    @ProxyMethod
+    public def create( def o ) {	
+		o.objid = "CUR"+new java.rmi.server.UID();
+		if(o.deptid!=null)
+			o.deptcode = em.read("orgunit", [objid:o.deptid]).code;		
+		return em.create("program", o );				
+    }			
+ 
+    @ProxyMethod
+    public def read( def o ){  	
+		return em.read("program", o );
+    }
+	
+    @ProxyMethod
+	public def update( def o ) {
+		if(o.deptid!=null)
+			o.deptcode = em.read("orgunit", [objid:o.deptid]).code;
+		return em.update("program", o );
+    }		
+
+    @ProxyMethod
+	public def delete( def o ) {
+		em.delete("program", o );
+    }	
+    
+    @ProxyMethod  	
+	public def getList( def params ) {				
+        def sb = new StringBuffer("select * from program");
+        def filter = new StringBuffer();
+        
+        if(params.search.deptid){			
+            params.search.deptcode=em.read("orgunit", [objid:params.search.deptid]).code;
+            filter.append(' deptcode like $P{deptcode} ');
+        }
+        
+        if(params.search.code){
+            if(filter.length()>0) filter.append(" and ");
+            
+            filter.append(' code like $P{code} ');
+        }
+        
+        if(filter.length()>0){
+            sb.append(" where "+filter.toString());
+        }
+		
+	    def qry= em.sqlContext.createQuery(sb.toString()).setParameters(params.search); 	    	  				
+		qry.setFirstResult(params._start);
+		qry.setMaxResults(params._limit);
+		return qry.resultList;
+    }
+    
+    @ProxyMethod
+    public def getCodeList(){
+	    return em.sqlContext.createQuery("select objid, code from orgunit where type='department'").resultList; 
+    }
+	
+}
+

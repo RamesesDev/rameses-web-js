@@ -1,0 +1,61 @@
+import com.rameses.annotations.*;
+
+class RoomService{
+    
+    @PersistenceContext("main")
+    def em;		
+    
+    @ProxyMethod
+    public def create( def o ) {         
+        o.objid = "RM"+ new java.rmi.server.UID();
+        if(em.sqlContext.createQuery('select * from room where building like $P{building}').setParameters(o).resultList != null )
+               return em.create("room", o );
+        else
+           return null;
+    }			
+
+    @ProxyMethod
+    public def delete( def o ) {
+	    return em.delete("room", o );
+    }	
+    
+    @ProxyMethod
+    public def read( def o ) {
+	    return em.read("room", o );
+    }	
+        
+    @ProxyMethod
+    public def update(def o){
+        return em.update("room", o);
+    }
+
+    @ProxyMethod  	
+	public def getList( def params ) {				
+        def sb = new StringBuffer("select * from room");
+        def filter = new StringBuffer();
+        
+        if(params.search.building){			            
+            filter.append(' building like $P{building} ');
+        }
+        
+        if(params.search.room_num){
+            if(filter.length()>0) filter.append(" and ");
+            
+            filter.append(' room_num like $P{room_num} ');
+        }
+        
+        if(filter.length()>0){
+            sb.append(" where "+filter.toString());
+        }
+		
+	    def qry= em.sqlContext.createQuery(sb.toString()).setParameters(params.search); 	    	  				
+		qry.setFirstResult(params._start);
+		qry.setMaxResults(params._limit);
+		return qry.resultList;
+    }	
+    
+	@ProxyMethod
+	public def getBldgList(){
+	    return em.sqlContext.createQuery("select distinct building from room").resultList; 
+    }
+}
