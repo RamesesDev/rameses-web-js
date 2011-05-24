@@ -81,7 +81,18 @@ String.prototype.evaluate = function( ctx ) {
         return str? eval( str )+'' : ''; 
     } 
 }; 
- 
+
+//****************************************************************************************************************** 
+// Array extension(s)
+//****************************************************************************************************************** 
+Array.prototype.remove = function(from, to) {
+  var rest = this.slice((to || from) + 1 || this.length);
+  this.length = from < 0 ? this.length + from : from;
+  return this.push.apply(this, rest);
+};
+
+
+
 var NumberUtils = new function() { 
     this.toNumber = function( val ) { 
         if(val==null || val=="") return null; 
