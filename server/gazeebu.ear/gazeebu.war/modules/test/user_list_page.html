@@ -1,0 +1,42 @@
+<table style="width:100%">
+	<tr>
+		<td align="left">
+			Search:<input type="text" context="user" name="query.search"/>
+			<input type="button" context="user" name="doSearch" value="Go" immediate="true"/>  
+		</td>
+		<td align="right">
+			<input type="button" context="user" name="addNew" value="Create" immediate="true"/>  
+		</td>
+	</tr>
+</table>    
+                
+<table class="list" context="user" model="userListModel" varStatus="status" width="100%">
+    <thead>
+        <tr>
+            <th class="list-column">Username</th>
+            <th class="list-column">Fullname</th>   
+            <th class="list-column">Email</th>
+            <th class="list-column-last">&nbsp;</th>
+        </tr>                 
+    </thead>
+    <tbody>
+        <tr class="#{status.index%2==0?'list-row-even':'list-row-odd'}">
+            <td name="username"></td>
+            <td name="fullname"></td>
+            <td name="email"></td>
+            <td align="right">
+                <a href="#" onclick="$get('user').invoke(null, 'edit', '${objid}', false)">
+                    Edit
+                </a>
+                &nbsp;
+                <a href="#" onclick="$get('user').invoke( null, 'delete', '${objid}', false)">
+                    Delete
+                </a>
+            </td>
+        </tr>
+    </tbody>
+</table>
+<input type="button" context="user" name="userListModel.movePrev" value="&lt;&lt; Previous" immediate="true">
+<input type="button" context="user" name="userListModel.moveNext" value="Next &gt;&gt;" immediate="true">
+<div id="dialog-form"></div>
+

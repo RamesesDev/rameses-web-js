@@ -1,5 +1,5 @@
 /*** 
-    version 1.5.22
+    version 1.5.23
     resources in the js script: 
 	NumberUtils
     DynamicProxy 
@@ -23,10 +23,68 @@
  
 //****************************************************************************************************************** 
 // String extensions 
-//****************************************************************************************************************** 
+//******************************************************************************************************************
 String.prototype.trim = function(){ return (this.replace(/^[\s\xA0]+/, "").replace(/[\s\xA0]+$/, ""))}; 
 String.prototype.startsWith = function(str) {return (this.match("^"+str)==str)}; 
 String.prototype.endsWith = function(str) {return (this.match(str+"$")==str)}; 
+Array.prototype.remove = function( from, to ) {
+	if( $.isFunction(from) ) {
+		var _arr = [];
+		for( var i=0; i<this.length; i++ ) {
+			var item = this[i];
+			if( !from(item) == true ) {
+				_arr.push( item );
+			}	
+		}
+		this.length = 0;
+		return this.push.apply(this, _arr);
+	}
+	else {
+		var rest = this.slice((to || from) + 1 || this.length);
+		this.length = from < 0 ? this.length + from : from;
+		return this.push.apply(this, rest);
+	}
+};	
+Array.prototype.find = function( func) {
+	if( $.isFunction(func) ) {
+		for( var i=0; i<this.length; i++ ) {
+			var item = this[i];
+			if( func(item) == true ) {
+				return item;
+			}	
+		}
+		return null;
+	}
+	else {
+		alert("Please pass a function when using find" );
+	}
+};	
+Array.prototype.findAll = function( func ) {
+	if( $.isFunction(func) ) {
+		var _arr = [];
+		for( var i=0; i<this.length; i++ ) {
+			var item = this[i];
+			if( func(item) == true ) {
+				_arr.push(item);
+			}	
+		}
+		return _arr;
+	}
+	else {
+		alert("Please pass a function when using findAll" );
+	}
+};	
+Array.prototype.each = function( func ) {
+	if( $.isFunction(func) ) {
+		for( var i=0; i<this.length; i++ ) {
+			func( this[i], i );
+		}
+	}
+	else {
+		alert("Please pass a function when using each" );
+	}
+};
+
  
 /** 
  * string expression support 
@@ -239,7 +297,7 @@ var BindingUtils = new function() {
     * applicable for text boxes, option boxes, list. 
     * assumptions:  
     *     all controls have required,  
-    *     all controls set a single value during onblur 
+    *     all controls set a single value during on change
     *     all controls get the value from bean during load 
     *     all will broadcast to to reset dependent controls values, (those with depends attribute) 
     * customFunc = refers to the custom function for additional decorations 
@@ -255,46 +313,22 @@ var BindingUtils = new function() {
         elem.value = (c ? c : "" ); 
         var dtype = o.attr("datatype"); 
         if(dtype=="decimal") { 
-            elem.onblur = function () { $get(controller.name).set(fldName, NumberUtils.toDecimal(this.value) ); } 
+            elem.onchange = function () { $get(controller.name).set(fldName, NumberUtils.toDecimal(this.value) ); } 
         } 
         else if( dtype=="integer") { 
-            elem.onblur = function () { $get(controller.name).set(fldName, NumberUtils.toInteger(this.value) ); } 
+            elem.onchange = function () { $get(controller.name).set(fldName, NumberUtils.toInteger(this.value) ); } 
         } 
         else if( dtype == "date" ){
 			o.datepicker({dateFormat:"yy-mm-dd"});
-            elem.onblur = function () { $get(controller.name).set(fldName, this.value ); } 
+            elem.onchange = function () { $get(controller.name).set(fldName, this.value ); } 
         }     
         else { 
-            elem.onblur = function () { $get(controller.name).set(fldName, this.value ); } 
+            elem.onchange = function () { $get(controller.name).set(fldName, this.value ); } 
         }     
 		
 		//add hints
 		if( $(elem).attr("hint")!=null ) {
-			var isPassword = (elem.type == "password");
-		
-			var hintStyle = {color: "gray"};
-			var oldColor = $(elem).css("color");
-			if(c==null || c == "" ) {
-				elem.value  = $(elem).attr("hint");
-				$(elem).css(hintStyle);
-				//if(isPassword) elem.type = "text";
-			}	
-			var lostFocus = function() { 
-				if(this.value==null || this.value == "") {
-					this.value = $(this).attr('hint'); 
-					$(this).css(hintStyle); 
-					//if(isPassword) elem.type = "text";
-				}
-			};
-			$(elem).bind( 'blur', lostFocus );
-			var gotFocus = function() { 
-				if($get(controller.name).get(fldName)==null ||$get(controller.name).get(fldName)=="") {
-					this.value="";
-					$(this).css({color:oldColor}); 
-					if(isPassword) elem.type = "password";
-				}
-			};
-			$(elem).bind( 'focus', gotFocus );
+			new InputHintDecorator( elem );
 		}
 		 
         //add additional input behaviors 
@@ -323,7 +357,106 @@ var BindingUtils = new function() {
         this.bind(null,selector); 
         this.loadViews(null,selector); 
 	}	
-} 
+	
+	/**---------------------------------------------------*
+	 * input hint support (InputHintDecorator class)
+	 *
+	 * @author jaycverg
+	 *----------------------------------------------------*/
+	function InputHintDecorator( inp ) {
+		var input = $(inp);
+		if( input.data('hint_decorator') ) {
+			input.data('hint_decorator').refresh();
+			return;
+		}				
+	
+		input.keyup(input_keyup)
+		 .keypress(input_keypress)
+		 .focus(input_focus)
+		 .blur(input_blur)
+		 .data('hint_decorator', this);
+
+		var span = $('<span class="hint" style="position:absolute; z-index:300000"></span>')
+		 .html( input.attr('hint') )
+		 .hide()
+		 .disableSelection()
+		 .appendTo( 'body' )
+		 .click(onClick);
+		 
+		this.refresh = refresh;
+	
+		//refresh
+		refresh();
+		
+		//reposition span on window resize
+		$(window).bind('resize', position);
+	
+		function refresh(){
+			if( !input.val() ) 
+				showHint();
+			else
+				hideHint();
+		}
+		
+		var isPositioned;
+		
+		function position() {
+			var pos = {};
+			var left = parseInt( input.css('paddingLeft') ) + 5;
+			if( inp.type == 'text' || inp.type == 'password' ) {
+				pos = {my: 'left center', at: 'left center', offset: (left + ' 0')};
+			}
+			else {
+				var top = parseInt( input.css('paddingTop') );
+				pos = {my: 'left top', at: 'left top', offset: (left + ' ' + top)};
+			}
+			pos.of = input;
+			span.position(pos);
+			isPositioned = true;
+		}
+	
+		function showHint() {
+			if( !isPositioned ) position();
+			span.show();
+		}
+	
+		function hideHint() {
+			span.hide();
+		}
+	
+		function onClick(){ 
+			input.focus();
+		}
+	
+		function input_focus() { 
+			span.addClass('hint-hover'); 
+		}
+		
+		function input_blur()  { 
+			span.removeClass('hint-hover');
+			refresh();
+		}
+	
+		function input_keyup() {
+			if( !input.val() ) showHint();
+		}
+	
+		function input_keypress(evt) {
+			if( isCharacterPressed(evt) ) hideHint();
+		}
+	
+		function isCharacterPressed(evt) {
+			if (typeof evt.which == "undefined") {
+				return true;
+			} else if (typeof evt.which == "number" && evt.which > 0) {
+				return !evt.ctrlKey && !evt.metaKey && !evt.altKey && evt.which != 8;
+			}
+			return false;
+		}
+					
+	}//-- end of InputHintDecorator class
+	
+} //-- end of BindingUtils class
  
  
  
@@ -339,7 +472,10 @@ var BeanUtils = new function(){
     } 
  
     this.getProperty = function( bean, fieldName ) {  
-        return eval( 'bean.' + fieldName ); 
+		try {
+        	return eval( 'bean.' + fieldName ); 
+        }
+        catch(e) {;}	
     } 
 	
 	this.invokeMethod = function( bean, action, args ) {
@@ -592,21 +728,46 @@ BindingUtils.handlers.input_radio = function(elem, controller, idx ) {
 
 BindingUtils.handlers.input_checkbox = function(elem, controller, idx ) { 
 	var c = controller.get(elem.name);
-	var isChecked = false;
-	var checkedValue = $(elem).attr("checkedValue");
-	if( checkedValue !=null && checkedValue == c ) {
-		isChecked = true;
+	if( $(elem).attr("mode") == "set" ) {
+		try {
+			var checkedValue = $(elem).attr("checkedValue");
+			
+			if( c.find( function(o) { return (o==checkedValue ) } ) !=null) {
+				elem.checked = true;
+			}	
+			else {
+				elem.checked = false;
+			}
+			elem.onclick = function () { 
+				var _list = $get(controller.name).get(this.name);
+				var v = $(this).attr( "checkedValue" );
+				if( v == null ) alert( "checkedValue in checkbox must be specified" );
+				if(this.checked) {
+					_list.push( v );		
+				}
+				else {
+					_list.remove( function(o) { return (o == v) } );
+				}	
+			} 
+		}
+		catch(e) {}	
 	}	
-	else if( c == true || c == "true" ) {
-		isChecked = true;	
+	else {
+		var isChecked = false;
+		var checkedValue = $(elem).attr("checkedValue");
+		if( checkedValue !=null && checkedValue == c ) {
+			isChecked = true;
+		}	
+		else if( c == true || c == "true" ) {
+			isChecked = true;	
+		}	
+		elem.checked = isChecked;
+		elem.onclick = function () { 
+			var v = ($(this).attr( "checkedValue" )==null) ? true : $(this).attr( "checkedValue" );
+			var uv = ($(this).attr( "uncheckedValue" )==null) ? false : $(this).attr( "uncheckedValue" );
+			$get(controller.name).set(this.name, (this.checked) ? v : uv );
+		} 
 	}	
-	elem.checked = isChecked;
-	
-	elem.onclick = function () { 
-		var v = ($(this).attr( "checkedValue" )==null) ? true : $(this).attr( "checkedValue" );
-		var uv = ($(this).attr( "uncheckedValue" )==null) ? false : $(this).attr( "uncheckedValue" );
-		$get(controller.name).set(this.name, (this.checked) ? v : uv );
-	} 
 } 
  
 BindingUtils.handlers.input_button = function( elem, controller, idx ) { 
@@ -875,7 +1036,7 @@ function DataTable( table, bean, controller ) {
 	var tabIdx;
 		
 	function doRender() {
-		tbody.empty();
+		tbody.hide('fade').empty();
 		tabIdx = table.data('index');
 		status.index = 0;
 		var list = model.getList();
@@ -899,6 +1060,8 @@ function DataTable( table, bean, controller ) {
 				status.index++;
 			}
 		}
+
+		tbody.stop().show('fade');
 		
 		BindingUtils.bind( null, table );
 	}
@@ -952,9 +1115,7 @@ function DataTable( table, bean, controller ) {
 	var prevRow;
 	var prevTd;
 	
-	function td_mousedown(e) {
-		if( !model.getDataModel() ) return;
-		
+	function td_mousedown(e) {		
 		var td = e.tagName? $(e) : $(this);
 		
 		if( prevTd ) prevTd.removeClass('selected');
@@ -974,11 +1135,13 @@ function DataTable( table, bean, controller ) {
 		var tr = td.parent();
 		if( tr.hasClass('selected') ) {
 			tr.removeClass('selected');
-			model.unselect( tr.data('index') );
+			if( model.getDataModel() ) 
+				model.unselect( tr.data('index') );
 		}
 		else {
 			tr.addClass('selected');
-			model.select( tr.data('index') );
+			if( model.getDataModel() ) 
+				model.select( tr.data('index') );
 		}
 			
 		prevRow = tr;
@@ -1294,6 +1457,8 @@ function PopupOpener( page, name, params, target ) {
 	this.source;
 	this.options = {};
 	
+	var defaultOptions = {show: 'fade', hide: 'fade', height: 'auto'};
+	
     this.load = function() { 
         var n = this.name;
         var p = this.params; 
@@ -1314,19 +1479,24 @@ function PopupOpener( page, name, params, target ) {
 		this.options.modal = true;
 		this.options.title = this.title;
 		
+		var options = $.extend(defaultOptions, this.options);
+		
         div.load(this.page, function() { 
-            BindingUtils.load( div); 
-            if(p!=null) {
+        	if(p!=null) {
                 for( var key in p ) {
-                    $ctx(n)[key] = p[key];    
+                    try{ $ctx(n)[key] = p[key]; }catch(e){;} 
                 }
-            }     
-            ContextManager.modalStack.push( {target: div.attr('id'), parent: parent} ); 
-        })
-        .dialog(this.options); 
+            }
+            BindingUtils.load( div);
+            ContextManager.modalStack.push( {target: div.attr('id'), parent: parent} );
+                                                            
+            //make into a dialog after the content is loaded.
+            div.dialog(options);
+        }); 
     } 
 } 
  
+//-- DropdownOpener class
 function DropdownOpener( page, name, params, target ) {
 	this.classname = "opener"; 
     this.name = name; 
@@ -1337,34 +1507,41 @@ function DropdownOpener( page, name, params, target ) {
 	this.title;
 	this.source;
 	this.options = {};
+	this.styleClass;
 	
     this.load = function() { 
         var n = this.name;
         var p = this.params; 
         
-		var w = new DropdownWindow(this.source, this.options);
+		var w = new DropdownWindow(this.source, this.options, this.styleClass);
         w.show(this.page, function(div) { 
-            BindingUtils.load( div); 
-            if(p!=null) {
+        	if(p!=null) {
                 for( var key in p ) {
-                    $ctx(n)[key] = p[key];
+                    try{ $ctx(n)[key] = p[key]; }catch(e){;}
                 }
-            }     
+            }
+            BindingUtils.load( div);     
         }); 
     };
 	
 	
 	//--- DropdownWindow class ----
-	function DropdownWindow( source, options ) {
+	function DropdownWindow( source, options, styleClass ) {
 
 		var div = $('<div class="dropdown-window" style="position: absolute; z-index: 200000; top: 0; left: 0;"></div>');
+		
+		var defaultConfig = { my: 'left top', at: 'left bottom' };
+		
+		if( styleClass ) div.addClass( styleClass );
 
 		this.show = function( page, callback ) {
-			var pos = options.position || {};
+			var posConfig = $.extend(defaultConfig, options.position || {});
+			posConfig.of = $(source);
+			
 			if( typeof page == 'string' ) {
 				div.hide().load( page, function(){ 
 					div.appendTo('body')
-					 .position({ of: $(source), my: pos.my ? pos.my : 'left top', at: pos.at ? pos.at : 'left bottom'})
+					 .position( posConfig )
 					 .show('fade');
 					
 					bindWindowEvt();
@@ -1374,7 +1551,7 @@ function DropdownOpener( page, name, params, target ) {
 			else {
 				div.html( page.html() )
 				 .appendTo('body')
-				 .position({ of: $(source), my: pos.my ? pos.my : 'left top', at: pos.at ? pos.at : 'left bottom'})
+				 .position( posConfig )
 				 .show('slide',{direction:"up"}, function(){
 					bindWindowEvt();
 					callback(div); 
@@ -1406,12 +1583,17 @@ function DropdownOpener( page, name, params, target ) {
  
  
 var InvokerUtil = new function() { 
-    this.invoke = function( name, page, target ) { 
-		$( "#"+target ).load(page, function() { 
-			BindingUtils.load("#"+target); 
+    this.invoke = function( name, page, target ) {
+    	var dummy = $('<div><div>');
+    	var target = $("#"+target);
+    	
+    	//load the page first then bind, before appending it to the target
+    	dummy.load(page, function() {
+    		BindingUtils.load( dummy );
+    		target.empty().append( dummy.children() );
 		}); 
     }     
-} 
+};
 
 var WindowUtil = new function() {
 	this.reload = function(args) {
@@ -1442,7 +1624,7 @@ var WindowUtil = new function() {
 		return decodeURIComponent(results[1].replace(/\+/g, " "));
 	}
 
-}
+};
 
 var ProxyService = new function() {
 	this.services = {}
@@ -1464,7 +1646,35 @@ var ProxyService = new function() {
 		}
 		return this.services[name];
 	}
-}
+};
+
+var AjaxStatus = function( msg ) {
+	var div = $('<div class="ajax-status" style="position:absolute; z-index:300000"></div>')
+	 .html( msg )
+	 .hide();
+
+	$(function(){ div.appendTo('body'); });
+	
+	this.show = function() {
+		position();
+		div.show();
+	};
+	
+	this.hide = function() {
+		div.hide('fade');
+	};
+	
+	function position() {
+		div.css({
+			'top': '0px', 'left': '0px'
+		});
+	}
+};
+
+$(function(){
+	//var ajxStat = new AjaxStatus('Processing ...');
+	//$(document).ajaxStart( ajxStat.show ).ajaxStop( ajxStat.hide );
+});
 
 
 

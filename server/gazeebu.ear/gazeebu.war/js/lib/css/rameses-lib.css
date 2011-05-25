@@ -1,4 +1,29 @@
 /**
+ * rameses-lib default style
+ */
+
+.ajax-status {
+	background: #369; color: #fff; padding: 10px 20px;
+	-moz-border-radius: 4px; -webkit-border-radius: 4px;
+}
+
+
+/**
+ * default input and hint style
+ */
+
+input, 
+textarea, 
+span.hint 
+{ 
+	font-family: arial, tahoma; font-size: 10pt; 
+}
+
+span.hint { color: gray; }
+span.hint-hover { color: lightgrey; }
+
+
+/**
  * default theme for the rameses-lib.js file DropdownOpener
  */
  .dropdown-window {

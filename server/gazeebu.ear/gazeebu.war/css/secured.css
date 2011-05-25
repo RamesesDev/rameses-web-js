@@ -25,6 +25,8 @@ body {
 	width: 980px;	
 }
 
+a { cursor: hand; }
+
 a:link {
 	color:maroon;
 	text-decoration: none;

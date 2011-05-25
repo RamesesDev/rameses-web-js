@@ -1,0 +1,28 @@
+<script type="text/javascript">
+    $put("useredit",
+        new function() {
+            var userSvc = ProxyService.lookup( 'UserAdminService' );
+            
+            this.entity = {};
+            
+            this.updateUser = function() {
+            	this.entity = userSvc.update( this.entity );
+            }
+            
+            this.updateRole = function() {
+            	this.entity = userSvc.updateRole( this.entity );
+            }
+            
+            this.updateLogin = function() {
+            	this.entity = userSvc.updateLogin( this.entity );
+            }
+        },
+        {
+            "default": "modules/user/user_form_edit_init.html",
+            "edit-role": "modules/user/user_role_edit.html",
+            "edit-login": "modules/user/user_login_edit.html"
+        }
+    );
+</script>
+
+<div context="useredit"></div>
