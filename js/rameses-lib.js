@@ -28,22 +28,37 @@ String.prototype.trim = function(){ return (this.replace(/^[\s\xA0]+/, "").repla
 String.prototype.startsWith = function(str) {return (this.match("^"+str)==str)}; 
 String.prototype.endsWith = function(str) {return (this.match(str+"$")==str)}; 
 Array.prototype.remove = function( from, to ) {
-	if( $.isFunction(from) ) {
-		var _arr = [];
-		for( var i=0; i<this.length; i++ ) {
-			var item = this[i];
-			if( !from(item) == true ) {
-				_arr.push( item );
-			}	
+	var rest = this.slice((to || from) + 1 || this.length);
+	this.length = from < 0 ? this.length + from : from;
+	return this.push.apply(this, rest);
+};	
+Array.prototype.removeAll = function( func ) {
+	var _retained = [];
+	var _removed = [];
+	for( var i=0; i<this.length; i++ ) {
+		var item = this[i];
+		if( !func(item) == true ) {
+			_retained.push( item );
+		}	
+		else {
+			_removed.push( item );
 		}
-		this.length = 0;
-		return this.push.apply(this, _arr);
 	}
-	else {
-		var rest = this.slice((to || from) + 1 || this.length);
-		this.length = from < 0 ? this.length + from : from;
-		return this.push.apply(this, rest);
+	this.length = 0;
+	this.push.apply(this, _retained);
+	return _removed;
+};
+Array.prototype.addAll = function( list ) {
+	for( var i=0; i<list.length; i++ ) {
+		this.push( list[i] );
 	}
+	return this;
+};	
+Array.prototype.each = function( func ) {
+	for( var i=0; i<this.length; i++ ) {
+		func( this[i], i );	
+	}
+	return this;
 };	
 Array.prototype.find = function( func) {
 	if( $.isFunction(func) ) {
@@ -72,16 +87,6 @@ Array.prototype.findAll = function( func ) {
 	}
 	else {
 		alert("Please pass a function when using findAll" );
-	}
-};	
-Array.prototype.each = function( func ) {
-	if( $.isFunction(func) ) {
-		for( var i=0; i<this.length; i++ ) {
-			func( this[i], i );
-		}
-	}
-	else {
-		alert("Please pass a function when using each" );
 	}
 };
 
