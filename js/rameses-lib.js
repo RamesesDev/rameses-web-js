@@ -1,5 +1,5 @@
 /*** 
-    version 1.5.23
+    version 1.5.24
     resources in the js script: 
 	NumberUtils
     DynamicProxy 
