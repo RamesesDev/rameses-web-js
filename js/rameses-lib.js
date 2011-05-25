@@ -1,5 +1,5 @@
 /*** 
-    version 1.5.22.2
+    version 1.5.23
     resources in the js script: 
 	NumberUtils
     DynamicProxy 
@@ -74,6 +74,17 @@ Array.prototype.findAll = function( func ) {
 		alert("Please pass a function when using findAll" );
 	}
 };	
+Array.prototype.each = function( func ) {
+	if( $.isFunction(func) ) {
+		for( var i=0; i<this.length; i++ ) {
+			func( this[i], i );
+		}
+	}
+	else {
+		alert("Please pass a function when using each" );
+	}
+};
+
  
 /** 
  * string expression support 
@@ -1025,7 +1036,7 @@ function DataTable( table, bean, controller ) {
 	var tabIdx;
 		
 	function doRender() {
-		tbody.hide().empty();
+		tbody.hide('fade').empty();
 		tabIdx = table.data('index');
 		status.index = 0;
 		var list = model.getList();
@@ -1049,8 +1060,8 @@ function DataTable( table, bean, controller ) {
 				status.index++;
 			}
 		}
-		
-		tbody.show('fade');
+
+		tbody.stop().show('fade');
 		
 		BindingUtils.bind( null, table );
 	}
