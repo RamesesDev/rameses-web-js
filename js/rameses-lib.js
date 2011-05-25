@@ -1589,15 +1589,15 @@ function DropdownOpener( page, name, params, target ) {
  
 var InvokerUtil = new function() { 
     this.invoke = function( name, page, target ) {
-    	var dummy = $('<div><div>');
     	var target = $("#"+target);
+    	var content = $('<div><div>').hide().appendTo('body');
     	
     	//load the page first then bind, before appending it to the target
-    	dummy.load(page, function() {
-    		BindingUtils.load( dummy );
-    		target.empty().append( dummy.children() );
-		}); 
-    }     
+    	content.load(page, function() {
+    		BindingUtils.load( content );
+    		target.empty().append( content.show('fade',{duration:100}) );
+		});
+    };
 };
 
 var WindowUtil = new function() {
