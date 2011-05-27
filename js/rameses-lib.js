@@ -695,27 +695,42 @@ BindingUtils.handlers.input_password = function(elem, controller, idx ) { Bindin
 BindingUtils.handlers.textarea = function(elem, controller, idx ) { BindingUtils.initInput(elem, controller); }; 
 BindingUtils.handlers.select = function(elem, controller, idx ) { 
 	BindingUtils.initInput(elem, controller, function(elem,controller) { 
-			var i = 0; 
+			var i = 0;
 			$(elem).empty();
-			if($(elem).attr("allowNull")!=null) { 
-				var txt = $(elem).attr("emptyText"); 
-				if(txt==null) txt = "-"; 
-				elem.options[0] = new Option(txt,"");  
-				i = 1; 
-			} 
-			var items = $(elem).attr("items"); 
-			if( items!=null && items!='') { 
-				var itemKey = $(elem).attr("itemKey"); 
-				var itemLabel = $(elem).attr("itemLabel"); 
-				var arr = controller.get(items);     
-				$(arr).each( function(idx,value) {  
-					var _key = value; 
-					if( itemKey != null ) _key = value[itemKey]; 
-					var _val = value;  
-					if( itemLabel != null ) _val = value[itemLabel]; 
-					elem.options[idx+i] = new Option(_val,_key);  
+			if($(elem).attr("allowNull")!=null) {
+				var txt = $(elem).attr("emptyText");
+				if(txt==null) txt = "-";
+				elem.options[0] = new Option(txt,"");
+				i = 1;
+			}
+			var items = $(elem).attr("items");
+			if( items!=null && items!='') {
+				var itemKey = $(elem).attr("itemKey");
+				var itemLabel = $(elem).attr("itemLabel");
+				var arr = controller.get(items);
+				$(arr).each( function(idx,value) {
+					var _key = value;
+					if( itemKey != null ) _key = value[itemKey];
+					var _val = value;
+					if( itemLabel != null ) _val = value[itemLabel];
+
+					var op = new Option(_val,_key);
+					$(op).data('object_value', value);
+					elem.options[idx+i] = op;
 				});
 			}
+
+			var selItemFld = $(elem).attr('selectedItem');
+			if( selItemFld && !$(elem).data('___changed_attached') ) {
+				$(elem).change(function(){
+					var op = this.options[this.selectedIndex];
+					$get(controller.name).set(selItemFld, $(op).data('object_value') );
+				})
+				.data('___changed_attached', true);
+			}
+
+			//fire change after bind to set default value
+			$(elem).change();
 
 	}); 
 } 
