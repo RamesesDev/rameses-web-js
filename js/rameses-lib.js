@@ -1,5 +1,5 @@
 /***
-    version 1.5.25
+    version 1.5.25.1
     resources in the js script:
 	NumberUtils
     DynamicProxy
@@ -697,45 +697,47 @@ BindingUtils.handlers.input_text = function(elem, controller, idx ) {
 BindingUtils.handlers.input_password = function(elem, controller, idx ) { BindingUtils.initInput(elem, controller ); };
 BindingUtils.handlers.textarea = function(elem, controller, idx ) { BindingUtils.initInput(elem, controller); };
 BindingUtils.handlers.select = function(elem, controller, idx ) {
-	BindingUtils.initInput(elem, controller, function(elem,controller) {
-			var i = 0;
-			$(elem).empty();
-			if($(elem).attr("allowNull")!=null) {
-				var txt = $(elem).attr("emptyText");
-				if(txt==null) txt = "-";
-				elem.options[0] = new Option(txt,"");
-				i = 1;
-			}
-			var items = $(elem).attr("items");
-			if( items!=null && items!='') {
-				var itemKey = $(elem).attr("itemKey");
-				var itemLabel = $(elem).attr("itemLabel");
-				var arr = controller.get(items);
-				$(arr).each( function(idx,value) {
-					var _key = value;
-					if( itemKey != null ) _key = value[itemKey];
-					var _val = value;
-					if( itemLabel != null ) _val = value[itemLabel];
+	var i = 0;
+	$(elem).empty();
+	if($(elem).attr("allowNull")!=null) {
+		var txt = $(elem).attr("emptyText");
+		if(txt==null) txt = "-";
+		elem.options[0] = new Option(txt,"");
+		i = 1;
+	}
+	
+	var name = $(elem).attr('name');
+	var items = $(elem).attr("items");
+	var selected = controller.get( name );
+	
+	if( items!=null && items!='') {
+		var itemKey = $(elem).attr("itemKey");
+		var itemLabel = $(elem).attr("itemLabel");
+		var arr = controller.get(items);
+		$(arr).each( function(idx,value) {
+			var _key = value;
+			if( itemKey != null ) _key = value[itemKey];
+			var _val = value+'';
+			if( itemLabel != null ) _val = value[itemLabel];
 
-					var op = new Option(_val,_key);
-					$(op).data('object_value', value);
-					elem.options[idx+i] = op;
-				});
-			}
+			var op = new Option(_val,_key+'');
+			
+			$(op).data('object_value', _key);
+			elem.options[idx+i] = op;
+			op.selected = (value == selected);
+		});
+	}
 
-			var selItemFld = $(elem).attr('selectedItem');
-			if( selItemFld && !$(elem).data('___changed_attached') ) {
-				$(elem).change(function(){
-					var op = this.options[this.selectedIndex];
-					$get(controller.name).set(selItemFld, $(op).data('object_value') );
-				})
-				.data('___changed_attached', true);
-			}
+	if( name && !$(elem).data('___changed_attached') ) {
+		$(elem).change(function(){
+			var op = this.options[this.selectedIndex];
+			$get(controller.name).set(name, $(op).data('object_value') );
+		})
+		.data('___changed_attached', true);
+	}
 
-			//fire change after bind to set default value
-			$(elem).change();
-
-	});
+	//fire change after bind to set default value
+	$(elem).change();
 }
 
 BindingUtils.handlers.input_radio = function(elem, controller, idx ) {
@@ -1030,11 +1032,12 @@ BindingUtils.handlers.table = function( elem, controller, idx ) {
 /*------ DataTable class ---------*/
 function DataTable( table, bean, controller ) {
 
-	var model = new DefaultTableModel();
+	var model = new DefaultTableModel( table );
 
 	var multiselect = table.attr('multiselect') == 'true';
 	var varStat =     table.attr('varStatus');
 	var varName =     table.attr('varName');
+	var name =        table.attr('name');
 
 	if( table.attr('items') ) {
 		model.setList( controller.get(table.attr('items')) );
@@ -1064,6 +1067,9 @@ function DataTable( table, bean, controller ) {
 		status.index = 0;
 		var list = model.getList();
 		if(list==null) list = [];
+		
+		var selected = name? controller.get(name) : null;
+		var selectedTds = [];
 
 		//render the rows
 		for(var i=0; i<list.length; ++i) {
@@ -1071,7 +1077,12 @@ function DataTable( table, bean, controller ) {
 			status.prevItem = (i > 0)? list[i-1] : null;
 			status.nextItem = (i < list.length-1)? list[i+1] : null;
 
-			createRow(i, item).appendTo( tbody );
+			var row = createRow(i, item).appendTo( tbody );
+			if( selected == item ) {
+				var pos = table.data('selected_position');
+				var td = pos ? $(row[pos.row]).find('td')[pos.col] : row.find('td:first')[0];
+				selectedTds.push( td )
+			};
 			status.index++;
 		};
 
@@ -1085,6 +1096,8 @@ function DataTable( table, bean, controller ) {
 		}
 
 		tbody.stop().show('fade');
+		
+		$(selectedTds).each(function(i,e){ td_mousedown(e, true); });
 
 		BindingUtils.bind( null, table );
 	}
@@ -1111,7 +1124,7 @@ function DataTable( table, bean, controller ) {
 			}
 			else {
 				td.each(function(idx,e){
-					var td = $(e);
+					var td = $(e).data('position', {row: i, col: idx }); //keep the td position
 					var value;
 					if( td.attr('name') )
 						value = resolve( td.attr('name'), item );
@@ -1135,12 +1148,15 @@ function DataTable( table, bean, controller ) {
 		 }); //-- end of each function
 	}//-- end of createRow function
 
+
+	//-- TD event support --
 	var prevRow;
 	var prevTd;
 
-	function td_mousedown(e) {
+	function td_mousedown(e, forced) {
 		var td = e.tagName? $(e) : $(this);
 
+		if( td.attr('selectable') == 'false' ) return;
 		if( prevTd ) prevTd.removeClass('selected');
 
 		if( td.hasClass('selected') )
@@ -1149,25 +1165,34 @@ function DataTable( table, bean, controller ) {
 			td.addClass('selected');
 
 		prevTd = td;
-
+		
 		if( !multiselect && prevRow ) {
 			prevRow.removeClass('selected');
 			model.unselect( prevRow.data('index') );
 		}
-
+		
 		var tr = td.parent();
 		if( tr.hasClass('selected') ) {
 			tr.removeClass('selected');
-			if( model.getDataModel() )
-				model.unselect( tr.data('index') );
+			model.unselect( tr.data('index') );
 		}
 		else {
 			tr.addClass('selected');
-			if( model.getDataModel() )
-				model.select( tr.data('index') );
+			model.select( tr.data('index') );
 		}
 
 		prevRow = tr;
+		
+		//if name is specified, update the value
+		if( !forced && name ) {
+			var items = model.getSelectedItems();
+			if( items ) {
+				controller.set( name, multiselect? items : items[0] );	
+			}
+			
+			//keep the selected td index to the table element
+			table.data('selected_position', td.data('position'));
+		}
 	}
 
 	function td_keydown(e) {
@@ -1392,6 +1417,10 @@ function DefaultTableModel() {
 		if( _listParam ) _listParam._start = 0;
 		doRefresh(true);
 	};
+	
+	_this.getSelectedItems = function() {
+		return _selectedItems;
+	};
 
 	function doRefresh( fetch ) {
 		if( fetch == true ) {
@@ -1608,12 +1637,10 @@ function DropdownOpener( page, name, params, target ) {
 var InvokerUtil = new function() {
     this.invoke = function( name, page, target ) {
     	var target = $("#"+target);
-    	var content = $('<div><div>').hide().appendTo('body');
 
     	//load the page first then bind, before appending it to the target
-    	content.load(page, function() {
-    		BindingUtils.load( content );
-    		target.empty().append( content.show() );
+    	target.load(page, function() {
+    		BindingUtils.load( target );
 		});
     };
 };
