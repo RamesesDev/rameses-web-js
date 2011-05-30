@@ -537,6 +537,10 @@ function Controller( code, pages ) {
         if(this.name!=null) BindingUtils.bind( this.name )
     }
 
+    this.reload = function() {
+        this.navigate( "_reload" );
+    }
+
     this.invoke = function( control, action, args, immed  ) {
         if( action.startsWith("_") ) {
             action = action.substring(1);
@@ -647,10 +651,8 @@ var ContextManager = new function() {
         if(code.onload!=null) {
             BindingUtils.loaders.push( function() { code.onload() } );
         }
-		if(code._controller!=null) {
-			code._controller = c;
-		}
-        c.name = name;
+		code._controller = c;
+		c.name = name;
         this.data[name] = c;
         return c;
     },
