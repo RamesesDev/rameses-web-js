@@ -1,5 +1,5 @@
 /***
-    version 1.5.25.1
+    version 1.5.25.3
     resources in the js script:
 	NumberUtils
     DynamicProxy
@@ -392,6 +392,7 @@ var BindingUtils = new function() {
 
 		//refresh
 		refresh();
+		
 		if( document.activeElement == input[0] ) input_focus();
 
 		//reposition span on window resize
@@ -598,7 +599,8 @@ function Controller( code, pages ) {
 			this.currentPage = outcome;
             var target = this.name;
             var _controller = this;
-            $('#'+target).load( this.pages[outcome], function() { _controller.refresh(); } );
+			
+            $('#'+target).load( this.pages[outcome], WindowUtil.getParameters(), function() { _controller.refresh(); } );
         }
     }
 
@@ -1534,7 +1536,7 @@ function PopupOpener( page, name, params, target ) {
 
 		var options = $.extend(defaultOptions, this.options);
 
-        div.load(this.page, function() {
+        div.load(this.page, WindowUtil.getParameters(), function() {
         	if(p!=null) {
                 for( var key in p ) {
                     try{ $ctx(n)[key] = p[key]; }catch(e){;}
@@ -1567,7 +1569,7 @@ function DropdownOpener( page, name, params, target ) {
         var p = this.params;
 
 		var w = new DropdownWindow(this.source, this.options, this.styleClass);
-        w.show(this.page, function(div) {
+        w.show(this.page, WindowUtil.getParameters(), function(div) {
         	if(p!=null) {
                 for( var key in p ) {
                     try{ $ctx(n)[key] = p[key]; }catch(e){;}
@@ -1587,12 +1589,12 @@ function DropdownOpener( page, name, params, target ) {
 
 		if( styleClass ) div.addClass( styleClass );
 
-		this.show = function( page, callback ) {
+		this.show = function( page, params, callback ) {
 			var posConfig = $.extend(defaultConfig, options.position || {});
 			posConfig.of = $(source);
 
 			if( typeof page == 'string' ) {
-				div.hide().load( page, function(){
+				div.hide().load( page, params, function(){
 					div.appendTo('body')
 					 .position( posConfig )
 					 .show('fade');
@@ -1640,7 +1642,7 @@ var InvokerUtil = new function() {
     	var target = $("#"+target);
 
     	//load the page first then bind, before appending it to the target
-    	target.load(page, function() {
+    	target.load(page, WindowUtil.getParameters(), function() {
     		BindingUtils.load( target );
 		});
     };
@@ -1675,6 +1677,17 @@ var WindowUtil = new function() {
 		return decodeURIComponent(results[1].replace(/\+/g, " "));
 	}
 
+	this.getParameters = function(){
+		var vars = {}, hash;
+		var hashes = window.location.href.slice(window.location.href.indexOf('?') + 1).split('&');
+		for(var i = 0; i < hashes.length; i++)
+		{
+			hash = hashes[i].split('=');
+			vars[hash[0]] = this.getParameter(hash[0]);
+		}
+		return vars;
+	}	
+	
 };
 
 var ProxyService = new function() {
