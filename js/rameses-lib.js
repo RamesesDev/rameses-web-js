@@ -392,6 +392,7 @@ var BindingUtils = new function() {
 
 		//refresh
 		refresh();
+		if( document.activeElement == input[0] ) input_focus();
 
 		//reposition span on window resize
 		$(window).bind('resize', position);
