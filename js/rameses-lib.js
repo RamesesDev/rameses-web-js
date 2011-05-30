@@ -1,37 +1,37 @@
-/*** 
-    version 1.5.24
-    resources in the js script: 
+/***
+    version 1.5.25
+    resources in the js script:
 	NumberUtils
-    DynamicProxy 
-    BindingUtils  
-    BeanUtils 
-    Controller 
-    ContextManager 
-    RequiredValidator 
-    Opener 
-    InvokerUtil = for launching actions from plugins. 
+    DynamicProxy
+    BindingUtils
+    BeanUtils
+    Controller
+    ContextManager
+    RequiredValidator
+    Opener
+    InvokerUtil = for launching actions from plugins.
     WindowUtil
     ProxyService
-    
+
     added table plugin
     added fileupload support
-     
-    added also String prototype attributes: trim, startsWith, endsWith 
-     
-    //handlers are injected at the bottom. 
-**/ 
- 
-//****************************************************************************************************************** 
-// String extensions 
+
+    added also String prototype attributes: trim, startsWith, endsWith
+
+    //handlers are injected at the bottom.
+**/
+
 //******************************************************************************************************************
-String.prototype.trim = function(){ return (this.replace(/^[\s\xA0]+/, "").replace(/[\s\xA0]+$/, ""))}; 
-String.prototype.startsWith = function(str) {return (this.match("^"+str)==str)}; 
-String.prototype.endsWith = function(str) {return (this.match(str+"$")==str)}; 
+// String extensions
+//******************************************************************************************************************
+String.prototype.trim = function(){ return (this.replace(/^[\s\xA0]+/, "").replace(/[\s\xA0]+$/, ""))};
+String.prototype.startsWith = function(str) {return (this.match("^"+str)==str)};
+String.prototype.endsWith = function(str) {return (this.match(str+"$")==str)};
 Array.prototype.remove = function( from, to ) {
 	var rest = this.slice((to || from) + 1 || this.length);
 	this.length = from < 0 ? this.length + from : from;
 	return this.push.apply(this, rest);
-};	
+};
 Array.prototype.removeAll = function( func ) {
 	var _retained = [];
 	var _removed = [];
@@ -39,7 +39,7 @@ Array.prototype.removeAll = function( func ) {
 		var item = this[i];
 		if( !func(item) == true ) {
 			_retained.push( item );
-		}	
+		}
 		else {
 			_removed.push( item );
 		}
@@ -53,27 +53,27 @@ Array.prototype.addAll = function( list ) {
 		this.push( list[i] );
 	}
 	return this;
-};	
+};
 Array.prototype.each = function( func ) {
 	for( var i=0; i<this.length; i++ ) {
-		func( this[i], i );	
+		func( this[i], i );
 	}
 	return this;
-};	
+};
 Array.prototype.find = function( func) {
 	if( $.isFunction(func) ) {
 		for( var i=0; i<this.length; i++ ) {
 			var item = this[i];
 			if( func(item) == true ) {
 				return item;
-			}	
+			}
 		}
 		return null;
 	}
 	else {
 		alert("Please pass a function when using find" );
 	}
-};	
+};
 Array.prototype.findAll = function( func ) {
 	if( $.isFunction(func) ) {
 		var _arr = [];
@@ -81,7 +81,7 @@ Array.prototype.findAll = function( func ) {
 			var item = this[i];
 			if( func(item) == true ) {
 				_arr.push(item);
-			}	
+			}
 		}
 		return _arr;
 	}
@@ -90,182 +90,182 @@ Array.prototype.findAll = function( func ) {
 	}
 };
 
- 
-/** 
- * string expression support 
- * @param ctx 
- *          - the context of the expression (window is the default context) 
- *          - the context can be a function that handles the variable resolution of an expression 
- * usage: "hello ${name}".evaluate( [optional context] ); 
- *        - where name is a property of the context 
- * 
- * @author jaycverg 
- */ 
-String.prototype.evaluate = function( ctx ) { 
- 
-    ctx = ctx? ctx : window; 
-    var handler = (typeof ctx === 'function')? ctx : defaultHandler; 
-         
-    var str = this, match; 
-    while( (match = str.match(/(?:\$|#){([^{]+)}/)) ) { 
-        str = str.replace( match[0], _evaluate(match[1]) ); 
-    } 
-    return str; 
-     
-    //-- helper methods 
-    function defaultHandler(name) { 
-        return BeanUtils.getProperty( ctx, name ); 
-    } 
- 
-    function _evaluate(str) { 
-        var match = str.match(/[a-zA-Z_\$]+[a-zA-Z_\$\d\.]*|'[^']*'|"[^"]*"/g); 
-        for(var i=0; i<match.length; ++i) { 
-            var o = ''; 
-            if( match[i].charAt(0) === "'" || match[i].charAt(0) === '"' ) { 
-                o = match[i]; 
-            } 
-            else { 
-                try { 
-                    o = handler( match[i] ); 
-                }catch(e) { 
-                    if( window.console ) window.console.log( e.message ); 
-                } 
-                if( typeof o === 'number' || typeof o === 'boolean' ); //do nothing 
-                else if( typeof o === 'string' ) 
-                    o = "'" + o + "'"; 
-                else if ( o == null || typeof o === 'undefined' ) 
-                    o = 'null'; 
-                else 
-                    o = "'[object]'"; 
-            } 
-            str = str.replace( match[i], o); 
+
+/**
+ * string expression support
+ * @param ctx
+ *          - the context of the expression (window is the default context)
+ *          - the context can be a function that handles the variable resolution of an expression
+ * usage: "hello ${name}".evaluate( [optional context] );
+ *        - where name is a property of the context
+ *
+ * @author jaycverg
+ */
+String.prototype.evaluate = function( ctx ) {
+
+    ctx = ctx? ctx : window;
+    var handler = (typeof ctx === 'function')? ctx : defaultHandler;
+
+    var str = this, match;
+    while( (match = str.match(/(?:\$|#){([^{]+)}/)) ) {
+        str = str.replace( match[0], _evaluate(match[1]) );
+    }
+    return str;
+
+    //-- helper methods
+    function defaultHandler(name) {
+        return BeanUtils.getProperty( ctx, name );
+    }
+
+    function _evaluate(str) {
+        var match = str.match(/[a-zA-Z_\$]+[a-zA-Z_\$\d\.]*|'[^']*'|"[^"]*"/g);
+        for(var i=0; i<match.length; ++i) {
+            var o = '';
+            if( match[i].charAt(0) === "'" || match[i].charAt(0) === '"' ) {
+                o = match[i];
+            }
+            else {
+                try {
+                    o = handler( match[i] );
+                }catch(e) {
+                    if( window.console ) window.console.log( e.message );
+                }
+                if( typeof o === 'number' || typeof o === 'boolean' ); //do nothing
+                else if( typeof o === 'string' )
+                    o = "'" + o + "'";
+                else if ( o == null || typeof o === 'undefined' )
+                    o = 'null';
+                else
+                    o = "'[object]'";
+            }
+            str = str.replace( match[i], o);
         }
 
-        return str? eval( str )+'' : ''; 
-    } 
-}; 
- 
-var NumberUtils = new function() { 
-    this.toNumber = function( val ) { 
-        if(val==null || val=="") return null; 
-        var n = eval(val); 
-        return n;     
-    } 
- 
-    this.toInteger = function( val ) { 
-        return parseInt(val);     
-    } 
- 
-    this.toDecimal = function( val ) { 
-        if( val.indexOf( ".") < 0 ) { 
-            alert( parseFloat(val).toFixed(2) ); 
-            return parseFloat(val).toFixed(2); 
-        } 
-        else { 
-            return eval(val);     
-        } 
-    } 
-}  
- 
+        return str? eval( str )+'' : '';
+    }
+};
 
-function DynamicProxy( context ) { 
-    this.context = context; 
-    this.create = function( svcName ) { 
-        return new _DynamicProxyService( svcName, this.context );     
-    } 
-	
-		/* DynamicProxy */ 
-	function _DynamicProxyService( name, context ) { 
-		this.name = name; 
-		this.context = context; 
-		this.env = {}; 
-		 
-		var convertResult = function( result ) { 
-			if(result!=null) { 
-				//alert( result ); 
-				if( result.trim().substring(0,1) == "["  || result.trim().substring(0,1) == "{"  ) { 
-					return $.parseJSON(result);     
-				} 
-				else { 
-					return eval(result); 
-				}     
-			} 
-			return null; 
-		} 
-		 
-		this.invoke = function( action, args, handler ) { 
-			jargs = null; 
-			if(args!=null) { jargs = $.toJSON( args ); } 
-			var contextPath = window.location.pathname.substring(1); 
-			contextPath = contextPath.substring(0,contextPath.indexOf('/'));  
-			var urlaction = "/" + contextPath + "/jsinvoker/"+this.context+"/"+this.name+ "."+action; 
-			var err = null; 
-			if(handler==null) { 
-				var result = $.ajax( {  
-					url:urlaction,  
-					type:"POST",  
-					error: function( xhr ) { err = xhr.responseText }, 
-					data: {args: jargs},  
-					async : false }).responseText; 
-				 
-				if( err!=null ) { 
-					throw new Error(err); 
-				} 
-				return convertResult( result ); 
-			} 
-			else { 
-				$.ajax( {  
-					url: urlaction,  
-					type: "POST",  
-					error: function( xhr ) { err = xhr.responseText }, 
-					data: {args: jargs},  
-					async: true, 
-					success: function( data) { handler( convertResult(data)); } 
-				}); 
-			} 
-		} 
-	} 
-} 
- 
- 
-var BindingUtils = new function() { 
-    //loads all controls and binds it to the context object 
-     
-    this.handlers = {} 
-    this.loaders = []; 
-    this.input_attributes = []; 
-     
-	var controlLoader =  function(idx, elem) { 
-	    var _self = BindingUtils; 
-		var contextName = $(elem).attr( 'context' ); 
-        var controller = $get(contextName); 
-        if( controller != null ) { 
-			if( controller.name == null ) controller.name = contextName; 
-            var n = elem.tagName.toLowerCase() 
-            if(n == "input") n = n + "_" + elem.type ; 
-			if( _self.handlers[n] ) _self.handlers[n]( elem, controller, idx );      
-        } 
-    } 
-	 
+var NumberUtils = new function() {
+    this.toNumber = function( val ) {
+        if(val==null || val=="") return null;
+        var n = eval(val);
+        return n;
+    }
+
+    this.toInteger = function( val ) {
+        return parseInt(val);
+    }
+
+    this.toDecimal = function( val ) {
+        if( val.indexOf( ".") < 0 ) {
+            alert( parseFloat(val).toFixed(2) );
+            return parseFloat(val).toFixed(2);
+        }
+        else {
+            return eval(val);
+        }
+    }
+}
+
+
+function DynamicProxy( context ) {
+    this.context = context;
+    this.create = function( svcName ) {
+        return new _DynamicProxyService( svcName, this.context );
+    }
+
+		/* DynamicProxy */
+	function _DynamicProxyService( name, context ) {
+		this.name = name;
+		this.context = context;
+		this.env = {};
+
+		var convertResult = function( result ) {
+			if(result!=null) {
+				//alert( result );
+				if( result.trim().substring(0,1) == "["  || result.trim().substring(0,1) == "{"  ) {
+					return $.parseJSON(result);
+				}
+				else {
+					return eval(result);
+				}
+			}
+			return null;
+		}
+
+		this.invoke = function( action, args, handler ) {
+			jargs = null;
+			if(args!=null) { jargs = $.toJSON( args ); }
+			var contextPath = window.location.pathname.substring(1);
+			contextPath = contextPath.substring(0,contextPath.indexOf('/'));
+			var urlaction = "/" + contextPath + "/jsinvoker/"+this.context+"/"+this.name+ "."+action;
+			var err = null;
+			if(handler==null) {
+				var result = $.ajax( {
+					url:urlaction,
+					type:"POST",
+					error: function( xhr ) { err = xhr.responseText },
+					data: {args: jargs},
+					async : false }).responseText;
+
+				if( err!=null ) {
+					throw new Error(err);
+				}
+				return convertResult( result );
+			}
+			else {
+				$.ajax( {
+					url: urlaction,
+					type: "POST",
+					error: function( xhr ) { err = xhr.responseText },
+					data: {args: jargs},
+					async: true,
+					success: function( data) { handler( convertResult(data)); }
+				});
+			}
+		}
+	}
+}
+
+
+var BindingUtils = new function() {
+    //loads all controls and binds it to the context object
+
+    this.handlers = {}
+    this.loaders = [];
+    this.input_attributes = [];
+
+	var controlLoader =  function(idx, elem) {
+	    var _self = BindingUtils;
+		var contextName = $(elem).attr( 'context' );
+        var controller = $get(contextName);
+        if( controller != null ) {
+			if( controller.name == null ) controller.name = contextName;
+            var n = elem.tagName.toLowerCase()
+            if(n == "input") n = n + "_" + elem.type ;
+			if( _self.handlers[n] ) _self.handlers[n]( elem, controller, idx );
+        }
+    }
+
 	var containerLoader = function(idx, div ) {
-		var contextName = div.getAttribute('context'); 
-		if(div.id==null || div.id=='') div.id = contextName; 
-		var controller = $get(contextName); 
-		if( controller != null ) { 
-			if( controller.name == null ) controller.name = contextName; 
-			if( div.getAttribute("loadAction")!=null) controller.loadAction = div.getAttribute("loadAction"); 
-			controller.load(); 
-		} 
-	}	
-	 
-    this.bind = function(ctxName, selector) { 
+		var contextName = div.getAttribute('context');
+		if(div.id==null || div.id=='') div.id = contextName;
+		var controller = $get(contextName);
+		if( controller != null ) {
+			if( controller.name == null ) controller.name = contextName;
+			if( div.getAttribute("loadAction")!=null) controller.loadAction = div.getAttribute("loadAction");
+			controller.load();
+		}
+	}
+
+    this.bind = function(ctxName, selector) {
 		//var predicate = (ctxName!=null && ctxName!="") ? "[context][context='"+ctxName+"']" : "[context][context!='']";
-		
+
 		//just bind all elements that has the attribute context
         $("[context][context!='']", selector? selector : null).each (function(idx, elm) {
 			var $e = $(elm);
 			var isVisible = true;
-			
+
 			if( $e.attr('visibleWhen') ) {
 				var expr = $e.attr('visibleWhen');
 				var ctxName = $e.attr('context');
@@ -278,7 +278,7 @@ var BindingUtils = new function() {
 					isVisible = false;
 				}
 			}
-			
+
 			if( isVisible ) {
 				if( $e.data('is_hidden') ) $e.show().removeData('is_hidden');
 	        	controlLoader(idx, elm);
@@ -288,81 +288,81 @@ var BindingUtils = new function() {
 	        	$e.hide();
 	        }
         });
-    } 
-     
-    this.loadViews = function(ctxName, selector) { 
+    }
+
+    this.loadViews = function(ctxName, selector) {
 		//var predicate = (ctxName!=null && ctxName!="") ? "[context][context='"+ctxName+"']" : "[context][context!='']";
-        //loads all divs with context and displays the page into the div. 
+        //loads all divs with context and displays the page into the div.
         $('div[context][context!=""]', selector? selector : null).each ( containerLoader );
-    } 
-     
-    //utilities 
-    /* 
-    * use init input for input type of element. this will set/get values for one field 
-    * applicable for text boxes, option boxes, list. 
-    * assumptions:  
-    *     all controls have required,  
+    }
+
+    //utilities
+    /*
+    * use init input for input type of element. this will set/get values for one field
+    * applicable for text boxes, option boxes, list.
+    * assumptions:
+    *     all controls have required,
     *     all controls set a single value during on change
-    *     all controls get the value from bean during load 
-    *     all will broadcast to to reset dependent controls values, (those with depends attribute) 
-    * customFunc = refers to the custom function for additional decorations 
-    */ 
-    this.initInput = function( elem, controller, customFunc ) { 
-        var fldName = elem.name; 
-        if( fldName==null || fldName=='' ) return; 
-        var c = controller.get(fldName); 
-        var  o = $(elem); 
-        if(customFunc!=null) { 
-            customFunc(elem, controller);     
-        } 
-        elem.value = (c ? c : "" ); 
-        var dtype = o.attr("datatype"); 
-        if(dtype=="decimal") { 
-            elem.onchange = function () { $get(controller.name).set(fldName, NumberUtils.toDecimal(this.value) ); } 
-        } 
-        else if( dtype=="integer") { 
-            elem.onchange = function () { $get(controller.name).set(fldName, NumberUtils.toInteger(this.value) ); } 
-        } 
+    *     all controls get the value from bean during load
+    *     all will broadcast to to reset dependent controls values, (those with depends attribute)
+    * customFunc = refers to the custom function for additional decorations
+    */
+    this.initInput = function( elem, controller, customFunc ) {
+        var fldName = elem.name;
+        if( fldName==null || fldName=='' ) return;
+        var c = controller.get(fldName);
+        var  o = $(elem);
+        if(customFunc!=null) {
+            customFunc(elem, controller);
+        }
+        elem.value = (c ? c : "" );
+        var dtype = o.attr("datatype");
+        if(dtype=="decimal") {
+            elem.onchange = function () { $get(controller.name).set(fldName, NumberUtils.toDecimal(this.value) ); }
+        }
+        else if( dtype=="integer") {
+            elem.onchange = function () { $get(controller.name).set(fldName, NumberUtils.toInteger(this.value) ); }
+        }
         else if( dtype == "date" ){
 			o.datepicker({dateFormat:"yy-mm-dd"});
-            elem.onchange = function () { $get(controller.name).set(fldName, this.value ); } 
-        }     
-        else { 
-            elem.onchange = function () { $get(controller.name).set(fldName, this.value ); } 
-        }     
-		
+            elem.onchange = function () { $get(controller.name).set(fldName, this.value ); }
+        }
+        else {
+            elem.onchange = function () { $get(controller.name).set(fldName, this.value ); }
+        }
+
 		//add hints
 		if( $(elem).attr("hint")!=null ) {
 			new InputHintDecorator( elem );
 		}
-		 
-        //add additional input behaviors 
-        //$(this.input_attributes).each( 
-        //    function(idx,func) { func(elem, controller); } 
-        //) 
-    }     
-     
+
+        //add additional input behaviors
+        //$(this.input_attributes).each(
+        //    function(idx,func) { func(elem, controller); }
+        //)
+    }
+
 	this.notifyDependents = function(dependName, _context) {
 		var ct = (_context !=null) ? _context + " " : "";
 		var predicate = "[depends*='"+dependName+"'][context!='']";
-		var filter =  ct + 'select'+predicate+','; 
-        filter += ct + 'input'+predicate+','; 
-        filter += ct + 'textarea'+predicate+', '; 
-        filter += ct + 'table'+predicate+', '; 
+		var filter =  ct + 'select'+predicate+',';
+        filter += ct + 'input'+predicate+',';
+        filter += ct + 'textarea'+predicate+', ';
+        filter += ct + 'table'+predicate+', ';
         filter += ct + 'label'+predicate;
 		$(filter).each( controlLoader );
 	}
-     
-	 
+
+
 	this.load = function(selector) {
-		for( var i=0; i < this.loaders.length; i++ ) { 
-            this.loaders[i]();   
-        } 
-        this.loaders = []; 
-        this.bind(null,selector); 
-        this.loadViews(null,selector); 
-	}	
-	
+		for( var i=0; i < this.loaders.length; i++ ) {
+            this.loaders[i]();
+        }
+        this.loaders = [];
+        this.bind(null,selector);
+        this.loadViews(null,selector);
+	}
+
 	/**---------------------------------------------------*
 	 * input hint support (InputHintDecorator class)
 	 *
@@ -373,8 +373,8 @@ var BindingUtils = new function() {
 		if( input.data('hint_decorator') ) {
 			input.data('hint_decorator').refresh();
 			return;
-		}				
-	
+		}
+
 		input.keyup(input_keyup)
 		 .keypress(input_keypress)
 		 .focus(input_focus)
@@ -387,24 +387,24 @@ var BindingUtils = new function() {
 		 .disableSelection()
 		 .appendTo( 'body' )
 		 .click(onClick);
-		 
+
 		this.refresh = refresh;
-	
+
 		//refresh
 		refresh();
-		
+
 		//reposition span on window resize
 		$(window).bind('resize', position);
-	
+
 		function refresh(){
-			if( !input.val() ) 
+			if( !input.val() )
 				showHint();
 			else
 				hideHint();
 		}
-		
+
 		var isPositioned;
-		
+
 		function position() {
 			var pos = {};
 			var left = parseInt( input.css('paddingLeft') ) + 5;
@@ -419,37 +419,37 @@ var BindingUtils = new function() {
 			span.position(pos);
 			isPositioned = true;
 		}
-	
+
 		function showHint() {
 			if( !isPositioned ) position();
 			span.show();
 		}
-	
+
 		function hideHint() {
 			span.hide();
 		}
-	
-		function onClick(){ 
+
+		function onClick(){
 			input.focus();
 		}
-	
-		function input_focus() { 
-			span.addClass('hint-hover'); 
+
+		function input_focus() {
+			span.addClass('hint-hover');
 		}
-		
-		function input_blur()  { 
+
+		function input_blur()  {
 			span.removeClass('hint-hover');
 			refresh();
 		}
-	
+
 		function input_keyup() {
 			if( !input.val() ) showHint();
 		}
-	
+
 		function input_keypress(evt) {
 			if( isCharacterPressed(evt) ) hideHint();
 		}
-	
+
 		function isCharacterPressed(evt) {
 			if (typeof evt.which == "undefined") {
 				return true;
@@ -458,223 +458,226 @@ var BindingUtils = new function() {
 			}
 			return false;
 		}
-					
+
 	}//-- end of InputHintDecorator class
-	
+
 } //-- end of BindingUtils class
- 
- 
- 
-//BeanUtils is for managing nested beans 
-var BeanUtils = new function(){ 
-    this.setProperty = function( bean, fieldName, value ) { 
+
+
+
+//BeanUtils is for managing nested beans
+var BeanUtils = new function(){
+    this.setProperty = function( bean, fieldName, value ) {
         eval( 'bean.'+fieldName + '= value');
-		
+
 		var pcl = bean.propertyChangeListener;
 		if( pcl && pcl[fieldName] ) {
 			pcl[fieldName]( value );
 		}
-    } 
- 
-    this.getProperty = function( bean, fieldName ) {  
+    }
+
+    this.getProperty = function( bean, fieldName ) {
 		try {
-        	return eval( 'bean.' + fieldName ); 
+        	return eval( 'bean.' + fieldName );
         }
-        catch(e) {;}	
-    } 
-	
+        catch(e) {;}
+    }
+
 	this.invokeMethod = function( bean, action, args ) {
-		var _act = action; 
-        if(!_act.endsWith("\\)")) { 
-			if(args==null) { 
-				_act = _act + "()"; 
-            } 
-            else { 
-				_act = _act + "(args)"; 
-            } 
-        } 
-        return eval('bean.' + _act ); 
+		var _act = action;
+        if(!_act.endsWith("\\)")) {
+			if(args==null) {
+				_act = _act + "()";
+            }
+            else {
+				_act = _act + "(args)";
+            }
+        }
+        return eval('bean.' + _act );
 	}
-} 
- 
-//VALIDATORS 
-function RequiredValidator( fieldName, caption ) { 
-    this.fieldName = fieldName; 
-    this.caption = caption; 
-     
-    this.validate = function( obj, errs ) { 
-        var data = BeanUtils.getProperty( obj, this.fieldName );   
-        if( data == "" || data == null ) errs.push( this.caption + " is required" );      
-    }     
-} 
- 
- 
-function Controller( code, pages ) { 
- 
-    this.name; 
-    this.pages = pages; 
-    this.code = code; 
-    this.loadAction; 
-    this.window;  
-     
-    this.set = function(fieldName, value) { 
-        BeanUtils.setProperty( this.code, fieldName, value ); 
+}
+
+//VALIDATORS
+function RequiredValidator( fieldName, caption ) {
+    this.fieldName = fieldName;
+    this.caption = caption;
+
+    this.validate = function( obj, errs ) {
+        var data = BeanUtils.getProperty( obj, this.fieldName );
+        if( data == "" || data == null ) errs.push( this.caption + " is required" );
+    }
+}
+
+function Controller( code, pages ) {
+
+    this.name;
+    this.pages = pages;
+    this.code = code;
+    this.loadAction;
+    this.window;
+	this.currentPage;
+
+    this.set = function(fieldName, value) {
+        BeanUtils.setProperty( this.code, fieldName, value );
 		this.notifyDependents( fieldName );
-    } 
-    
+    }
+
 	this.notifyDependents = function(dependName) {
 		BindingUtils.notifyDependents( dependName );
 	}
-	
-    this.get = function(fieldName ) { 
-        return BeanUtils.getProperty( this.code, fieldName ); 
-    } 
-     
-    this.refresh = function( fieldNames ) { 
-        //try to use jquery here. 
-        if(this.name!=null) BindingUtils.bind( this.name ) 
-    } 
-     
-    this.invoke = function( control, action, args, immed  ) { 
-        if( action.startsWith("_") ) { 
-            action = action.substring(1); 
-            this.navigate( action, control ); 
-        } 
-        else { 
-            try { 
-                var immediate =  false; 
+
+    this.get = function(fieldName ) {
+        return BeanUtils.getProperty( this.code, fieldName );
+    }
+
+    this.refresh = function( fieldNames ) {
+        //try to use jquery here.
+        if(this.name!=null) BindingUtils.bind( this.name )
+    }
+
+    this.invoke = function( control, action, args, immed  ) {
+        if( action.startsWith("_") ) {
+            action = action.substring(1);
+            this.navigate( action, control );
+        }
+        else {
+            try {
+                var immediate =  false;
 				if( immed !=null ) immediate = immed;
-                var target = this.name; 
-                //check validation if not immediate. 
-                if(control!=null ) { 
-                    if(control.getAttribute("immediate")!=null && control.getAttribute("immediate")!=null) { 
-                        immediate = control.getAttribute("immediate"); 
-                    } 
-                    if(control.getAttribute("target")!=null && control.getAttribute("target")!='' ) {  
-                        target = control.getAttribute("target"); 
-                    } 
-                } 
-                if(immediate=="false" || immediate==false) this.validate(); 
-                if(this.code == null) throw new Error( "Code not set"); 
-                var outcome = action; 
-                if( !outcome.startsWith("_")) { 
-                    outcome = BeanUtils.invokeMethod( this.code, action, args ); 
-                }     
-                this.navigate( outcome, control ); 
-            } 
-            catch(e) { 
-                alert( e.message, "ERROR!" ); 
-            } 
-        }     
-    } 
- 
-    this.navigate = function(outcome, control) { 
-        if(outcome==null) { 
-            this.refresh(); 
-        } 
-        else if(outcome.classname == 'opener' ) { 
+                var target = this.name;
+                //check validation if not immediate.
+                if(control!=null ) {
+                    if(control.getAttribute("immediate")!=null && control.getAttribute("immediate")!=null) {
+                        immediate = control.getAttribute("immediate");
+                    }
+                    if(control.getAttribute("target")!=null && control.getAttribute("target")!='' ) {
+                        target = control.getAttribute("target");
+                    }
+                }
+                if(immediate=="false" || immediate==false) this.validate();
+                if(this.code == null) throw new Error( "Code not set");
+                var outcome = action;
+                if( !outcome.startsWith("_")) {
+                    outcome = BeanUtils.invokeMethod( this.code, action, args );
+                }
+                this.navigate( outcome, control );
+            }
+            catch(e) {
+                alert( e.message, "ERROR!" );
+            }
+        }
+    }
+
+    this.navigate = function(outcome, control) {
+        if(outcome==null) {
+            this.refresh();
+        }
+        else if(outcome.classname == 'opener' ) {
 			outcome.parent = this.name;
 			outcome.source = control;
-            outcome.load(); 
-        } 
-        else if( outcome == "_close" ) { 
-            if( ContextManager.modalStack.length > 0 ) { 
+            outcome.load();
+        }
+        else if( outcome == "_close" ) {
+            if( ContextManager.modalStack.length > 0 ) {
 				var c = ContextManager.modalStack.pop();
-                var tgt = c.target; 
-				var parent = c.parent; 
-                $('#'+tgt).dialog('close'); 
+                var tgt = c.target;
+				var parent = c.parent;
+                $('#'+tgt).dialog('close');
                 if(parent!=null) $get(parent).refresh();
-            } 
-            else if( this.window && this.window.close ) { 
-                this.window.close(); 
-            }     
-        }     
-        else { 
-            if(outcome.startsWith("_")) outcome = outcome.substring(1); 
-         
-            var target = this.name; 
-            var _controller = this;     
-            $('#'+target).load( this.pages[outcome], function() { _controller.refresh(); } ); 
-        } 
-    } 
-     
-    this.validate = function() { 
-        var errs = []; 
-        var _code = this.code; 
-        var d = '[context="' + this.name + '"][required=true]'; 
-        var filter = "input"+d+", select"+d+", textarea"+d; 
-        $(filter).each(  
-            function(idx, elem) {     
-                var o = $(elem); 
-                var fldName = elem.name; 
-                var caption = fldName; 
-                if( o.attr("caption")!=null ) caption = o.attr("caption");  
-                new RequiredValidator(fldName, caption ).validate( _code, errs ); 
-            } 
-        ) 
-        if( errs.length > 0 ) {  
-            throw new Error( errs.join("\n") ); 
-        } 
-    } 
-     
-    this.load = function() { 
-        if( this.loadAction!=null ) { 
-            var result = this.invoke( null, this.loadAction );      
-            if(result==null) { 
-                this.navigate( "default" ); 
-            }     
-        } 
-        else { 
-            this.navigate( "default" ); 
-        } 
-    } 
-} 
- 
- 
-var ContextManager = new function() { 
-    this.data = {} 
-    this.modalStack= []; 
-    this.create = function( name, code, pages ) { 
-        if(name==null)  
-            throw new Error("Please indicate a name"); 
-        var c = new Controller( code, pages ); 
-        if(code.onload!=null) { 
-            BindingUtils.loaders.push( function() { code.onload() } ); 
-        } 
+            }
+            else if( this.window && this.window.close ) {
+                this.window.close();
+            }
+        }
+        else {
+			if( outcome == "_reload" ) outcome = this.currentPage;
+			if( outcome == null ) outcome = "default";
+			
+            if(outcome.startsWith("_")) outcome = outcome.substring(1);
+			this.currentPage = outcome;
+            var target = this.name;
+            var _controller = this;
+            $('#'+target).load( this.pages[outcome], function() { _controller.refresh(); } );
+        }
+    }
+
+    this.validate = function() {
+        var errs = [];
+        var _code = this.code;
+        var d = '[context="' + this.name + '"][required=true]';
+        var filter = "input"+d+", select"+d+", textarea"+d;
+        $(filter).each(
+            function(idx, elem) {
+                var o = $(elem);
+                var fldName = elem.name;
+                var caption = fldName;
+                if( o.attr("caption")!=null ) caption = o.attr("caption");
+                new RequiredValidator(fldName, caption ).validate( _code, errs );
+            }
+        )
+        if( errs.length > 0 ) {
+            throw new Error( errs.join("\n") );
+        }
+    }
+
+    this.load = function() {
+        if( this.loadAction!=null ) {
+            var result = this.invoke( null, this.loadAction );
+            if(result==null) {
+                this.navigate( "default" );
+            }
+        }
+        else {
+            this.navigate( "default" );
+        }
+    }
+}
+
+
+var ContextManager = new function() {
+    this.data = {}
+    this.modalStack= [];
+    this.create = function( name, code, pages ) {
+        if(name==null)
+            throw new Error("Please indicate a name");
+        var c = new Controller( code, pages );
+        if(code.onload!=null) {
+            BindingUtils.loaders.push( function() { code.onload() } );
+        }
 		if(code._controller!=null) {
 			code._controller = c;
 		}
-        c.name = name; 
-        this.data[name] = c; 
-        return c; 
-    },     
-     
-    this.get = function(name) { 
-        var c = this.data[name]; 
-        if( c == null ) throw new Error(name + " does not exist"); 
-        return c; 
-    } 
-     
-}  
- 
- 
-//load binding immediately 
-$(window).load (  
-    function() { 
+        c.name = name;
+        this.data[name] = c;
+        return c;
+    },
+
+    this.get = function(name) {
+        var c = this.data[name];
+        if( c == null ) throw new Error(name + " does not exist");
+        return c;
+    }
+
+}
+
+//load binding immediately
+$(window).load (
+    function() {
         BindingUtils.load();
-    } 
-); 
- 
-//important keyword shortcuts used by the programmer 
-function $get( name ) { return ContextManager.get(name); }; 
-function $put( name, code, pages ) {return ContextManager.create( name, code, pages );}; 
-function $ctx(name) {return ContextManager.get(name).code;}; 
-function $load(func) {  BindingUtils.loaders.push(func); }; 
- 
-//****************************************************************************************************************** 
-// configure input controls 
-//****************************************************************************************************************** 
-BindingUtils.handlers.input_text = function(elem, controller, idx ) { 
+    }
+);
+
+
+//important keyword shortcuts used by the programmer
+function $get( name ) { return ContextManager.get(name); };
+function $put( name, code, pages ) {return ContextManager.create( name, code, pages );};
+function $ctx(name) {return ContextManager.get(name).code;};
+function $load(func) {  BindingUtils.loaders.push(func); };
+
+//******************************************************************************************************************
+// configure input controls
+//******************************************************************************************************************
+BindingUtils.handlers.input_text = function(elem, controller, idx ) {
 	BindingUtils.initInput(elem, controller, function(elem,controller) {
 		var input = $(elem);
 		if( input.attr('suggest') && input.autocomplete ) {
@@ -688,13 +691,13 @@ BindingUtils.handlers.input_text = function(elem, controller, idx ) {
 			}
 			input.autocomplete({ source: src });
 		}
-	}); 	
-}; 
+	});
+};
 
-BindingUtils.handlers.input_password = function(elem, controller, idx ) { BindingUtils.initInput(elem, controller ); }; 
-BindingUtils.handlers.textarea = function(elem, controller, idx ) { BindingUtils.initInput(elem, controller); }; 
-BindingUtils.handlers.select = function(elem, controller, idx ) { 
-	BindingUtils.initInput(elem, controller, function(elem,controller) { 
+BindingUtils.handlers.input_password = function(elem, controller, idx ) { BindingUtils.initInput(elem, controller ); };
+BindingUtils.handlers.textarea = function(elem, controller, idx ) { BindingUtils.initInput(elem, controller); };
+BindingUtils.handlers.select = function(elem, controller, idx ) {
+	BindingUtils.initInput(elem, controller, function(elem,controller) {
 			var i = 0;
 			$(elem).empty();
 			if($(elem).attr("allowNull")!=null) {
@@ -732,93 +735,93 @@ BindingUtils.handlers.select = function(elem, controller, idx ) {
 			//fire change after bind to set default value
 			$(elem).change();
 
-	}); 
-} 
- 
-BindingUtils.handlers.input_radio = function(elem, controller, idx ) { 
+	});
+}
+
+BindingUtils.handlers.input_radio = function(elem, controller, idx ) {
 	var c = controller.get(elem.name);
 	var value = $(elem).attr("value");
 	elem.checked = (c==value) ? true :  false;
-	elem.onchange = function () { 
+	elem.onchange = function () {
 		if( this.checked ) {
-			$get(controller.name).set(this.name, this.value ); 
-		}	
-	} 
-} 
+			$get(controller.name).set(this.name, this.value );
+		}
+	}
+}
 
-BindingUtils.handlers.input_checkbox = function(elem, controller, idx ) { 
+BindingUtils.handlers.input_checkbox = function(elem, controller, idx ) {
 	var c = controller.get(elem.name);
 	if( $(elem).attr("mode") == "set" ) {
 		try {
 			var checkedValue = $(elem).attr("checkedValue");
-			
+
 			if( c.find( function(o) { return (o==checkedValue ) } ) !=null) {
 				elem.checked = true;
-			}	
+			}
 			else {
 				elem.checked = false;
 			}
-			elem.onclick = function () { 
+			elem.onclick = function () {
 				var _list = $get(controller.name).get(this.name);
 				var v = $(this).attr( "checkedValue" );
 				if( v == null ) alert( "checkedValue in checkbox must be specified" );
 				if(this.checked) {
-					_list.push( v );		
+					_list.push( v );
 				}
 				else {
 					_list.remove( function(o) { return (o == v) } );
-				}	
-			} 
+				}
+			}
 		}
-		catch(e) {}	
-	}	
+		catch(e) {}
+	}
 	else {
 		var isChecked = false;
 		var checkedValue = $(elem).attr("checkedValue");
 		if( checkedValue !=null && checkedValue == c ) {
 			isChecked = true;
-		}	
+		}
 		else if( c == true || c == "true" ) {
-			isChecked = true;	
-		}	
+			isChecked = true;
+		}
 		elem.checked = isChecked;
-		elem.onclick = function () { 
+		elem.onclick = function () {
 			var v = ($(this).attr( "checkedValue" )==null) ? true : $(this).attr( "checkedValue" );
 			var uv = ($(this).attr( "uncheckedValue" )==null) ? false : $(this).attr( "uncheckedValue" );
 			$get(controller.name).set(this.name, (this.checked) ? v : uv );
-		} 
-	}	
-} 
- 
-BindingUtils.handlers.input_button = function( elem, controller, idx ) { 
-    var action = elem.getAttribute("name"); 
-    if(action==null || action == '') return; 
-    elem.onclick = function() { $get(controller.name).invoke( this, action );  }     
-}; 
+		}
+	}
+}
+
+BindingUtils.handlers.input_button = function( elem, controller, idx ) {
+    var action = elem.getAttribute("name");
+    if(action==null || action == '') return;
+    elem.onclick = function() { $get(controller.name).invoke( this, action );  }
+};
 
 BindingUtils.handlers.a = function( elem, controller, idx ) {
-    var action = elem.getAttribute("name"); 
-    if(action==null || action == '') return; 
-    elem.onclick = function() { $get(controller.name).invoke( this, action ); return false; } 
+    var action = elem.getAttribute("name");
+    if(action==null || action == '') return;
+    elem.onclick = function() { $get(controller.name).invoke( this, action ); return false;}
 }
- 
-BindingUtils.handlers.input_submit = function( elem, controller, idx ) { 
-    var action = elem.getAttribute("name"); 
-    if(action==null || action == '') return; 
-    elem.onclick = function() { $get(controller.name).invoke( this, action );  }     
-}; 
- 
-BindingUtils.handlers.label = function( elem, controller, idx ){ 
-    var lbl = $(elem); 
-    var ctx = $ctx(controller.name); 
-    var expr; 
-    if( lbl.data('expr')!=null ) { 
-        expr = lbl.data('expr'); 
-    } else { 
-        expr = lbl.html(); 
-        lbl.data('expr', expr); 
-    } 
-    lbl.html( expr.evaluate(ctx) ); 
+
+BindingUtils.handlers.input_submit = function( elem, controller, idx ) {
+    var action = elem.getAttribute("name");
+    if(action==null || action == '') return;
+    elem.onclick = function() { $get(controller.name).invoke( this, action );  }
+};
+
+BindingUtils.handlers.label = function( elem, controller, idx ){
+    var lbl = $(elem);
+    var ctx = $ctx(controller.name);
+    var expr;
+    if( lbl.data('expr')!=null ) {
+        expr = lbl.data('expr');
+    } else {
+        expr = lbl.html();
+        lbl.data('expr', expr);
+    }
+    lbl.html( expr.evaluate(ctx) );
 };
 
 
@@ -830,23 +833,23 @@ BindingUtils.handlers.label = function( elem, controller, idx ){
 BindingUtils.handlers.span = function( elem, controller, idx ) {
 
 	var div = $(elem);
-	
+
 	if( div.attr('type') != 'fileupload' ) return;
 	if( div.data('_binded') ) return;
 
 	div.css('display', 'block').addClass('file-uploader').data('_binded', true);
-	
+
 	//-- properties/callbacks
 	var oncomplete = div.attr('oncomplete')? controller.get(div.attr('oncomplete')) : null;
 	var onremove =   div.attr('onremove')? controller.get(div.attr('onremove')) : null;
 	var labelExpr =  div.attr('label');
-	
+
 	//upload box design
 	var listBox =       $('<div class="files"></div>').appendTo(div);
 	var inputWrapper =  $('<div style="overflow: hidden; position: relative;"></div>');
 	var anchorLbl =     $('<a href="#">' + div.attr('caption') + '</a>');
 	var anchorBox =     $('<div class="selector"></div>');
-	
+
 	anchorBox.appendTo( div )
 	.append( anchorLbl )
 	.append( inputWrapper );
@@ -857,41 +860,41 @@ BindingUtils.handlers.span = function( elem, controller, idx ) {
 	anchorBox.css('height', lblHeight);
 
 	attachInput();
-					
+
 	function file_change(e) {
 		var frameid = '__frame' + Math.floor( Math.random() * 200000 );
 		var input =   $(this).remove().attr('name', frameid);
 		var frame =   createFrame(frameid);
 		var form =    createForm(frameid, input);
 		var pBar =    $('<div class="bar"><div class="progress"></div></div>');
-		
+
 		addToFileList(frame, form, pBar, input);
-		
+
 		var req = new ProgressRequest( pBar, frameid );
-		frame.load(function(){ 
+		frame.load(function(){
 			req.completed();
 			frame_loaded(frame);
 		});
-		
-		form.submit(function(){ 
-			req.start(); 
+
+		form.submit(function(){
+			req.start();
 		});
-		 
+
 		attachInput();
 		form.submit();
 	}
-	
+
 	function frame_loaded(frame) {
 		var value = null;
 		var lbl = frame.parent().find('div.label')
-		
+
 		try {
-			value = $.parseJSON(frame.contents().text());  
+			value = $.parseJSON(frame.contents().text());
 		}catch(e){;}
-		
+
 		if( oncomplete )         safeExecute(function() { oncomplete( value ); });
 		if( labelExpr && value ) lbl.html( labelExpr.evaluate(value) );
-		
+
 		if( onremove ) {
 			$('<a href="#" class="remove">Remove</a>')
 			 .appendTo( lbl )
@@ -902,7 +905,7 @@ BindingUtils.handlers.span = function( elem, controller, idx ) {
 			 });
 		}
 	}
-	
+
 	function safeExecute( fn ) {
 		try {
 			return fn();
@@ -912,15 +915,15 @@ BindingUtils.handlers.span = function( elem, controller, idx ) {
 		}
 		return null;
 	}
-	
+
 	function addToFileList(frame, form, pBar, input) {
 		var b = $.browser;
-		
+
 		//decorate progress bar
 		pBar.find('div.progress')
 		.addClass( b.msie? '' : b.webkit? 'webk' : 'moz' )
 		.attr('id', frame.attr('id') + '_progress');
-	
+
 		//create the file item box
 		var fibox = $('<div class="file"></div>')
 		 .appendTo( listBox )
@@ -929,7 +932,7 @@ BindingUtils.handlers.span = function( elem, controller, idx ) {
 		 .append('<div class="label">' + input.val() + '</div>')
 		 .append( pBar );
 	}
-	
+
 	function createFrame( id ) {
 		return $('<iframe src="" id="'+id+'" name="'+id+'"></iframe>').hide();
 	}
@@ -946,26 +949,26 @@ BindingUtils.handlers.span = function( elem, controller, idx ) {
 		var input = $('<input type="file" name="file" style="position:relative;opacity:0;filter:alpha(opacity=0)"/>');
 		input.appendTo( inputWrapper ).change(file_change).css({left: -(input[0].offsetWidth - lblWidth)});
 	}
-	
+
 	//-- utility inner class for file status pulling --
 	function ProgressRequest( bar, reqId ) {
 
-		var progress = bar.find('div.progress');			
+		var progress = bar.find('div.progress');
 		var completed = false;
 
 
 		this.start = function() {
 			pullUpdates();
 		};
-	
+
 		this.completed = function() {
 			updateProgress( 100 );
 			completed = true;
 		};
-	
+
 		function pullUpdates() {
 			if( completed ) return;
-			
+
 			$.ajax({
 				url: div.attr('url'),
 				cache: false,
@@ -973,7 +976,7 @@ BindingUtils.handlers.span = function( elem, controller, idx ) {
 				success: onPullResponse
 			});
 		}
-		
+
 		function onPullResponse(data) {
 			try {
 				var resp = $.parseJSON(data);
@@ -981,18 +984,18 @@ BindingUtils.handlers.span = function( elem, controller, idx ) {
 				updateProgress( resp.percentCompleted );
 			}
 			catch(e) {;}
-		
+
 			if( !completed ) {
 				//throws error in IE if no deplay specified
 				setTimeout( pullUpdates, 5 );
 			}
 		}
-	
+
 		var prevValue = 0;
-	
+
 		function updateProgress( value ) {
 			value = (typeof value == 'number')? value : 0;
-			prevValue = (value > prevValue)? value : prevValue; 
+			prevValue = (value > prevValue)? value : prevValue;
 			progress.stop().animate({width: prevValue+'%'}, {duration: 100, complete: function() {
 				if( completed ) {
 					bar.animate({opacity: 0}, {duration: 600, complete: function() {
@@ -1001,11 +1004,11 @@ BindingUtils.handlers.span = function( elem, controller, idx ) {
 				}
 			}});
 		}
-	
+
 	}
-	
+
 };// --- end of file upload plugin ---
- 
+
 
 /**----------------------------------*
  * table plugin
@@ -1017,22 +1020,22 @@ BindingUtils.handlers.table = function( elem, controller, idx ) {
 
 	if( $(elem).data('_has_model') ) return;
 	if( !window.___table_ctr ) window.___table_ctr = 0;
-	
+
 	var tbl = $(elem);
 	if( !tbl.data('index') ) tbl.data('index', ( window.___table_ctr += 1000));
 	new DataTable( tbl, $ctx(controller.name), controller );
-	
+
 };
-	
+
 /*------ DataTable class ---------*/
 function DataTable( table, bean, controller ) {
 
 	var model = new DefaultTableModel();
-	
+
 	var multiselect = table.attr('multiselect') == 'true';
 	var varStat =     table.attr('varStatus');
 	var varName =     table.attr('varName');
-		
+
 	if( table.attr('items') ) {
 		model.setList( controller.get(table.attr('items')) );
 	}
@@ -1040,7 +1043,7 @@ function DataTable( table, bean, controller ) {
 		model.setDataModel( controller.get(table.attr('model')) );
 		table.data('_has_model', true);
 	}
-		
+
 	var status = {prevItem: null, nextItem: null};
 	var tbody = table.find('tbody');
 
@@ -1049,12 +1052,12 @@ function DataTable( table, bean, controller ) {
 		tpl = tbody.find('tr').remove();
 		table.data('template', tpl);
 	}
-	
+
 	model.onRefresh = function() { doRender() };
 	model.load();
-	
+
 	var tabIdx;
-		
+
 	function doRender() {
 		tbody.hide('fade').empty();
 		tabIdx = table.data('index');
@@ -1064,14 +1067,14 @@ function DataTable( table, bean, controller ) {
 
 		//render the rows
 		for(var i=0; i<list.length; ++i) {
-			var item = list[i]; 
+			var item = list[i];
 			status.prevItem = (i > 0)? list[i-1] : null;
 			status.nextItem = (i < list.length-1)? list[i+1] : null;
 
 			createRow(i, item).appendTo( tbody );
 			status.index++;
 		};
-		
+
 		var rows = model.getRows();
 		if( rows != -1 && list.length < rows ) {
 			//add extra rows if the items size is less than the no. of rows
@@ -1082,14 +1085,14 @@ function DataTable( table, bean, controller ) {
 		}
 
 		tbody.stop().show('fade');
-		
+
 		BindingUtils.bind( null, table );
 	}
-	
+
 	function createRow(i, item) {
 		return tpl.clone()
 		 .data('index', i)
-		 .each(function(i,e) 
+		 .each(function(i,e)
 		  {
 			var tr = $(e);
 			var origTr = $(tpl[i]);
@@ -1128,25 +1131,25 @@ function DataTable( table, bean, controller ) {
 
 					evalAttr(origTd[idx],e,item);
 				});
-			}		 	
+			}
 		 }); //-- end of each function
 	}//-- end of createRow function
-	
+
 	var prevRow;
 	var prevTd;
-	
-	function td_mousedown(e) {		
+
+	function td_mousedown(e) {
 		var td = e.tagName? $(e) : $(this);
-		
+
 		if( prevTd ) prevTd.removeClass('selected');
-		
+
 		if( td.hasClass('selected') )
 			td.removeClass('selected');
 		else
 			td.addClass('selected');
-		
+
 		prevTd = td;
-		
+
 		if( !multiselect && prevRow ) {
 			prevRow.removeClass('selected');
 			model.unselect( prevRow.data('index') );
@@ -1155,42 +1158,42 @@ function DataTable( table, bean, controller ) {
 		var tr = td.parent();
 		if( tr.hasClass('selected') ) {
 			tr.removeClass('selected');
-			if( model.getDataModel() ) 
+			if( model.getDataModel() )
 				model.unselect( tr.data('index') );
 		}
 		else {
 			tr.addClass('selected');
-			if( model.getDataModel() ) 
+			if( model.getDataModel() )
 				model.select( tr.data('index') );
 		}
-			
+
 		prevRow = tr;
 	}
-	
+
 	function td_keydown(e) {
 		td_edit(e, this);
 	}
-	
+
 	var editor;
-	
+
 	function td_edit(e, src) {
 		var td = $(src? src : this);
 		if( td.data('editing') ) return;
 		td_mousedown( td[0] );
-		
+
 		if( !editor ) editor = TableCellEditor.getInstance();
 		editor.show( td );
 	}
-			
+
 	function evalAttr(origElem, cloneElem, ctx) {
 		var attrs = origElem.attributes;
 		for(var i=0; i<attrs.length; ++i) {
 			var attr = attrs[i];
 			if( !attr.specified || !attr.value ) continue;
-			
+
 			try {
 				var attrName = attr.name.toLowerCase();
-				var attrValue = $(origElem).attr(attrName).evaluate( function(n) { return resolve(n, ctx); } );				
+				var attrValue = $(origElem).attr(attrName).evaluate( function(n) { return resolve(n, ctx); } );
 				if( attrName.endsWith('expr') ) {
 					attrName = attrName.replace(/expr$/, '');
 				}
@@ -1199,7 +1202,7 @@ function DataTable( table, bean, controller ) {
 			catch(e) {;}
 		}
 	}
-		
+
 	function resolve( name, ctx ) {
 		try {
 			var _ctx = ctx;
@@ -1216,7 +1219,7 @@ function DataTable( table, bean, controller ) {
 					_ctx = bean;
 				}
 			}
-		
+
 			return BeanUtils.getProperty( _ctx, name );
 		}
 		catch(e) {
@@ -1224,21 +1227,21 @@ function DataTable( table, bean, controller ) {
 		}
 		return null;
 	}
-	
+
 } //-- end of DataTable class
-	
+
 /*---------- table cell editor ----------------*/
 function TableCellEditor() {
-	
+
 	var cell;
 	var input;
-	
+
 	init();
-	
+
 	this.show = function( td ) {
 		cell = td.tagName? $(td) : td;
 		cell.data('editing', cell.html());
-		
+
 		var loc = getLocation( cell[0] );
 		input.attr('tabindex', cell.attr('tabindex'))
 		 .val( cell.html() )
@@ -1250,15 +1253,15 @@ function TableCellEditor() {
 		 .focus()
 		 .select();
 	};
-	
+
 	function hide() {
 		input.val('').hide();
 	};
-	
+
 	function init() {
 		input = $('#__cell_editor');
 		if( input.size() > 0 ) return;
-		
+
 		input = $('<input type="text" id="__cell_editor" class="cell-editor" style="position: absolute; z-index: 999999; border: none;"/>')
 		 .hide()
 		 .blur( commit )
@@ -1277,25 +1280,25 @@ function TableCellEditor() {
 		  })
 		 .appendTo( $('body') );
 	}
-	
+
 	function focusNext( tbl, next ) {
 		var tdElem = tbl.find('td[tabindex="' + next + '"]')[0];
 		if( tdElem ) $(tdElem).focus();
 		return tdElem != null;
 	}
-	
+
 	function commit() {
 		if( input.is(':hidden') ) return;
 		cell.html( input.val() ).removeData('editing');
 		hide();
 	}
-	
+
 	function revert() {
 		if( input.is(':hidden') ) return;
 		cell.html( cell.data('editing') ).removeData('editing');
 		hide();
 	}
-	
+
 	function getLocation(e) {
 		var loc = { x: e.offsetLeft, y: e.offsetTop };
 		while( (e = e.offsetParent) ) {
@@ -1304,7 +1307,7 @@ function TableCellEditor() {
 		}
 		return loc;
 	}
-		
+
 }
 
 TableCellEditor.getInstance = function() {
@@ -1313,10 +1316,10 @@ TableCellEditor.getInstance = function() {
 	}
 	return TableCellEditor.__instance;
 };
-	
+
 //end of TableCellEditor class
 
-	
+
 /*-------- default internal table model ------------------*/
 function DefaultTableModel() {
 
@@ -1325,17 +1328,17 @@ function DefaultTableModel() {
 	var _dataModel;
 	var _listParam = null;
 	var _isLast = false;
-	
+
 	var _selectedItems = [];
-	
+
 	//on refresh callback
 	_this.onRefresh;
-	
+
 	_this.select = function(idx) {
 		if( idx >=0 && idx < _list.length )
 			_selectedItems.push( _list[idx] );
 	};
-	
+
 	_this.unselect = function(idx) {
 		var obj = _list[idx];
 		if( _selectedItems.indexOf ) {
@@ -1351,23 +1354,23 @@ function DefaultTableModel() {
 				}
 			}
 		}
-			
+
 		if( idx >= 0 ) _selectedItems.splice(idx, 1);
 	};
-	
+
 	_this.getRows = function() {
 		return _listParam? _listParam._limit-1 : -1;
 	};
-	
+
 	_this.setDataModel = function( mdl ) {
 		_dataModel = mdl;
 		initDataModel();
 	};
-	
+
 	_this.getDataModel = function() { return _dataModel; };
-	
-	_this.setList = function( list ) { 
-		_list = list; 
+
+	_this.setList = function( list ) {
+		_list = list;
 		_selectedItems = [];
 		if( _listParam ) {
 			if( _list.length == _listParam._limit ) {
@@ -1379,17 +1382,17 @@ function DefaultTableModel() {
 			}
 		}
 	};
-	
+
 	_this.getList = function() {
 		if( typeof _list == 'undefined' ) _list = [];
 		return _list;
 	};
-	
+
 	_this.load = function() {
 		if( _listParam ) _listParam._start = 0;
 		doRefresh(true);
 	};
-	
+
 	function doRefresh( fetch ) {
 		if( fetch == true ) {
 			if( _dataModel && $.isFunction( _dataModel.fetchList ) ) {
@@ -1402,7 +1405,7 @@ function DefaultTableModel() {
 		if( $.isFunction( _this.onRefresh ) )
 			_this.onRefresh();
 	}
-	
+
 	/**
 	 * inject callback methods to the passed dataModel
 	 * methods to be injected:
@@ -1414,77 +1417,77 @@ function DefaultTableModel() {
 	 */
 	function initDataModel() {
 		if( !_dataModel ) return;
-		
+
 		_listParam = null;
-		
+
 		_dataModel.setList = function( list ) { _this.setList(list); };
 		_dataModel.load = function() { _this.load(); };
-		
-		_dataModel.refresh = function( fetch ) { 
-			doRefresh( fetch ); 
+
+		_dataModel.refresh = function( fetch ) {
+			doRefresh( fetch );
 		};
-		
-		_dataModel.moveFirst = function() { 
+
+		_dataModel.moveFirst = function() {
 			_listParam._start = 0;
 			doRefresh(true);
 		};
-		
+
 		_dataModel.moveNext = function() {
 			if( _listParam && !_isLast ) {
 				_listParam._start += _listParam._limit-1;
 			}
 			doRefresh(true);
 		};
-		
+
 		_dataModel.movePrev = function() {
 			if( _listParam && _listParam._start > 0 ) {
 				_listParam._start -= _listParam._limit-1;
 			}
 			doRefresh(true);
 		};
-		
+
 		_dataModel.getSelectedItem = function() {
 			var len = _selectedItems.length;
-			return len > 0? _selectedItems[len-1] : null; 
+			return len > 0? _selectedItems[len-1] : null;
 		};
-		
+
 		_dataModel.getSelectedItems = function() { return _selectedItems; };
-		
+
 		if( _dataModel.rows ) {
 			_listParam = {};
 			_listParam._limit = _dataModel.rows+1;
 			_listParam._start = 0;
 		}
 	}
-	
+
 }
 // end of DefaultTableModel class
- 
-//****************************************************************************************************************** 
-// type of openers... 
-//req. Opener must have an interface  
-//  classname = 'opener' 
-//  load(); 
-//****************************************************************************************************************** 
-function PopupOpener( page, name, params, target ) { 
-    this.classname = "opener"; 
-    this.name = name; 
-    this.page = page; 
+
+//******************************************************************************************************************
+// type of openers...
+//req. Opener must have an interface
+//  classname = 'opener'
+//  load();
+//******************************************************************************************************************
+function PopupOpener( page, name, params, target ) {
+    this.classname = "opener";
+    this.name = name;
+    this.page = page;
     this.target = target;
-    this.params = params; 
+    this.params = params;
 	this.parent;
 	this.title;
 	this.source;
 	this.options = {};
-	
+
 	var defaultOptions = {show: 'fade', hide: 'fade', height: 'auto'};
-	
-    this.load = function() { 
+
+    this.load = function() {
         var n = this.name;
-        var p = this.params; 
+        var p = this.params;
 		var parent = this.parent;
 		var target = this.target;
-        
+
         var div = null;
         if( target ) {
         	div = $( "#"+target );
@@ -1498,74 +1501,74 @@ function PopupOpener( page, name, params, target ) {
 		this.options.close = function() { if( !target ) div.remove();	}
 		this.options.modal = true;
 		this.options.title = this.title;
-		
+
 		var options = $.extend(defaultOptions, this.options);
-		
-        div.load(this.page, function() { 
-        	if(p!=null) {
-                for( var key in p ) {
-                    try{ $ctx(n)[key] = p[key]; }catch(e){;} 
-                }
-            }
-            BindingUtils.load( div);
-            ContextManager.modalStack.push( {target: div.attr('id'), parent: parent} );
-                                                            
-            //make into a dialog after the content is loaded.
-            div.dialog(options);
-        }); 
-    } 
-} 
- 
-//-- DropdownOpener class
-function DropdownOpener( page, name, params, target ) {
-	this.classname = "opener"; 
-    this.name = name; 
-    this.page = page; 
-    this.target = target;
-    this.params = params; 
-	this.parent;
-	this.title;
-	this.source;
-	this.options = {};
-	this.styleClass;
-	
-    this.load = function() { 
-        var n = this.name;
-        var p = this.params; 
-        
-		var w = new DropdownWindow(this.source, this.options, this.styleClass);
-        w.show(this.page, function(div) { 
+
+        div.load(this.page, function() {
         	if(p!=null) {
                 for( var key in p ) {
                     try{ $ctx(n)[key] = p[key]; }catch(e){;}
                 }
             }
-            BindingUtils.load( div);     
-        }); 
+            BindingUtils.load( div);
+            ContextManager.modalStack.push( {target: div.attr('id'), parent: parent} );
+
+            //make into a dialog after the content is loaded.
+            div.dialog(options);
+        });
+    }
+}
+
+//-- DropdownOpener class
+function DropdownOpener( page, name, params, target ) {
+	this.classname = "opener";
+    this.name = name;
+    this.page = page;
+    this.target = target;
+    this.params = params;
+	this.parent;
+	this.title;
+	this.source;
+	this.options = {};
+	this.styleClass;
+
+    this.load = function() {
+        var n = this.name;
+        var p = this.params;
+
+		var w = new DropdownWindow(this.source, this.options, this.styleClass);
+        w.show(this.page, function(div) {
+        	if(p!=null) {
+                for( var key in p ) {
+                    try{ $ctx(n)[key] = p[key]; }catch(e){;}
+                }
+            }
+            BindingUtils.load( div);
+        });
     };
-	
-	
+
+
 	//--- DropdownWindow class ----
 	function DropdownWindow( source, options, styleClass ) {
 
 		var div = $('<div class="dropdown-window" style="position: absolute; z-index: 200000; top: 0; left: 0;"></div>');
-		
+
 		var defaultConfig = { my: 'left top', at: 'left bottom' };
-		
+
 		if( styleClass ) div.addClass( styleClass );
 
 		this.show = function( page, callback ) {
 			var posConfig = $.extend(defaultConfig, options.position || {});
 			posConfig.of = $(source);
-			
+
 			if( typeof page == 'string' ) {
-				div.hide().load( page, function(){ 
+				div.hide().load( page, function(){
 					div.appendTo('body')
 					 .position( posConfig )
 					 .show('fade');
-					
+
 					bindWindowEvt();
-					callback(div); 
+					callback(div);
 				});
 			}
 			else {
@@ -1574,22 +1577,22 @@ function DropdownOpener( page, name, params, target ) {
 				 .position( posConfig )
 				 .show('slide',{direction:"up"}, function(){
 					bindWindowEvt();
-					callback(div); 
+					callback(div);
 				 });
-			}			
+			}
 		};
-		
+
 		this.close = function() { doHide(); };
-		
+
 		function hide() {
 			div.hide('slide', {direction:"up"}, function() { $(this).remove(); });
 			$(document).unbind('mouseup', onWindowClicked);
 		}
-		
+
 		function bindWindowEvt() {
 			$(document).bind('mouseup', onWindowClicked);
 		}
-		
+
 		function onWindowClicked(evt) {
 			var target = $(evt.target).closest('div.dropdown-window');
 			if( target.length == 0 ) {
@@ -1598,19 +1601,19 @@ function DropdownOpener( page, name, params, target ) {
 		}
 
 	}//-- end of DropdownWindow class
-	
+
 }//-- end of DropdownOpener
- 
- 
-var InvokerUtil = new function() { 
+
+
+var InvokerUtil = new function() {
     this.invoke = function( name, page, target ) {
     	var target = $("#"+target);
     	var content = $('<div><div>').hide().appendTo('body');
-    	
+
     	//load the page first then bind, before appending it to the target
     	content.load(page, function() {
     		BindingUtils.load( content );
-    		target.empty().append( content.show('fade',{duration:100}) );
+    		target.empty().append( content.show() );
 		});
     };
 };
@@ -1626,13 +1629,13 @@ var WindowUtil = new function() {
 		}
 		window.location.search = (qry!="") ? "?"+qry : "";
 	}
-	
-	this.load = function( page, target, options ) { 
-		$( "#"+target ).load(page, function() { 
-			BindingUtils.load( "#"+target); 
-		}); 
-    } 
-    
+
+	this.load = function( page, target, options ) {
+		$( "#"+target ).load(page, function() {
+			BindingUtils.load( "#"+target);
+		});
+    }
+
     this.getParameter = function( name ) {
 	  name = name.replace(/[\[]/,"\\\[").replace(/[\]]/,"\\\]");
 	  var regexS = "[\\?&]"+name+"=([^&#]*)";
@@ -1651,15 +1654,15 @@ var ProxyService = new function() {
 	this.lookup = function(name) {
 		if( this.services[name]==null ) {
 			var err = null;
-			var contextPath = window.location.pathname.substring(1); 
-			contextPath = contextPath.substring(0,contextPath.indexOf('/')); 
+			var contextPath = window.location.pathname.substring(1);
+			contextPath = contextPath.substring(0,contextPath.indexOf('/'));
 			var urlaction = "/" + contextPath + "/remote-proxy/"+name + ".js";
-			var result = $.ajax( {  
-                url:urlaction,  
-                type:"POST",  
-                error: function( xhr ) { err = xhr.responseText }, 
-                async : false }).responseText; 	
-			if( err!=null ) { 
+			var result = $.ajax( {
+                url:urlaction,
+                type:"POST",
+                error: function( xhr ) { err = xhr.responseText },
+                async : false }).responseText;
+			if( err!=null ) {
 				throw new Error(err);
             }
 			this.services[name] = eval( result );
@@ -1674,16 +1677,16 @@ var AjaxStatus = function( msg ) {
 	 .hide();
 
 	$(function(){ div.appendTo('body'); });
-	
+
 	this.show = function() {
 		position();
 		div.show();
 	};
-	
+
 	this.hide = function() {
 		div.hide('fade');
 	};
-	
+
 	function position() {
 		div.css({
 			'top': '0px', 'left': '0px'
