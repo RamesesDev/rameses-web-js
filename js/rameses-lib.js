@@ -253,10 +253,10 @@ var BindingUtils = new function() {
 		}
 		
 		if( isVisible ) {
-			if( $e.data('is_hidden') ) $e.show().removeData('is_hidden');
+			if( $e.is(':hidden') ) $e.show();
 		}
 		else {
-			$e.hide().data('is_hidden', true);
+			$e.hide();
 		}
 		
 	    var _self = BindingUtils;
