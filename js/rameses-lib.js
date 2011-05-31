@@ -109,8 +109,8 @@ String.prototype.evaluate = function( ctx ) {
     var str = this, match;
     while( (match = str.match(/(?:\$|#){([^{]+)}/)) ) {
         str = str.replace( match[0], _evaluate(match[1]) );
-    }
-    return str;
+    }    
+    return str+''; //return the parsed value
 
     //-- helper methods
     function defaultHandler(name) {
@@ -231,11 +231,34 @@ function DynamicProxy( context ) {
 var BindingUtils = new function() {
     //loads all controls and binds it to the context object
 
-    this.handlers = {}
+    this.handlers = {};
     this.loaders = [];
     this.input_attributes = [];
 
 	var controlLoader =  function(idx, elem) {
+		var $e = $(elem);
+		var isVisible = true;
+
+		if( $e.attr('visibleWhen') ) {
+			var expr = $e.attr('visibleWhen');
+			var ctxName = $e.attr('context');
+			try {
+				var res = expr.evaluate( $ctx(ctxName) );
+				isVisible = (res != 'false' && res != 'null');
+			}
+			catch(e) {
+				if( window.console ) console.log('error evaluating visibleWhen: ' + e.message);
+				isVisible = false;
+			}
+		}
+		
+		if( isVisible ) {
+			if( $e.data('is_hidden') ) $e.show().removeData('is_hidden');
+		}
+		else {
+			$e.hide().data('is_hidden', true);
+		}
+		
 	    var _self = BindingUtils;
 		var contextName = $(elem).attr( 'context' );
         var controller = $get(contextName);
@@ -245,7 +268,7 @@ var BindingUtils = new function() {
             if(n == "input") n = n + "_" + elem.type ;
 			if( _self.handlers[n] ) _self.handlers[n]( elem, controller, idx );
         }
-    }
+    };
 
 	var containerLoader = function(idx, div ) {
 		var contextName = div.getAttribute('context');
@@ -256,45 +279,18 @@ var BindingUtils = new function() {
 			if( div.getAttribute("loadAction")!=null) controller.loadAction = div.getAttribute("loadAction");
 			controller.load();
 		}
-	}
+	};
 
     this.bind = function(ctxName, selector) {
-		//var predicate = (ctxName!=null && ctxName!="") ? "[context][context='"+ctxName+"']" : "[context][context!='']";
-
 		//just bind all elements that has the attribute context
-        $("[context][context!='']", selector? selector : null).each (function(idx, elm) {
-			var $e = $(elm);
-			var isVisible = true;
-
-			if( $e.attr('visibleWhen') ) {
-				var expr = $e.attr('visibleWhen');
-				var ctxName = $e.attr('context');
-				try {
-					var res = expr.evaluate( $ctx(ctxName) );
-					isVisible = (res != 'false' && res != 'null');
-				}
-				catch(e) {
-					if( window.console ) console.log('error evaluating visibleWhen: ' + e.message);
-					isVisible = false;
-				}
-			}
-
-			if( isVisible ) {
-				if( $e.data('is_hidden') ) $e.show().removeData('is_hidden');
-	        	controlLoader(idx, elm);
-	        }
-	        else {
-				$e.data('is_hidden', true);
-	        	$e.hide();
-	        }
-        });
-    }
+        $("[context][context!='']", selector? selector : null).each ( controlLoader );
+    };
 
     this.loadViews = function(ctxName, selector) {
 		//var predicate = (ctxName!=null && ctxName!="") ? "[context][context='"+ctxName+"']" : "[context][context!='']";
         //loads all divs with context and displays the page into the div.
         $('div[context][context!=""]', selector? selector : null).each ( containerLoader );
-    }
+    };
 
     //utilities
     /*
@@ -311,7 +307,7 @@ var BindingUtils = new function() {
         var fldName = elem.name;
         if( fldName==null || fldName=='' ) return;
         var c = controller.get(fldName);
-        var  o = $(elem);
+        var o = $(elem);
         if(customFunc!=null) {
             customFunc(elem, controller);
         }
@@ -340,7 +336,7 @@ var BindingUtils = new function() {
         //$(this.input_attributes).each(
         //    function(idx,func) { func(elem, controller); }
         //)
-    }
+    };
 
 	this.notifyDependents = function(dependName, _context) {
 		var ct = (_context !=null) ? _context + " " : "";
@@ -351,7 +347,7 @@ var BindingUtils = new function() {
         filter += ct + 'table'+predicate+', ';
         filter += ct + 'label'+predicate;
 		$(filter).each( controlLoader );
-	}
+	};
 
 
 	this.load = function(selector) {
@@ -361,7 +357,7 @@ var BindingUtils = new function() {
         this.loaders = [];
         this.bind(null,selector);
         this.loadViews(null,selector);
-	}
+	};
 
 	/**---------------------------------------------------*
 	 * input hint support (InputHintDecorator class)
@@ -616,6 +612,8 @@ function Controller( code, pages ) {
         $(filter).each(
             function(idx, elem) {
                 var o = $(elem);
+                if( o.is(':hidden') ) return; //validate the visible elements only
+                
                 var fldName = elem.name;
                 var caption = fldName;
                 if( o.attr("caption")!=null ) caption = o.attr("caption");
@@ -819,16 +817,19 @@ BindingUtils.handlers.input_submit = function( elem, controller, idx ) {
 };
 
 BindingUtils.handlers.label = function( elem, controller, idx ){
-    var lbl = $(elem);
-    var ctx = $ctx(controller.name);
-    var expr;
-    if( lbl.data('expr')!=null ) {
-        expr = lbl.data('expr');
-    } else {
-        expr = lbl.html();
-        lbl.data('expr', expr);
-    }
-    lbl.html( expr.evaluate(ctx) );
+	var lbl = $(elem);
+	var ctx = $ctx(controller.name);
+	var expr;
+	if( lbl.data('expr')!=null ) {
+		expr = lbl.data('expr');
+	} else {
+		expr = lbl.html();
+		lbl.data('expr', expr);
+	}
+	lbl.html( expr.evaluate(ctx) );
+	
+	//bind label elements
+	BindingUtils.bind( null, lbl );
 };
 
 
