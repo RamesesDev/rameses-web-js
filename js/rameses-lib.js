@@ -1125,7 +1125,9 @@ function DataTable( table, bean, controller ) {
 				if( visible != 'true' ) $(e).css('display', 'none');
 			}
 
-			var td = tr.find('td').mousedown( td_mousedown );
+			var td = tr.find('td')
+			           .mousedown( td_mousedown )
+			           .hover( td_mouseover, td_mouseout );;
 			var origTd = origTr.find('td');
 
 			if( !item ) {
@@ -1150,8 +1152,6 @@ function DataTable( table, bean, controller ) {
 						  .focus(function(e) { td_edit(e, this); })
 						  .dblclick(td_edit);
 					}
-					
-					td.hover( td_mouseover, td_mouseout );
 
 					evalAttr(origTd[idx],e,item);
 				});
