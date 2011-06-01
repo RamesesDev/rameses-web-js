@@ -600,7 +600,10 @@ function Controller( code, pages ) {
             var target = this.name;
             var _controller = this;
 			
-            $('#'+target).load( this.pages[outcome], WindowUtil.getParameters(), function() { _controller.refresh(); } );
+            $('#'+target).load( this.pages[outcome], WindowUtil.getParameters(), function() { 
+                if( _controller.code.onpageload != null ) _controller.code.onpageload(outcome);
+                _controller.refresh(); 
+            } );
         }
     }
 
