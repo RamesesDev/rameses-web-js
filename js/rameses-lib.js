@@ -730,7 +730,7 @@ BindingUtils.handlers.select = function(elem, controller, idx ) {
 			
 			$(op).data('object_value', _key);
 			elem.options[idx+i] = op;
-			op.selected = (value == selected);
+			op.selected = (_key == selected);
 		});
 	}
 
