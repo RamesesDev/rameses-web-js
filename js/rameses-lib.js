@@ -1147,6 +1147,8 @@ function DataTable( table, bean, controller ) {
 						  .focus(function(e) { td_edit(e, this); })
 						  .dblclick(td_edit);
 					}
+					
+					td.hover( td_mouseover, td_mouseout );
 
 					evalAttr(origTd[idx],e,item);
 				});
@@ -1199,6 +1201,16 @@ function DataTable( table, bean, controller ) {
 			//keep the selected td index to the table element
 			table.data('selected_position', td.data('position'));
 		}
+	}
+	
+	function td_mouseover() {
+		$(this).addClass('hover')
+		 .parent().addClass('hover');
+	}
+	
+	function td_mouseout() {
+		$(this).removeClass('hover')
+		 .parent().removeClass('hover');
 	}
 
 	function td_keydown(e) {
