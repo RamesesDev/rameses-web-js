@@ -381,7 +381,7 @@ var BindingUtils = new function() {
 		 .html( input.attr('hint') )
 		 .hide()
 		 .disableSelection()
-		 .appendTo( 'body' )
+		 .insertBefore( input )
 		 .click(onClick);
 
 		this.refresh = refresh;
@@ -452,7 +452,7 @@ var BindingUtils = new function() {
 			if (typeof evt.which == "undefined") {
 				return true;
 			} else if (typeof evt.which == "number" && evt.which > 0) {
-				return !evt.ctrlKey && !evt.metaKey && !evt.altKey && evt.which != 8;
+				return !evt.ctrlKey && !evt.metaKey && !evt.altKey && evt.which != 8 && evt.which != 13;
 			}
 			return false;
 		}
