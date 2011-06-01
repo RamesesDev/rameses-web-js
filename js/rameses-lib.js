@@ -377,7 +377,7 @@ var BindingUtils = new function() {
 		 .blur(input_blur)
 		 .data('hint_decorator', this);
 
-		var span = $('<span class="hint" style="position:absolute; z-index:300000"></span>')
+		var span = $('<span class="hint" style="position:absolute; z-index:100"></span>')
 		 .html( input.attr('hint') )
 		 .hide()
 		 .disableSelection()
@@ -404,17 +404,18 @@ var BindingUtils = new function() {
 		var isPositioned;
 
 		function position() {
-			var pos = {};
-			var left = parseInt( input.css('paddingLeft') ) + 5;
+			var pos = input.position();
+			var css = {left: pos.left + parseInt( input.css('paddingLeft') ) + 5};
+
 			if( inp.type == 'text' || inp.type == 'password' ) {
-				pos = {my: 'left center', at: 'left center', offset: (left + ' 0')};
+				var lineHeight = parseInt( input.css('lineHeight') );
+				css.top = pos.top + input[0].offsetHeight/2 - lineHeight/2;
 			}
 			else {
 				var top = parseInt( input.css('paddingTop') );
-				pos = {my: 'left top', at: 'left top', offset: (left + ' ' + top)};
+				css.top = pos.top + top;
 			}
-			pos.of = input;
-			span.position(pos);
+			span.css( css );
 			isPositioned = true;
 		}
 
