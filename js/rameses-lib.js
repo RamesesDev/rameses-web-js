@@ -1,5 +1,5 @@
 /***
-    version 1.5.25.4
+    version 1.5.25.5
     resources in the js script:
 	NumberUtils
     DynamicProxy
@@ -470,12 +470,15 @@ var BindingUtils = new function() {
 //BeanUtils is for managing nested beans
 var BeanUtils = new function(){
     this.setProperty = function( bean, fieldName, value ) {
-        eval( 'bean.'+fieldName + '= value');
+		try {
+			eval( 'bean.'+fieldName + '= value');
 
-		var pcl = bean.propertyChangeListener;
-		if( pcl && pcl[fieldName] ) {
-			pcl[fieldName]( value );
+			var pcl = bean.propertyChangeListener;
+			if( pcl && pcl[fieldName] ) {
+				pcl[fieldName]( value );
+			}
 		}
+		catch(e){;}
     }
 
     this.getProperty = function( bean, fieldName ) {
