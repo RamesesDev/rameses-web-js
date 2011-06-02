@@ -377,7 +377,7 @@ var BindingUtils = new function() {
 		 .blur(input_blur)
 		 .data('hint_decorator', this);
 
-		var span = $('<span class="hint" style="position:absolute; z-index:100"></span>')
+		var span = $('<span class="hint" style="position:absolute; z-index:100; overflow: hidden;"></span>')
 		 .html( input.attr('hint') )
 		 .hide()
 		 .disableSelection()
@@ -393,6 +393,7 @@ var BindingUtils = new function() {
 
 		//reposition span on window resize
 		$(window).bind('resize', position);
+		$(document).bind('resize', position);
 
 		function refresh(){
 			if( !input.val() )
@@ -406,22 +407,24 @@ var BindingUtils = new function() {
 		function position() {
 			var pos = input.position();
 			var css = {left: pos.left + parseInt( input.css('paddingLeft') ) + 5};
+			var paddingTop = parseInt( input.css('paddingTop') );
+			var inpHeight = input[0].offsetHeight;
+			var spanHeight = span[0].offsetHeight;
 
 			if( inp.type == 'text' || inp.type == 'password' ) {
-				var lineHeight = parseInt( input.css('lineHeight') );
-				css.top = pos.top + input[0].offsetHeight/2 - lineHeight/2;
+				css.top = pos.top + inpHeight/2 - spanHeight/2;
 			}
 			else {
-				var top = parseInt( input.css('paddingTop') );
-				css.top = pos.top + top;
+				css.top = pos.top + paddingTop;
 			}
+						
 			span.css( css );
 			isPositioned = true;
 		}
 
 		function showHint() {
-			if( !isPositioned ) position();
-			span.show();
+			span.css('width', input.width()).show();
+			position();
 		}
 
 		function hideHint() {
@@ -433,11 +436,11 @@ var BindingUtils = new function() {
 		}
 
 		function input_focus() {
-			span.addClass('hint-hover');
+			if(!span.hasClass('hint-hover')) span.addClass('hint-hover');
 		}
 
-		function input_blur()  {
-			span.removeClass('hint-hover');
+		function input_blur() {
+			if(span.hasClass('hint-hover')) span.removeClass('hint-hover');
 			refresh();
 		}
 
