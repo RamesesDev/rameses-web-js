@@ -815,9 +815,17 @@ BindingUtils.handlers.input_button = function( elem, controller, idx ) {
 };
 
 BindingUtils.handlers.a = function( elem, controller, idx ) {
-    var action = elem.getAttribute("name");
-    if(action==null || action == '') return;
-    elem.onclick = function() { $get(controller.name).invoke( this, action ); return false;}
+	var $e = $(elem);
+    var action = $e.attr("name");
+    
+    //add an href property if not specified,
+    //css hover does not apply when no href is specified
+    if( !$e.attr('href') ) $e.attr('href', '#');
+    
+    elem.onclick = function() { 
+		if( action ) $get(controller.name).invoke( this, action ); 
+		return false; 
+	}
 }
 
 BindingUtils.handlers.input_submit = function( elem, controller, idx ) {
