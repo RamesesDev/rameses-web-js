@@ -1,0 +1,39 @@
+<html>
+	<head>
+		<script src="../js/jquery-all.js"></script>
+		<script src="../js/rameses-lib.js"></script>
+
+		<script>
+			$put(
+				'test',
+				new function() {
+
+					this.itemCode;
+					this.item;
+
+					this.items = [
+						{code: 'bn', caption: 'Banana'},
+						{code: 'wm', caption: 'Watermelon'},
+						{code: 'ap', caption: 'Apple'},
+						{code: 'or', caption: 'Orange'},
+						{code: 'ma', caption: 'Mango'}
+					];
+
+					this.showSelected = function(){
+						alert('selected is code ' + this.itemCode + '\nselected object is [code=${code}, caption=${caption}]'.evaluate(this.item) );
+					};
+
+				}
+			);
+		</script>
+	</head>
+
+	<body>
+		<select context="test" name="itemCode" selectedItem="item"
+		        items="items" itemKey="code" itemLabel="caption"
+		        emptyText="-- Select Item --" allowNull="true">
+		</select>
+		<input type="button" context="test" name="showSelected" value="Show Selected Value"/>
+	</body>
+
+</html>

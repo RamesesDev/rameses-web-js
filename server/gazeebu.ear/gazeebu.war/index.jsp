@@ -17,10 +17,6 @@
 			<t:public-header showLogin="true" />
 		</jsp:attribute>
 		
-		<jsp:attribute name="contextmenu">
-			<t:public-header showLogin="true" />
-		</jsp:attribute>
-
 		<jsp:attribute name="footer">
 			<t:footer />
 		</jsp:attribute>

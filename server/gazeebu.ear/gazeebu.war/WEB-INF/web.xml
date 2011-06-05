@@ -11,7 +11,8 @@
 		<param-name>app.context</param-name>
 		<param-value>gazeebu</param-value>
 	</context-param>
-	
+		
+	<!-- Servlet Configuration -->
     <servlet>
 		<servlet-name>JSInvoker</servlet-name>
         <servlet-class>com.rameses.web.support.JsonInvoker</servlet-class>
@@ -32,17 +33,19 @@
         <servlet-name>remoteJS</servlet-name>
         <url-pattern>/remote-proxy/*</url-pattern>
     </servlet-mapping>
- 
- 
-    <!-- UploadFilter Configuration  -->
+   
+    
+    <!-- WebFilter Configuration  -->
     <filter>
-        <filter-name>UploadFilter</filter-name>
-        <filter-class>com.rameses.web.fileupload.Filter</filter-class>
+        <filter-name>WebFilter</filter-name>
+        <filter-class>com.rameses.web.support.Filter</filter-class>
     </filter>
 	
     <filter-mapping>
-        <filter-name>UploadFilter</filter-name>
+        <filter-name>WebFilter</filter-name>
         <url-pattern>/*</url-pattern>
+		<dispatcher>REQUEST</dispatcher> 
+		<dispatcher>FORWARD</dispatcher>
     </filter-mapping>  
  
 </web-app>

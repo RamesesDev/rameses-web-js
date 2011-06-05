@@ -1,0 +1,16 @@
+Step 2 of 3
+<br/><br/>
+
+Org Unit Type: <br/>
+<select name="entity.type" context="userform" items="typeList" required="true" itemKey="type" itemLabel="type" allowNull="true" emptyText="Please Select"></select><br/>
+
+Org Unit:<br/>
+<select depends="entity.type" name="entity.usergroupName" required="true"  context="userform" items="showParent();" itemKey="objid" itemLabel="name" allowNull="true" emptyText="Please Select"></select><br/>
+
+Role:<br/>
+<select context="userform" items="roleList" name="entity.rolename" required="true" itemKey="name" itemLabel="name"></select><br/>
+
+<div>
+    <div style="float:left;"><input type="button" context="userform" name="_default" value="Back" immediate="true"/></div>
+    <div style="float:right;"><input type="button" context="userform" name="editLogin" value="Next" immediate="false"/></div>
+</div>

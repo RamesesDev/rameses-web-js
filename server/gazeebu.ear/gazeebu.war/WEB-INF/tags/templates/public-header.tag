@@ -17,8 +17,8 @@
 						<td>&nbsp;</td>
 					</tr>
 					<tr>
-						<td><input type="text" size="15" context="login" name="data.username"></td>
-						<td><input type="password" size="15" context="login" name="data.password"></td>
+						<td><input type="text" size="15" context="login" name="data.username" hint="Username"></td>
+						<td><input type="password" size="15" context="login" name="data.password" hint="Password"></td>
 						<td><input type="button" value="Login" context="login" name="login" style="border:none;"></td>
 					</tr>
 				</table>
