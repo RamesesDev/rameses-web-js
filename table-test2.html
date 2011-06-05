@@ -33,16 +33,16 @@
 					var _this = this;
 
 					this.list = [
-						{id: '001', firstname:"elmo", lastname:"nazareno", category: 'A'},
-						{id: '002', firstname:"jess", lastname:"zamora", category: 'A'},
-						{id: '003', firstname:"worgie", lastname:"flores", category: 'A'},
-						{id: '004', firstname:"michael", lastname:"ramos", category: 'B'},
-						{id: '005', firstname:"johana", lastname:"cardona", category: 'B'},
-						{id: '006', firstname:"chariss", lastname:"villarosa", category: 'B'},
-						{id: '007', firstname:"rojean", lastname:"vergara", category: 'C'},
-						{id: '008', firstname:"robert", lastname:"yap", category: 'C'},
-						{id: '009', firstname:"james", lastname:"yap", category: 'C'},
-						{id: '010', firstname:"loren", lastname:"pedrito", category: 'D'}
+						{id: '001', firstname:"elmo", lastname:"nazareno", category: 'A', sales: 100.00},
+						{id: '002', firstname:"jess", lastname:"zamora", category: 'A', sales: 120.00},
+						{id: '003', firstname:"worgie", lastname:"flores", category: 'A', sales: 80.00},
+						{id: '004', firstname:"michael", lastname:"ramos", category: 'B', sales: 90.00},
+						{id: '005', firstname:"johana", lastname:"cardona", category: 'B', sales: 70.00},
+						{id: '006', firstname:"chariss", lastname:"villarosa", category: 'B', sales: 77.00},
+						{id: '007', firstname:"rojean", lastname:"vergara", category: 'C', sales: 99.00},
+						{id: '008', firstname:"robert", lastname:"yap", category: 'C', sales: 444.00},
+						{id: '009', firstname:"james", lastname:"yap", category: 'C', sales: 33.00},
+						{id: '010', firstname:"loren", lastname:"pedrito", category: 'D', sales: 20.00}
 					];
 					
 					this.cityList;
@@ -79,22 +79,24 @@
 		<br/>
 		<table context="profile" items="list" varName="item" varStatus="stat"
 		       border="1" cellpadding="3" cellspacing="0" width="400"
-		       script="">
+		       script="if( stat.total ) stat.total += item.sales; else stat.total = item.sales;">
 			<thead>
 				<th style="text-align: center">Id</th>
 				<th>First Name</th>
 				<th>Last Name</th>
-				<th>Remarks</th>
+				<th>Sales</th>
+				<th>Total Sales</th>
 			</thead>
 			<tbody>
 				<tr styleExpr="#{stat.prevItem.category != item.category? '' : 'display: none'}; background: #369; color: #fff;">
-					<td colspan="4" >${item.category}</td>
+					<td colspan="6" >${item.category}</td>
 				</tr>
 				<tr class="#{stat.index%2==0? 'even' : 'odd'}">
 					<td width="50" align="center" name="item.id">
 					<td name="item.firstname" style=""></td>
 					<td name="item.lastname"></td>
-					<td name="item.remarks"></td>
+					<td name="item.sales"></td>
+					<td name="stat.total"></td>
 				</tr>
 			</tbody>
 		</table>
