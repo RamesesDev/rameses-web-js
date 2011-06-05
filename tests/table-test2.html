@@ -1,15 +1,14 @@
 <html>
 	<head>
-		<script src="js/jquery-all.js"></script>
-		<script src="js/rameses-lib.js"></script>
+		<script src="../js/jquery-all.js"></script>
+		<script src="../js/rameses-lib.js"></script>
 
 		<style>
 			body, table { font: 10pt/145% 'arial', 'verdana'; }
 			th { background: gray; color: #fff; }
 			tr.odd td { background: #e3e3e3; }
 			
-			tr.selected td { background: #323232; }
-			td.selected { color: green; }
+			tr.selected td { background: #323232; color: #ffffbb; }
 		</style>
 		
 		<script type="text/javascript">
@@ -88,7 +87,7 @@
 				<th>Total Sales</th>
 			</thead>
 			<tbody>
-				<tr styleExpr="#{stat.prevItem.category != item.category? '' : 'display: none'}; background: #369; color: #fff;">
+				<tr selectable="false" styleExpr="#{stat.prevItem.category != item.category? '' : 'display: none'}; background: #369; color: #fff;">
 					<td colspan="6" >${item.category}</td>
 				</tr>
 				<tr class="#{stat.index%2==0? 'even' : 'odd'}">

@@ -1062,6 +1062,8 @@ function DataTable( table, bean, controller ) {
 	var varStat =     table.attr('varStatus');
 	var varName =     table.attr('varName');
 	var name =        table.attr('name');
+	var script =      table.attr('script');
+
 
 	if( table.attr('items') ) {
 		model.setList( controller.get(table.attr('items')) );
@@ -1101,6 +1103,7 @@ function DataTable( table, bean, controller ) {
 			status.prevItem = (i > 0)? list[i-1] : null;
 			status.nextItem = (i < list.length-1)? list[i+1] : null;
 
+			executeScript(item);
 			var row = createRow(i, item).appendTo( tbody );
 			if( selected == item ) {
 				var pos = table.data('selected_position');
@@ -1126,6 +1129,28 @@ function DataTable( table, bean, controller ) {
 		BindingUtils.bind( null, table );
 	}
 
+	
+	var scriptFn;
+	
+	function executeScript( _itm ) {
+		if( !script ) return;
+		if( !scriptFn ) {
+			var args = [];
+			args.push( varName || '___arg1' );
+			args.push( varStat || '___arg2' );
+			if( varName )
+				scriptFn = eval('(function ___eval(' + args.join(',') + ') { ' + script + ' })');
+			else
+				scriptFn = eval('(function ___eval(' + args.join(',') + ') { with(___arg1){ ' + script + ' }})');
+		}
+		try {
+			scriptFn( _itm, status );
+		}
+		catch(e){
+			if( window.console ) console.log( e.message );
+		}
+	}
+	
 	function createRow(i, item) {
 		return tpl.clone()
 		 .data('index', i)
@@ -1183,6 +1208,7 @@ function DataTable( table, bean, controller ) {
 		var td = e.tagName? $(e) : $(this);
 
 		if( td.attr('selectable') == 'false' ) return;
+		if( td.parent().attr('selectable') == 'false' ) return;
 		if( prevTd ) prevTd.removeClass('selected');
 
 		if( td.hasClass('selected') )
