@@ -1,5 +1,5 @@
 /***
-    version 1.5.25.5
+    version 1.5.25.6
     resources in the js script:
 	NumberUtils
     DynamicProxy
@@ -166,67 +166,6 @@ var NumberUtils = new function() {
         }
     }
 }
-
-
-function DynamicProxy( context ) {
-    this.context = context;
-    this.create = function( svcName ) {
-        return new _DynamicProxyService( svcName, this.context );
-    }
-
-		/* DynamicProxy */
-	function _DynamicProxyService( name, context ) {
-		this.name = name;
-		this.context = context;
-		this.env = {};
-
-		var convertResult = function( result ) {
-			if(result!=null) {
-				//alert( result );
-				if( result.trim().substring(0,1) == "["  || result.trim().substring(0,1) == "{"  ) {
-					return $.parseJSON(result);
-				}
-				else {
-					return eval(result);
-				}
-			}
-			return null;
-		}
-
-		this.invoke = function( action, args, handler ) {
-			jargs = null;
-			if(args!=null) { jargs = $.toJSON( args ); }
-			var contextPath = window.location.pathname.substring(1);
-			contextPath = contextPath.substring(0,contextPath.indexOf('/'));
-			var urlaction = "/" + contextPath + "/jsinvoker/"+this.context+"/"+this.name+ "."+action;
-			var err = null;
-			if(handler==null) {
-				var result = $.ajax( {
-					url:urlaction,
-					type:"POST",
-					error: function( xhr ) { err = xhr.responseText },
-					data: {args: jargs},
-					async : false }).responseText;
-
-				if( err!=null ) {
-					throw new Error(err);
-				}
-				return convertResult( result );
-			}
-			else {
-				$.ajax( {
-					url: urlaction,
-					type: "POST",
-					error: function( xhr ) { err = xhr.responseText },
-					data: {args: jargs},
-					async: true,
-					success: function( data) { handler( convertResult(data)); }
-				});
-			}
-		}
-	}
-}
-
 
 var BindingUtils = new function() {
     //loads all controls and binds it to the context object
@@ -525,7 +464,7 @@ function Controller( code, pages ) {
     this.loadAction;
     this.window;
 	this.currentPage;
-
+	
     this.set = function(fieldName, value) {
         BeanUtils.setProperty( this.code, fieldName, value );
 		this.notifyDependents( fieldName );
@@ -550,7 +489,6 @@ function Controller( code, pages ) {
 
     this.invoke = function( control, action, args, immed  ) {
         if( action.startsWith("_") ) {
-            action = action.substring(1);
             this.navigate( action, control );
         }
         else {
@@ -588,17 +526,10 @@ function Controller( code, pages ) {
         else if(outcome.classname == 'opener' ) {
 			outcome.parent = this.name;
 			outcome.source = control;
-            outcome.load();
+			outcome.load();
         }
         else if( outcome == "_close" ) {
-            if( ContextManager.modalStack.length > 0 ) {
-				var c = ContextManager.modalStack.pop();
-                var tgt = c.target;
-				var parent = c.parent;
-                $('#'+tgt).dialog('close');
-                if(parent!=null) $get(parent).refresh();
-            }
-            else if( this.window && this.window.close ) {
+			if( this.window && this.window.close ) {
                 this.window.close();
             }
         }
@@ -655,7 +586,7 @@ function Controller( code, pages ) {
 
 var ContextManager = new function() {
     this.data = {}
-    this.modalStack= [];
+    
     this.create = function( name, code, pages ) {
         if(name==null)
             throw new Error("Please indicate a name");
@@ -788,7 +719,7 @@ BindingUtils.handlers.input_checkbox = function(elem, controller, idx ) {
 					_list.push( v );
 				}
 				else {
-					_list.remove( function(o) { return (o == v) } );
+					_list.removeAll( function(o) { return (o == v) } );
 				}
 			}
 		}
@@ -815,7 +746,9 @@ BindingUtils.handlers.input_checkbox = function(elem, controller, idx ) {
 BindingUtils.handlers.input_button = function( elem, controller, idx ) {
     var action = elem.getAttribute("name");
     if(action==null || action == '') return;
-    elem.onclick = function() { $get(controller.name).invoke( this, action );  }
+    elem.onclick = function() { 
+		$get(controller.name).invoke( this, action );  
+	}
 };
 
 BindingUtils.handlers.a = function( elem, controller, idx ) {
@@ -1590,6 +1523,7 @@ function PopupOpener( page, name, params, target ) {
     this.target = target;
     this.params = params;
 	this.parent;
+	this.parentTarget;
 	this.title;
 	this.source;
 	this.options = {};
@@ -1611,6 +1545,11 @@ function PopupOpener( page, name, params, target ) {
         	div = $('<div id="' + id + '"></div>').appendTo('body');
         }
 
+		//if name not specified, use the filename by convention
+		if(n==null || n.trim() == "" ) {
+			n = this.page.substring( this.page.lastIndexOf("/")+1, this.page.indexOf(".") );
+		}	
+
 		//remove div if dynamically created
 		this.options.close = function() { if( !target ) div.remove();	}
 		this.options.modal = true;
@@ -1619,14 +1558,20 @@ function PopupOpener( page, name, params, target ) {
 		var options = $.extend(defaultOptions, this.options);
 
         div.load(this.page, WindowUtil.getParameters(), function() {
+			if( $get(n) == null ) {
+				alert( "Error in popup. Context " + n + " not found. Pls. specify a specific context otherwise context is same as page name");
+				throw new Error("Popup error");
+			}
+		
         	if(p!=null) {
                 for( var key in p ) {
                     try{ $ctx(n)[key] = p[key]; }catch(e){;}
                 }
             }
             BindingUtils.load( div);
-            ContextManager.modalStack.push( {target: div.attr('id'), parent: parent} );
-
+			$get(n).window = {
+				close: function() { div.dialog("close"); $get(parent).refresh(); }
+			};	
             //make into a dialog after the content is loaded.
             div.dialog(options);
         });
@@ -1650,14 +1595,23 @@ function DropdownOpener( page, name, params, target ) {
         var n = this.name;
         var p = this.params;
 
+		//if name not specified, use the filename by convention
+		if(n==null || n.trim() == "" ) {
+			if( typeof this.page == "string" ) {
+				n = this.page.substring( this.page.lastIndexOf("/")+1, this.page.indexOf(".") );
+			}	
+		}
 		var w = new DropdownWindow(this.source, this.options, this.styleClass);
         w.show(this.page, WindowUtil.getParameters(), function(div) {
-        	if(p!=null) {
-                for( var key in p ) {
-                    try{ $ctx(n)[key] = p[key]; }catch(e){;}
-                }
-            }
-            BindingUtils.load( div);
+			if( n!=null ) {
+				if(p!=null) {
+					for( var key in p ) {
+						try{ $ctx(n)[key] = p[key]; }catch(e){;}
+					}
+				}
+				BindingUtils.load( div);
+				$get(n).window = { close: function() { w.close();  } }
+			}
         });
     };
 
@@ -1696,7 +1650,7 @@ function DropdownOpener( page, name, params, target ) {
 			}
 		};
 
-		this.close = function() { doHide(); };
+		this.close = function() { hide(); };
 
 		function hide() {
 			div.hide('slide', {direction:"up"}, function() { $(this).remove(); });
@@ -1772,28 +1726,6 @@ var WindowUtil = new function() {
 	
 };
 
-var ProxyService = new function() {
-	this.services = {}
-	this.lookup = function(name) {
-		if( this.services[name]==null ) {
-			var err = null;
-			var contextPath = window.location.pathname.substring(1);
-			contextPath = contextPath.substring(0,contextPath.indexOf('/'));
-			var urlaction = "/" + contextPath + "/remote-proxy/"+name + ".js";
-			var result = $.ajax( {
-                url:urlaction,
-                type:"POST",
-                error: function( xhr ) { err = xhr.responseText },
-                async : false }).responseText;
-			if( err!=null ) {
-				throw new Error(err);
-            }
-			this.services[name] = eval( result );
-		}
-		return this.services[name];
-	}
-};
-
 var AjaxStatus = function( msg ) {
 	var div = $('<div class="ajax-status" style="position:absolute; z-index:300000"></div>')
 	 .html( msg )
@@ -1823,4 +1755,83 @@ $(function(){
 });
 
 
+function DynamicProxy( context ) {
+    this.context = context;
+    this.create = function( svcName ) {
+        return new _DynamicProxyService( svcName, this.context );
+    }
 
+		/* DynamicProxy */
+	function _DynamicProxyService( name, context ) {
+		this.name = name;
+		this.context = context;
+		this.env = {};
+
+		var convertResult = function( result ) {
+			if(result!=null) {
+				//alert( result );
+				if( result.trim().substring(0,1) == "["  || result.trim().substring(0,1) == "{"  ) {
+					return $.parseJSON(result);
+				}
+				else {
+					return eval(result);
+				}
+			}
+			return null;
+		}
+
+		this.invoke = function( action, args, handler ) {
+			jargs = null;
+			if(args!=null) { jargs = $.toJSON( args ); }
+			var contextPath = window.location.pathname.substring(1);
+			contextPath = contextPath.substring(0,contextPath.indexOf('/'));
+			var urlaction = "/" + contextPath + "/jsinvoker/"+this.context+"/"+this.name+ "."+action;
+			var err = null;
+			if(handler==null) {
+				var result = $.ajax( {
+					url:urlaction,
+					type:"POST",
+					error: function( xhr ) { err = xhr.responseText },
+					data: {args: jargs},
+					async : false }).responseText;
+
+				if( err!=null ) {
+					throw new Error(err);
+				}
+				return convertResult( result );
+			}
+			else {
+				$.ajax( {
+					url: urlaction,
+					type: "POST",
+					error: function( xhr ) { err = xhr.responseText },
+					data: {args: jargs},
+					async: true,
+					success: function( data) { handler( convertResult(data)); }
+				});
+			}
+		}
+	}
+}
+
+var ProxyService = new function() {
+	this.services = {}
+	this.lookup = function(name) {
+		if( this.services[name]==null ) {
+			var err = null;
+			var contextPath = window.location.pathname.substring(1);
+			contextPath = contextPath.substring(0,contextPath.indexOf('/'));
+			var urlaction = "/" + contextPath + "/remote-proxy/"+name + ".js";
+			var result = $.ajax( {
+                url:urlaction,
+                type:"POST",
+                error: function( xhr ) { err = xhr.responseText },
+                async : false }).responseText;
+			if( err!=null ) {
+				throw new Error(err);
+            }
+			this.services[name] = eval( result );
+		}
+		return this.services[name];
+	}
+};
