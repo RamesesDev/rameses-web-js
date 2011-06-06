@@ -1,5 +1,5 @@
 /***
-    version 1.5.25.6
+    version 1.5.25.7
     resources in the js script:
 	NumberUtils
     DynamicProxy
@@ -220,12 +220,12 @@ var BindingUtils = new function() {
 		}
 	};
 
-    this.bind = function(ctxName, selector) {
+    this.bind = function(selector) {
 		//just bind all elements that has the attribute context
         $("[context][context!='']", selector? selector : null).each ( controlLoader );
     };
 
-    this.loadViews = function(ctxName, selector) {
+    this.loadViews = function(selector) {
 		//var predicate = (ctxName!=null && ctxName!="") ? "[context][context='"+ctxName+"']" : "[context][context!='']";
         //loads all divs with context and displays the page into the div.
         $('div[context][context!=""]', selector? selector : null).each ( containerLoader );
@@ -297,8 +297,8 @@ var BindingUtils = new function() {
             this.loaders[i]();
         }
         this.loaders = [];
-        this.bind(null,selector);
-        this.loadViews(null,selector);
+        this.bind(selector);
+        this.loadViews(selector);
 	};
 
 	/**---------------------------------------------------*
@@ -480,7 +480,7 @@ function Controller( code, pages ) {
 
     this.refresh = function( fieldNames ) {
         //try to use jquery here.
-        if(this.name!=null) BindingUtils.bind( this.name )
+        if(this.name!=null) BindingUtils.bind()
     }
 
     this.reload = function() {
@@ -760,7 +760,14 @@ BindingUtils.handlers.a = function( elem, controller, idx ) {
     if( !$e.attr('href') ) $e.attr('href', '#');
     
     elem.onclick = function() { 
-		if( action ) $get(controller.name).invoke( this, action ); 
+		if( action ) {
+			try {
+				$get(controller.name).invoke( this, action ); 
+			}
+			catch(e) {
+				if( window.console ) console.log( e.message );	
+			}
+		}
 		return false; 
 	}
 }
@@ -784,7 +791,7 @@ BindingUtils.handlers.label = function( elem, controller, idx ){
 	lbl.html( expr.evaluate(ctx) );
 	
 	//bind label elements
-	BindingUtils.bind( null, lbl );
+	BindingUtils.bind( lbl );
 };
 
 //------ input text case support ----
@@ -1082,7 +1089,7 @@ function DataTable( table, bean, controller ) {
 		
 		$(selectedTds).each(function(i,e){ td_mousedown(e, true); });
 
-		BindingUtils.bind( null, table );
+		BindingUtils.bind( table );
 	}
 
 	
@@ -1609,9 +1616,9 @@ function DropdownOpener( page, name, params, target ) {
 						try{ $ctx(n)[key] = p[key]; }catch(e){;}
 					}
 				}
-				BindingUtils.load( div);
-				$get(n).window = { close: function() { w.close();  } }
 			}
+			BindingUtils.load( div);
+			$get(n).window = { close: function() { w.close();  } }
         });
     };
 
