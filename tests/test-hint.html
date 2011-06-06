@@ -1,0 +1,44 @@
+<html>
+	<head>
+		<link href="../js/css/jquery-ui/jquery.css" rel="stylesheet"/>
+		<link href="../js/css/rameses-lib.css" rel="stylesheet"/>
+		<script src="../js/jquery-all.js"></script>
+		<script src="../js/rameses-lib.js"></script>
+
+		<script>
+			$put(
+				'test',
+				new function() {
+					this.entity = {};
+				}
+			);
+			
+			//$(function(){ $('.dialog').dialog(); });
+		</script>
+	</head>
+
+	<body>
+		<div class="dialog">
+		  <table>
+			<tr>
+				<td>
+					<input type="text" context="test" name="entity.username" hint="Username"/><br/>
+					<input type="password" context="test" name="entity.password" hint="Password"/><br/>
+					<input type="password" context="test" name="entity.cpassword" hint="Confirm Password"/><br/>
+					<input type="text" context="test" name="entity.firstname" hint="Firstname" textcase="upper"/><br/>
+					<input type="text" context="test" name="entity.lastname" hint="Lastname" textcase="upper"/><br/>
+					<input type="text" context="test" name="entity.middlename" hint="Middlename" textcase="upper"/><br/>
+					<input type="text" context="test" name="entity.email" hint="Email Address"/><br/>
+					<textarea context="test" name="entity.message" hint="Leave a message" cols="50" rows="5"></textarea>
+				</td>
+			</tr>
+			<tr>
+				<td>
+					<input type="button" value="Save"/>
+				</td>
+			</tr>
+		  </table>
+		</div>
+	</body>
+
+</html>

@@ -233,7 +233,7 @@ var BindingUtils = new function() {
 
     this.handlers = {};
     this.loaders = [];
-    this.input_attributes = [];
+    this.input_attributes = {};
 
 	var controlLoader =  function(idx, elem) {
 		var $e = $(elem);
@@ -333,9 +333,12 @@ var BindingUtils = new function() {
 		}
 
         //add additional input behaviors
-        //$(this.input_attributes).each(
-        //    function(idx,func) { func(elem, controller); }
-        //)
+        for(var key in this.input_attributes) {
+            if( !$(elem).attr(key) ) return;
+			
+			var func = this.input_attributes[key];
+			if( typeof func == 'function' ) func(elem, controller, $(elem).attr(key));
+        }
     };
 
 	this.notifyDependents = function(dependName, _context) {
@@ -378,7 +381,7 @@ var BindingUtils = new function() {
 		 .data('hint_decorator', this);
 
 		var span = $('<span class="hint" style="position:absolute; z-index:100; overflow: hidden;"></span>')
-		 .html( input.attr('hint') )
+		 .html( $('<nobr></nobr>').append(input.attr('hint')) )
 		 .hide()
 		 .disableSelection()
 		 .insertBefore( input )
@@ -394,6 +397,8 @@ var BindingUtils = new function() {
 		//reposition span on window resize
 		$(window).bind('resize', position);
 		$(document).bind('resize', position);
+		if( inp.tagName.toLowerCase() == 'textarea' )
+			input.bind('resize', position);
 
 		function refresh(){
 			if( !input.val() )
@@ -402,9 +407,8 @@ var BindingUtils = new function() {
 				hideHint();
 		}
 
-		var isPositioned;
-
 		function position() {
+			if( !span.is(':visible') ) return;
 			var pos = input.position();
 			var css = {left: pos.left + parseInt( input.css('paddingLeft') ) + 5};
 			var paddingTop = parseInt( input.css('paddingTop') );
@@ -417,13 +421,13 @@ var BindingUtils = new function() {
 			else {
 				css.top = pos.top + paddingTop;
 			}
-						
+			
+			css.width = input.width() - parseInt(input.css('borderRightWidth')) - 1;
 			span.css( css );
-			isPositioned = true;
 		}
 
 		function showHint() {
-			span.css('width', input.width()).show();
+			span.show();
 			position();
 		}
 
@@ -848,6 +852,25 @@ BindingUtils.handlers.label = function( elem, controller, idx ){
 	
 	//bind label elements
 	BindingUtils.bind( null, lbl );
+};
+
+//------ input text case support ----
+BindingUtils.input_attributes.textcase = function(elem, controller, textcase) {
+	if( textcase != 'upper' && textcase != 'lower' ) return;
+	if( $(elem).data('___txtcs') ) return;
+	
+	$(elem).data('___txtcs', true)
+	 .keydown(function(e) {
+		if( e.keyCode >= 65 && e.keyCode <= 92 ) {
+			var str = String.fromCharCode(e.keyCode);
+			str = (textcase == 'lower'? str.toLowerCase() : str.toUpperCase());
+			var arr = this.value.split('');
+			arr.splice( this.selectionStart, this.selectionEnd, str );
+			this.value = arr.join('');
+			$(this).trigger('keypress', e);
+			return false;
+		}
+	 });
 };
 
 
