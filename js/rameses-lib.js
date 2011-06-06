@@ -1539,6 +1539,11 @@ function PopupOpener( page, name, params, target ) {
 
     this.load = function() {
         var n = this.name;
+        
+        if( !n ) {
+			throw new Error("PopupOpener Error: Context name is required.");
+		}
+        
         var p = this.params;
 		var parent = this.parent;
 		var target = this.target;
@@ -1552,11 +1557,6 @@ function PopupOpener( page, name, params, target ) {
         	div = $('<div id="' + id + '"></div>').appendTo('body');
         }
 
-		//if name not specified, use the filename by convention
-		if(n==null || n.trim() == "" ) {
-			n = this.page.substring( this.page.lastIndexOf("/")+1, this.page.indexOf(".") );
-		}	
-
 		//remove div if dynamically created
 		this.options.close = function() { if( !target ) div.remove();	}
 		this.options.modal = true;
@@ -1565,12 +1565,7 @@ function PopupOpener( page, name, params, target ) {
 		var options = $.extend(defaultOptions, this.options);
 
         div.load(this.page, WindowUtil.getParameters(), function() {
-			if( $get(n) == null ) {
-				alert( "Error in popup. Context " + n + " not found. Pls. specify a specific context otherwise context is same as page name");
-				throw new Error("Popup error");
-			}
-		
-        	if(p!=null) {
+			if(p!=null) {
                 for( var key in p ) {
                     try{ $ctx(n)[key] = p[key]; }catch(e){;}
                 }
@@ -1600,6 +1595,11 @@ function DropdownOpener( page, name, params, target ) {
 
     this.load = function() {
         var n = this.name;
+        
+        if( !n ) {
+			throw new Error("Dropdown Opener Error: Context name is required.");
+		}
+        
         var p = this.params;
 
 		//if name not specified, use the filename by convention
