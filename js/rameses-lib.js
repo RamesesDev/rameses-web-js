@@ -132,17 +132,29 @@ String.prototype.evaluate = function( ctx ) {
                 }
                 if( typeof o === 'number' || typeof o === 'boolean' ); //do nothing
                 else if( typeof o === 'string' )
-                    o = "'" + o + "'";
+                    o = "'" + strEscape(o) + "'";
                 else if ( o == null || typeof o === 'undefined' )
                     o = 'null';
                 else
-                    o = "'[object]'";
+                    o = "'[object]'";                    
             }
             str = str.replace( match[i], o);
         }
 
-        return str? eval( str )+'' : '';
+		try {
+        	return str? eval( str )+'' : '';
+		}
+		catch(e) {
+			if( window.console ) console.log( 'Error: ' + e.message + ', expr: ' + str );
+			return '';	
+		}
     }
+    
+    function strEscape( str ) {
+		return str.replace(/'/g, '\\\'')
+		          .replace(/\n/g, '\\n')
+		          .replace(/\t/, '\\t');
+	}
 };
 
 var NumberUtils = new function() {
@@ -1799,7 +1811,7 @@ function DynamicProxy( context ) {
 					url:urlaction,
 					type:"POST",
 					error: function( xhr ) { err = xhr.responseText },
-					data: {args: jargs},
+					data: {args: jargs, env: this.env},
 					async : false }).responseText;
 
 				if( err!=null ) {
@@ -1812,7 +1824,7 @@ function DynamicProxy( context ) {
 					url: urlaction,
 					type: "POST",
 					error: function( xhr ) { err = xhr.responseText },
-					data: {args: jargs},
+					data: {args: jargs, env: this.env},
 					async: true,
 					success: function( data) { handler( convertResult(data)); }
 				});
