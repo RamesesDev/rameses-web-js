@@ -170,8 +170,7 @@ var NumberUtils = new function() {
 
     this.toDecimal = function( val ) {
         if( val.indexOf( ".") < 0 ) {
-            alert( parseFloat(val).toFixed(2) );
-            return parseFloat(val).toFixed(2);
+            return eval(parseFloat(val).toFixed(2));
         }
         else {
             return eval(val);
@@ -1800,18 +1799,21 @@ function DynamicProxy( context ) {
 		}
 
 		this.invoke = function( action, args, handler ) {
-			jargs = null;
-			if(args!=null) { jargs = $.toJSON( args ); }
 			var contextPath = window.location.pathname.substring(1);
 			contextPath = contextPath.substring(0,contextPath.indexOf('/'));
 			var urlaction = "/" + contextPath + "/jsinvoker/"+this.context+"/"+this.name+ "."+action;
-			var err = null;
+			
+			var err = null;			
+			var data = {};
+			if( args )     { data.args = $.toJSON( args ); }
+			if( this.env ) { data.env = $.toJSON( this.env ); }
+			
 			if(handler==null) {
 				var result = $.ajax( {
 					url:urlaction,
 					type:"POST",
 					error: function( xhr ) { err = xhr.responseText },
-					data: {args: jargs, env: this.env},
+					data: data,
 					async : false }).responseText;
 
 				if( err!=null ) {
@@ -1824,7 +1826,7 @@ function DynamicProxy( context ) {
 					url: urlaction,
 					type: "POST",
 					error: function( xhr ) { err = xhr.responseText },
-					data: {args: jargs, env: this.env},
+					data: data,
 					async: true,
 					success: function( data) { handler( convertResult(data)); }
 				});
