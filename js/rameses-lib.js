@@ -291,15 +291,9 @@ var BindingUtils = new function() {
         }
     };
 
-	this.notifyDependents = function(dependName, _context) {
-		var ct = (_context !=null) ? _context + " " : "";
+	this.notifyDependents = function(dependName, selector) {
 		var predicate = "[depends*='"+dependName+"'][context!='']";
-		var filter =  ct + 'select'+predicate+',';
-        filter += ct + 'input'+predicate+',';
-        filter += ct + 'textarea'+predicate+', ';
-        filter += ct + 'table'+predicate+', ';
-        filter += ct + 'label'+predicate;
-		$(filter).each( controlLoader );
+		$(predicate, selector).each( controlLoader );
 	};
 
 
@@ -1062,7 +1056,7 @@ function DataTable( table, bean, controller ) {
 	var tabIdx;
 
 	function doRender() {
-		tbody.hide('fade').empty();
+		tbody.hide().empty();
 		tabIdx = table.data('index');
 		status.index = 0;
 		var list = model.getList();
@@ -1076,7 +1070,7 @@ function DataTable( table, bean, controller ) {
 			var item = list[i];
 			status.prevItem = (i > 0)? list[i-1] : null;
 			status.nextItem = (i < list.length-1)? list[i+1] : null;
-
+			
 			executeScript(item);
 			var row = createRow(i, item).appendTo( tbody );
 			if( selected == item ) {
@@ -1096,7 +1090,7 @@ function DataTable( table, bean, controller ) {
 			}
 		}
 
-		tbody.stop().show('fade');
+		tbody.show();
 		
 		$(selectedTds).each(function(i,e){ td_mousedown(e, true); });
 
