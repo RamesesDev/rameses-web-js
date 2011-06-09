@@ -1706,6 +1706,10 @@ function Bookmarker( tgt ) {
 	var firstLoad = true;
 	
 	this.load = function( typename ) {
+		$(window).bind( "hashchange", function() {
+			self.onHashChange();
+		});
+		
 		if( window.location.hash && firstLoad ) {
 			firstLoad = false;
 			this.reload();
@@ -1716,12 +1720,7 @@ function Bookmarker( tgt ) {
 			if( !inv ) return;
 			
 			this.invokeSelected( inv );
-			if(this.updateHandler) this.updateHandler( inv );	
-			
-			//added also to window
-			$(window).bind( "hashchange", function() {
-				self.onHashChange();
-			});
+			if(this.updateHandler) this.updateHandler( inv );
 		}
 	}
 	
