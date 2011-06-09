@@ -1835,7 +1835,7 @@ function PopupOpener( id, params ) {
 		//remove div if dynamically created
 		this.options.close = function() { div.remove();	}
 		this.options.modal = true;
-		this.options.title = this.title || inv.title;
+		this.options.title = this.title || o.title;
 
 		var options = $.extend(defaultOptions, this.options);
 
