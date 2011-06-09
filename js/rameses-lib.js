@@ -118,7 +118,7 @@ String.prototype.evaluate = function( ctx ) {
     }
 
     function _evaluate(str) {
-        var match = str.match(/[a-zA-Z_\$]+[a-zA-Z_\$\d\.]*|'[^']*'|"[^"]*"/g);
+        var match = str.match(/[a-zA-Z_\$]+[\w\.]*(?:\([^\)]*\))?|'[^']*'|"[^"]*"/g);
         for(var i=0; i<match.length; ++i) {
             var o = '';
             if( match[i].charAt(0) === "'" || match[i].charAt(0) === '"' ) {
@@ -764,9 +764,24 @@ BindingUtils.handlers.input_button = function( elem, controller, idx ) {
 };
 
 BindingUtils.handlers.a = function( elem, controller, idx ) {
-    var action = elem.getAttribute("name");
-    if(action==null || action == '') return;
-    elem.onclick = function() { $get(controller.name).invoke( this, action ); return false;}
+	var $e = $(elem);
+    var action = $e.attr("name");
+    
+    //add an href property if not specified,
+    //css hover does not apply when no href is specified
+    if( !$e.attr('href') ) $e.attr('href', '#');
+    
+    elem.onclick = function() { 
+		if( action ) {
+			try {
+				$get(controller.name).invoke( this, action ); 
+			}
+			catch(e) {
+				if( window.console ) console.log( e.message );	
+			}
+		}
+		return false; 
+	}
 }
 
 BindingUtils.handlers.input_submit = function( elem, controller, idx ) {
@@ -1919,7 +1934,7 @@ function DropdownOpener( id, params ) {
 			div.hide().load( page, params, function(){
 				div.appendTo('body')
 				 .position( posConfig )
-				 .show('fade');
+				 .show('slide', {direction:"up"});
 
 				bindWindowEvt();
 				callback(div);
