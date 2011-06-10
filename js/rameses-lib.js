@@ -432,6 +432,12 @@ var BeanUtils = new function(){
         catch(e) {;}
     }
 
+	this.setProperties = function( bean, map ) {
+		for( var n in map ) {
+			this.setProperty( bean, n, map[n] ); 
+		}
+	}
+	
 	this.invokeMethod = function( bean, action, args ) {
 		var _act = action;
         if(!_act.endsWith("\\)")) {
@@ -511,6 +517,18 @@ function Controller( code, pages ) {
                 }
                 if(immediate=="false" || immediate==false) this.validate();
                 if(this.code == null) throw new Error( "Code not set");
+				
+				/*added support for parameters that are set when firing a button or action.*/
+				if( $(control).attr("params") ) {
+					try {
+						var _parms  = $.parseJSON($(control).attr('params'));
+						BeanUtils.setProperties( this.code, _parms );
+					}
+					catch(e) {
+						if(window.console) console.log("error in control params " + e.message );
+					}
+				}
+				
                 var outcome = action;
                 if( !outcome.startsWith("_")) {
                     outcome = BeanUtils.invokeMethod( this.code, action, args );
@@ -542,19 +560,29 @@ function Controller( code, pages ) {
                 this.container.close();
             }
         }
-		else if( outcome == "_reload" && this.container && this.container.reload ) {
-			this.container.reload();	
+		else if( outcome == "_reload" ) {
+			if(this.container && this.container.reload) {
+				this.container.reload();	
+			}
+			else {
+				//intended only for <div context="name"></div>
+				var _outcome = this.currentPage;	
+				var _target = this.name;
+				var _controller = this;
+				$('#'+_target).load( this.pages[_outcome], WindowUtil.getAllParameters('#'+_target), function() { 
+					if( _controller.code.onpageload != null ) _controller.code.onpageload(_outcome);
+					_controller.refresh(); 
+				} );
+			}
 		}
         else {
-			if( outcome == "_reload" ) outcome = this.currentPage;
+			//intended only for <div context="name"></div>
 			if( outcome == null ) outcome = "default";
-			
             if(outcome.startsWith("_")) outcome = outcome.substring(1);
 			this.currentPage = outcome;
             var target = this.name;
             var _controller = this;
-			
-            $('#'+target).load( this.pages[outcome], WindowUtil.getParameters(), function() { 
+            $('#'+target).load( this.pages[outcome], WindowUtil.getAllParameters(), function() { 
                 if( _controller.code.onpageload != null ) _controller.code.onpageload(outcome);
                 _controller.refresh(); 
             } );
@@ -1525,6 +1553,20 @@ var WindowUtil = new function() {
 		return this.parseParameters( window.location.href.slice(window.location.href.indexOf('?') + 1) );
 	}
 	
+	//this will retrieve all parameters including hidden parameters.
+	this.getAllParameters = function(selector) {
+		var f = this.getParameters();
+		if(f==null) f = {};
+		if( selector ) {
+			$("input[type='hidden'][context!='']", selector).each(function(i,elm){
+				if( elm.name ) {
+					f[elm.name] = $get($(elm).attr('context')).get( elm.name );
+				}
+			});
+		}
+		return f;
+	}
+	
 	this.parseParameters = function( str ) {
 		var vars = {}, hash;
 		var hashes = str.split('&');
@@ -1673,6 +1715,11 @@ var InvokerUtil = new function() {
 		return index[id];
 	}
 	
+	this.invokeOpener = function( opener, control ) {
+		opener.source = control;
+		opener.load();
+	}
+	
 };
 
 /***
@@ -1696,7 +1743,7 @@ function Bookmarker( tgt ) {
 		updateHash( inv, params );
 		
 		var content = $('#'+this.target);		
-		content.load(inv.page, WindowUtil.getParameters(), function() {
+		content.load(inv.page, WindowUtil.getAllParameters(), function() {
 			var canProceed = true;
 			try {
 				if( $get(inv.context) == null )	canProceed = false;
@@ -1730,7 +1777,7 @@ function Bookmarker( tgt ) {
 		$(window).bind( "hashchange", function() {
 			self.onHashChange();
 		});
-		
+	
 		if( window.location.hash && firstLoad ) {
 			firstLoad = false;
 			this.reload();
@@ -1741,7 +1788,7 @@ function Bookmarker( tgt ) {
 			if( !inv ) return;
 			
 			this.invokeSelected( inv );
-			if(this.updateHandler) this.updateHandler( inv );
+			if(this.updateHandler) this.updateHandler( inv );	
 		}
 	}
 	
@@ -1867,7 +1914,7 @@ function PopupOpener( id, params ) {
 					}
 				}
 				$get(n).container = {
-					close: function() { div.dialog("close"); },
+					close: function() { div.dialog("close"); if(caller) caller.refresh(); },
 					refresh: function() { $get(n).refresh(); }
 				};	
 			}
@@ -1899,7 +1946,8 @@ function DropdownOpener( id, params ) {
         var n = inv.context;
         var p = this.params;
 		var page = inv.page;
-
+		var caller = this.caller;
+		
 		var w = new DropdownWindow(this.source, this.options, this.styleClass);
         w.show( page, WindowUtil.getParameters(), function(div) {
 			if( n!=null ) {
@@ -1910,7 +1958,7 @@ function DropdownOpener( id, params ) {
 				}
 				BindingUtils.load( div );
 				$get(n).container = { 
-					close:   function() { w.close(); },
+					close:   function() { w.close(); if(caller) caller.refresh() },
 					refresh: function() { $get(n).refresh(); }
 				}
 			}
