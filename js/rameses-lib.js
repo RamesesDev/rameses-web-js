@@ -27,6 +27,10 @@
 String.prototype.trim = function(){ return (this.replace(/^[\s\xA0]+/, "").replace(/[\s\xA0]+$/, ""))};
 String.prototype.startsWith = function(str) {return (this.match("^"+str)==str)};
 String.prototype.endsWith = function(str) {return (this.match(str+"$")==str)};
+
+//******************************************************************************************************************
+// Array extensions
+//******************************************************************************************************************
 Array.prototype.remove = function( from, to ) {
 	var rest = this.slice((to || from) + 1 || this.length);
 	this.length = from < 0 ? this.length + from : from;
@@ -156,6 +160,22 @@ String.prototype.evaluate = function( ctx ) {
 		          .replace(/\t/, '\\t');
 	}
 };
+
+//******************************************************************************************************************
+// Number extensions
+//******************************************************************************************************************
+Number.prototype.formatDecimal = function() {
+	var nStr = this.toFixed(2);
+	x = nStr.split('.');
+	x1 = x[0];
+	x2 = x.length > 1 ? '.' + x[1] : '';
+	var rgx = /(\d+)(\d{3})/;
+	while (rgx.test(x1)) {
+		x1 = x1.replace(rgx, '$1' + ',' + '$2');
+	}
+	return x1 + x2;
+};
+
 
 var NumberUtils = new function() {
     this.toNumber = function( val ) {
