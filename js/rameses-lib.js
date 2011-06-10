@@ -1735,8 +1735,9 @@ var InvokerUtil = new function() {
 		return index[id];
 	}
 	
-	this.invokeOpener = function( opener, control ) {
+	this.invokeOpener = function( opener, control, options ) {
 		opener.source = control;
+		if(options) opener.options = options;
 		opener.load();
 	}
 	
