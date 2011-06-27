@@ -1,5 +1,5 @@
 /***
-    version 1.5.25.7
+    version 1.5.25.9
     resources in the js script:
 	NumberUtils
     DynamicProxy
@@ -229,11 +229,20 @@ var BindingUtils = new function() {
 			$e.hide();
 		}
 		
+
 	    var _self = BindingUtils;
 		var contextName = $(elem).attr( 'context' );
         var controller = $get(contextName);
         if( controller != null ) {
 			if( controller.name == null ) controller.name = contextName;
+			
+			if( $e.attr('action') ) {
+				var action = $e.attr('action');
+				elem.onclick = function() { 
+					$get(controller.name).invoke( this, action );  
+				}
+			}
+			
             var n = elem.tagName.toLowerCase()
             if(n == "input") n = n + "_" + elem.type ;
 			if( _self.handlers[n] ) _self.handlers[n]( elem, controller, idx );
@@ -241,7 +250,7 @@ var BindingUtils = new function() {
     };
 
 	var containerLoader = function(idx, div ) {
-		var contextName = div.getAttribute('context');
+		var contextName = div.getAttribute('controller');
 		if(div.id==null || div.id=='') div.id = contextName;
 		var controller = $get(contextName);
 		if( controller != null ) {
@@ -259,7 +268,7 @@ var BindingUtils = new function() {
     this.loadViews = function(ctxName, selector) {
 		//var predicate = (ctxName!=null && ctxName!="") ? "[context][context='"+ctxName+"']" : "[context][context!='']";
         //loads all divs with context and displays the page into the div.
-        $('div[context][context!=""]', selector? selector : null).each ( containerLoader );
+        $('div[controller][controller!=""]', selector? selector : null).each ( containerLoader );
     };
 
     //utilities
@@ -1534,6 +1543,98 @@ function DefaultTableModel() {
 }
 // end of DefaultTableModel class
 
+/**
+ *  <OL> and <UL> plugin
+ *    @author  jaycvergS
+ */
+
+(function(){
+
+	BindingUtils.handlers.ol = renderer;
+	BindingUtils.handlers.ul = renderer;
+	
+	//shared renderer
+	function renderer( elem, controller, idx ) {
+		var $e = $(elem);
+		if( !$e.attr('items') ) return;
+		
+		var tpl = $e.data('___template');
+		if( !tpl && !$e.data('___binded') ) {
+			tpl = $e.html();
+			$e.data('___template', tpl);
+			$e.data('___binded', true);
+		}
+		
+		var selected;
+		if( $e.attr('name') ) selected = controller.get( $e.attr('name') );
+		
+		var varName = $e.attr('varName');
+		var varStat = $e.attr('varStatus');
+		var status = { index: 0 };
+		
+		$e.empty();
+		$(controller.get($e.attr('items'))).each(function(i,o){
+			var li;
+			if( tpl ) {
+				var html = tpl;
+				li = $( (html+'').evaluate( function(n) { return resolve(n, o); } ) );
+			}
+			else {
+				li = $( '<li>' + o + '</li>' );
+			}
+			
+			if( o == selected ) li.addClass('selected');
+			
+			li.data('value', o);
+			$e.append( li );
+			
+			status.index++;
+		});
+		
+		if( $e.attr('name') ) {
+			$e.find('li').mousedown(function(){
+				controller.set($e.attr('name'), $(this).data('value'));
+				$e.find('li').removeClass('selected');
+				$(this).addClass('selected');
+			});
+		}
+		
+		if( tpl ) {
+			BindingUtils.bind( null, $e );
+		}
+		
+		function resolve( name, ctx ) {
+			try {
+				var _ctx = ctx;
+				if( varStat && name.startsWith( varStat + '\.' ) ) {
+					_ctx = [];
+					_ctx[varStat] = status;
+				}
+				else if( varName ) {
+					if( name.startsWith( varName + '\.' ) ) {
+						_ctx = [];
+						_ctx[varName] = ctx;
+					}
+					else {
+						_ctx = bean;
+					}
+				}
+
+				return BeanUtils.getProperty( _ctx, name );
+			}
+			catch(e) {
+				if( window.console ) console.log( e.message );
+			}
+			return null;
+		}
+	}
+
+})();
+
+//-- end of <OL> and <UL> plugin
+
+
+
 var WindowUtil = new function() {
 	this.reload = function(args) {
 		var qry = "";
@@ -1684,7 +1785,7 @@ function DynamicProxy( context ) {
 				$.ajax( {
 					url: urlaction,
 					type: "POST",
-					error: function( xhr ) { err = xhr.responseText },
+					error: function( xhr ) { handler( null, new Error(xhr.responseText) ); },
 					data: data,
 					async: true,
 					success: function( data) { handler( convertResult(data)); }
@@ -1907,13 +2008,13 @@ function PopupOpener( id, params ) {
 	var defaultOptions = {show: 'fade', hide: 'fade', height: 'auto'};
 
     this.load = function() {
-		var o = InvokerUtil.find(this.id);
-		if(o==null) {
+		var inv = InvokerUtil.find(this.id);
+		if(inv==null) {
 			alert( this.id + " is not registered" );
 			return;
 		}
-        var n = o.context;
-		var page = o.page;
+        var n = inv.context;
+		var page = inv.page;
         var p = this.params;
 		var caller = this.caller;
 		
@@ -1923,9 +2024,10 @@ function PopupOpener( id, params ) {
 		//remove div if dynamically created
 		this.options.close = function() { div.remove();	}
 		this.options.modal = true;
-		this.options.title = this.title || o.title;
+		this.options.title = this.title || inv.title;
 
 		var options = $.extend(defaultOptions, this.options);
+		if( inv.options ) options = $.extend(options, inv.options);
 
         div.load(page, WindowUtil.getParameters(), function() {
 			try {
@@ -1968,6 +2070,8 @@ function DropdownOpener( id, params ) {
         var p = this.params;
 		var page = inv.page;
 		var caller = this.caller;
+		
+		if( inv.options ) this.options = $.extend(this.options, inv.options);
 		
 		var w = new DropdownWindow(this.source, this.options, this.styleClass);
         w.show( page, WindowUtil.getParameters(), function(div) {
