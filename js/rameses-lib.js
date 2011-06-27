@@ -1232,11 +1232,15 @@ function DataTable( table, bean, controller ) {
 	}
 	
 	function td_mouseover() {
+		if( $(this).attr('selectable') == 'false' ) return;
+		
 		$(this).addClass('hover')
 		 .parent().addClass('hover');
 	}
 	
 	function td_mouseout() {
+		if( $(this).attr('selectable') == 'false' ) return;
+		
 		$(this).removeClass('hover')
 		 .parent().removeClass('hover');
 	}
@@ -1833,7 +1837,12 @@ var InvokerUtil = new function() {
 	}	
 	
 	this.find = function(id) {
-		return index[id];
+		if( typeof id == 'string' )
+			return index[id];
+		else if ( id && id.parent ) {
+			return index[ id.parent.evaluate($ctx(id.context)) ]
+		}
+		return null;
 	}
 	
 	this.invokeOpener = function( opener, control, options ) {
@@ -1850,6 +1859,7 @@ var InvokerUtil = new function() {
 function Bookmarker( tgt ) {
 
 	this.target = tgt;
+	this.updateHandler;
 	
 	var self = this;
 	var blockHashChange = false;
@@ -1862,8 +1872,9 @@ function Bookmarker( tgt ) {
 	}
 	
 	this.loadPage = function( inv, params ) {
+		if( inv.params ) params = $.extend(inv.params, params || {});
 		updateHash( inv, params );
-		
+				
 		var content = $('#'+this.target);		
 		content.load(inv.page, WindowUtil.getAllParameters(), function() {
 			var canProceed = true;
@@ -1877,7 +1888,7 @@ function Bookmarker( tgt ) {
 				$get(inv.context).bookmark = self;
 				if(params!=null) {
 					for( var key in params ) {
-						try{ $ctx(inv.context)[key] = params[key]; }catch(e){;}
+						try{ $get(inv.context).set(key,params[key]); }catch(e){;}
 					}
 				}
 				if( inv.parent ) {
@@ -1889,6 +1900,8 @@ function Bookmarker( tgt ) {
 				}
 			}	
 			BindingUtils.load( content );
+			$(document).trigger('resize');
+			if(self.updateHandler) self.updateHandler( inv );
 		});
 	};
 	
@@ -1910,7 +1923,6 @@ function Bookmarker( tgt ) {
 			if( !inv ) return;
 			
 			this.invokeSelected( inv );
-			if(this.updateHandler) this.updateHandler( inv );	
 		}
 	}
 	
@@ -1937,8 +1949,6 @@ function Bookmarker( tgt ) {
 		this.invoke( o.hash, o.param );
 	};
 	
-	this.updateHandler;
-	
 	//assuming called by javascript
 	this.invoke = function(hash, params) {
 		var o = InvokerUtil.find(hash);
@@ -1948,7 +1958,6 @@ function Bookmarker( tgt ) {
 		if( o.page ) {
 			this.loadPage( o, params );
 		}
-		if(this.updateHandler) this.updateHandler( o );	
 	}
 	
 	//this function invokes the current selected item
@@ -1960,7 +1969,7 @@ function Bookmarker( tgt ) {
 	this.invokeParent = function( invId ) {
 		var inv = InvokerUtil.find( invId );
 		if( !inv ) return;
-		var p = InvokerUtil.find( inv.parent );
+		var p = InvokerUtil.find( inv );
 		if( !p ) return;
 		
 		this.invokeSelected( p );
