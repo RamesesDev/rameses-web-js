@@ -1740,6 +1740,30 @@ function DynamicProxy( context ) {
         return new _DynamicProxyService( svcName, this.context );
     }
 
+	var processAsync = function(reqId, handler) {
+		var contextPath = window.location.pathname.substring(1);
+		contextPath = contextPath.substring(0,contextPath.indexOf('/'));
+		var urlaction = "/" + contextPath + "/async/poll";
+		$.ajax( 
+			{
+				url: urlaction,
+				type: "POST",
+				error: function( xhr ) { alert(xhr.responseText); },
+				data: {requestId: reqId},
+				async: true,
+				success: function( data ) { 
+					var o = $.parseJSON(data);
+					if(o.status != "EOF") {
+						if( o.status == "OK" ) {
+							if(handler) handler(o.result);
+						}	
+						setTimeout( function() { processAsync( o.requestId, handler ) }, 5 );
+					}	   	
+				}
+			}
+		);		
+	}	
+	
 		/* DynamicProxy */
 	function _DynamicProxyService( name, context ) {
 		this.name = name;
@@ -1762,7 +1786,7 @@ function DynamicProxy( context ) {
 		this.invoke = function( action, args, handler ) {
 			var contextPath = window.location.pathname.substring(1);
 			contextPath = contextPath.substring(0,contextPath.indexOf('/'));
-			var urlaction = "/" + contextPath + "/jsinvoker/"+this.context+"/"+this.name+ "."+action;
+			var urlaction = "/" + contextPath + "/jsinvoker/"+this.name+ "."+action;
 			
 			var err = null;			
 			var data = {};
@@ -1783,7 +1807,15 @@ function DynamicProxy( context ) {
 				if( err!=null ) {
 					throw new Error(err);
 				}
-				return convertResult( result );
+				
+				var r = convertResult( result );
+				if( r && r.classname=="com.rameses.common.AsyncResponse") {
+					processAsync( r.id, handler );
+					return null;
+				}
+				else {
+					return r;
+				}
 			}
 			else {
 				$.ajax( {
@@ -1792,7 +1824,15 @@ function DynamicProxy( context ) {
 					error: function( xhr ) { handler( null, new Error(xhr.responseText) ); },
 					data: data,
 					async: true,
-					success: function( data) { handler( convertResult(data)); }
+					success: function( data) { 
+						var r = convertResult(data);
+						if(r && r.classname=="com.rameses.common.AsyncResponse") {
+							processAsync( r.id, handler );
+						}
+						else {
+							handler(r); 
+						}	
+					}
 				});
 			}
 		}
@@ -2145,5 +2185,25 @@ function DropdownOpener( id, params ) {
 
 }//-- end of DropdownOpener
 
+var ThreadPool = new function() {
+	var threads = [];
+	
+	var run = function() {
+		for(var i=0;i<threads.length;i++) {
+			if( !threads[i].page || threads[i].page==window.location+"" ) {
+				threads[i].thread();
+			}	
+		}
+	}
+	setInterval(run, 2000);
+	
+	this.addGlobal = function(t) {
+		threads.push( {thread:t} );
+	}
+
+	this.addPage = function(t) {
+		threads.push( {thread:t, page: window.location+""} );
+	}
+}
 
 
