@@ -1117,7 +1117,7 @@ function DataTable( table, bean, controller ) {
 			var row = createRow(i, item).appendTo( tbody );
 			if( selected == item ) {
 				var pos = table.data('selected_position');
-				var td = pos ? $(row[pos.row]).find('td')[pos.col] : row.find('td:first')[0];
+				var td = pos ? $(row[pos.row]).find('td')[pos.col] : row.find('td:first:not([selectable])')[0];
 				selectedTds.push( td )
 			};
 			status.index++;
