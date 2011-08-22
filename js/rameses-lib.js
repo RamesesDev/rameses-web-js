@@ -1093,7 +1093,8 @@ function DataTable( table, bean, controller ) {
 		table.data('template', tpl);
 	}
 
-	model.onRefresh = function() { doRender() };
+	model.onRefresh = doRender;
+	model.onAppend = renderItemsAdded;
 	model.load();
 
 	var tabIdx;
@@ -1102,9 +1103,18 @@ function DataTable( table, bean, controller ) {
 		tbody.hide().empty();
 		tabIdx = table.data('index');
 		status.index = 0;
+		
 		var list = model.getList();
 		if(list==null) list = [];
 		
+		var items = renderItemsAdded( list, false );
+		$(items).each(function(i,e){ td_mousedown(e, true); });
+		tbody.show();
+		BindingUtils.bind( null, table );
+	}
+	
+	function renderItemsAdded( list, animate ) {
+		animate = (animate!=null)? animate : true;
 		var selected = name? controller.get(name) : null;
 		var selectedTds = [];
 
@@ -1115,6 +1125,7 @@ function DataTable( table, bean, controller ) {
 			status.nextItem = (i < list.length-1)? list[i+1] : null;
 
 			var row = createRow(i, item).appendTo( tbody );
+			if( animate ) row.hide().fadeIn('slow');
 			if( selected == item ) {
 				var pos = table.data('selected_position');
 				var td = pos ? $(row[pos.row]).find('td')[pos.col] : row.find('td:first:not([selectable])')[0];
@@ -1131,12 +1142,8 @@ function DataTable( table, bean, controller ) {
 				status.index++;
 			}
 		}
-
-		tbody.show();
 		
-		$(selectedTds).each(function(i,e){ td_mousedown(e, true); });
-
-		BindingUtils.bind( null, table );
+		return selectedTds;
 	}
 
 	function createRow(i, item) {
@@ -1173,14 +1180,6 @@ function DataTable( table, bean, controller ) {
 						value = unescape(td.html()).evaluate(  function(n) { return resolve(n, item); }  );
 
 					td.html( value? value+'' : '&nbsp;' );
-
-					if( td.attr('editable') == 'true' ) {
-						td.attr('tabindex', tabIdx++)
-						  .keydown(td_keydown)
-						  .focus(function(e) { td_edit(e, this); })
-						  .dblclick(td_edit);
-					}
-
 					evalAttr(origTd[idx],e,item);
 				});
 			}
@@ -1245,21 +1244,6 @@ function DataTable( table, bean, controller ) {
 		 .parent().removeClass('hover');
 	}
 
-	function td_keydown(e) {
-		td_edit(e, this);
-	}
-
-	var editor;
-
-	function td_edit(e, src) {
-		var td = $(src? src : this);
-		if( td.data('editing') ) return;
-		td_mousedown( td[0] );
-
-		if( !editor ) editor = TableCellEditor.getInstance();
-		editor.show( td );
-	}
-
 	function evalAttr(origElem, cloneElem, ctx) {
 		var attrs = origElem.attributes;
 		for(var i=0; i<attrs.length; ++i) {
@@ -1305,95 +1289,6 @@ function DataTable( table, bean, controller ) {
 
 } //-- end of DataTable class
 
-/*---------- table cell editor ----------------*/
-function TableCellEditor() {
-
-	var cell;
-	var input;
-
-	init();
-
-	this.show = function( td ) {
-		cell = td.tagName? $(td) : td;
-		cell.data('editing', cell.html());
-
-		var loc = getLocation( cell[0] );
-		input.attr('tabindex', cell.attr('tabindex'))
-		 .val( cell.html() )
-		 .css({
-			'top' : loc.y, 'left' : loc.x,
-			'width' : cell[0].offsetWidth, 'height' : cell[0].offsetHeight
-		  })
-		 .show()
-		 .focus()
-		 .select();
-	};
-
-	function hide() {
-		input.val('').hide();
-	};
-
-	function init() {
-		input = $('#__cell_editor');
-		if( input.size() > 0 ) return;
-
-		input = $('<input type="text" id="__cell_editor" class="cell-editor" style="position: absolute; z-index: 999999; border: none;"/>')
-		 .hide()
-		 .blur( commit )
-		 .keydown(function(e){
-			if( e.keyCode == 13 ) {
-				commit();
-				var next = parseInt($(this).attr('tabindex'))+1;
-				var tbl = cell.parents('table:first');
-				if( !focusNext( tbl, next ) ) {
-					focusNext( tbl, tbl.data('index') );
-				}
-			}
-			else if ( e.keyCode == 27 ) {
-				revert();
-			}
-		  })
-		 .appendTo( $('body') );
-	}
-
-	function focusNext( tbl, next ) {
-		var tdElem = tbl.find('td[tabindex="' + next + '"]')[0];
-		if( tdElem ) $(tdElem).focus();
-		return tdElem != null;
-	}
-
-	function commit() {
-		if( input.is(':hidden') ) return;
-		cell.html( input.val() ).removeData('editing');
-		hide();
-	}
-
-	function revert() {
-		if( input.is(':hidden') ) return;
-		cell.html( cell.data('editing') ).removeData('editing');
-		hide();
-	}
-
-	function getLocation(e) {
-		var loc = { x: e.offsetLeft, y: e.offsetTop };
-		while( (e = e.offsetParent) ) {
-			loc.x += e.offsetLeft;
-			loc.y += e.offsetTop;
-		}
-		return loc;
-	}
-
-}
-
-TableCellEditor.getInstance = function() {
-	if( !TableCellEditor.__instance ) {
-		TableCellEditor.__instance = new TableCellEditor();
-	}
-	return TableCellEditor.__instance;
-};
-
-//end of TableCellEditor class
-
 
 /*-------- default internal table model ------------------*/
 function DefaultTableModel() {
@@ -1408,6 +1303,7 @@ function DefaultTableModel() {
 
 	//on refresh callback
 	_this.onRefresh;
+	_this.onAppend;
 
 	_this.select = function(idx) {
 		if( idx >=0 && idx < _list.length )
@@ -1489,6 +1385,37 @@ function DefaultTableModel() {
 		if( $.isFunction( _this.onRefresh ) )
 			_this.onRefresh();
 	}
+	
+	function fetchNext() {
+		if( _dataModel && $.isFunction( _dataModel.fetchList ) ) {
+			var result = _dataModel.fetchList({});
+			if( typeof result != 'undefined' ) {
+				if( $.isFunction( _this.onAppend ) ) {
+					_this.getList().addAll( result );
+					_this.onAppend( result );
+				}
+			}
+		}
+	}
+	
+	function moveFirst() {
+		_listParam._start = 0;
+		doRefresh(true);
+	}
+	
+	function moveNext() {
+		if( _listParam && !_isLast ) {
+			_listParam._start += _listParam._limit-1;
+		}
+		doRefresh(true);
+	}
+	
+	function movePrev() {
+		if( _listParam && _listParam._start > 0 ) {
+			_listParam._start -= _listParam._limit-1;
+		}
+		doRefresh(true);
+	}
 
 	/**
 	 * inject callback methods to the passed dataModel
@@ -1504,31 +1431,13 @@ function DefaultTableModel() {
 
 		_listParam = null;
 
-		_dataModel.setList = function( list ) { _this.setList(list); };
-		_dataModel.load = function() { _this.load(); };
-
-		_dataModel.refresh = function( fetch ) {
-			doRefresh( fetch );
-		};
-
-		_dataModel.moveFirst = function() {
-			_listParam._start = 0;
-			doRefresh(true);
-		};
-
-		_dataModel.moveNext = function() {
-			if( _listParam && !_isLast ) {
-				_listParam._start += _listParam._limit-1;
-			}
-			doRefresh(true);
-		};
-
-		_dataModel.movePrev = function() {
-			if( _listParam && _listParam._start > 0 ) {
-				_listParam._start -= _listParam._limit-1;
-			}
-			doRefresh(true);
-		};
+		_dataModel.setList = _this.setList;
+		_dataModel.load = _this.load;
+		_dataModel.fetchNext = fetchNext;
+		_dataModel.refresh = doRefresh;
+		_dataModel.moveFirst = moveFirst;
+		_dataModel.moveNext = moveNext;
+		_dataModel.movePrev = movePrev;
 
 		_dataModel.getSelectedItem = function() {
 			var len = _selectedItems.length;

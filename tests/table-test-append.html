@@ -1,0 +1,75 @@
+<html>
+	<head>
+		<script type="text/javascript">
+			if( !window.console ) window.console = { log: function(msg){  }};
+		</script>
+		<script src="../js/jquery-all.js"></script>
+		<script src="../js/rameses-lib.js"></script>
+
+		<style>
+			body, table { font: 10pt/145% 'arial', 'verdana'; }
+		
+			.post { margin: 10px; border-bottom: solid 1px lightgrey; }
+			.poster { color: #999; font-size: 0.8em; }
+			.message { color: #333; }
+			
+		</style>
+		<script>
+			$put( "profile",
+				new function() {
+
+					var idx = 0;
+				
+					this.model = {
+						fetchList: function() {
+							idx++;
+							return [
+								{id: idx+'001', firstname:"elmo", lastname:"nazareno"},
+								{id: idx+'002', firstname:"jess", lastname:"zamora"},
+								{id: idx+'003', firstname:"worgie", lastname:"flores"},
+								{id: idx+'004', firstname:"michael", lastname:"ramos"},
+								{id: idx+'005', firstname:"johana", lastname:"cardona"},
+								{id: idx+'006', firstname:"chariss", lastname:"villarosa"},
+								{id: idx+'007', firstname:"rojean", lastname:"vergara"},
+								{id: idx+'008', firstname:"robert", lastname:"yap"},
+								{id: idx+'009', firstname:"james", lastname:"yap"},
+								{id: idx+'010', firstname:"loren", lastname:"pedrito"}
+							];
+						}
+					};
+				}
+			);
+		</script>
+
+	</head>
+	<body>
+
+		<table context="profile" model="model" varStatus="stat" cellpadding="0" 
+			   cellspacing="0" width="400">
+			<thead>
+				<th>
+					Posts
+					<hr/>
+				</th>
+			</thead>
+			<tbody>
+				<tr>
+					<td>
+						<div class="post">
+							<div class="poster">#{id} - #{firstname} #{lastname}</div>
+							<div class="message">
+								Hi, this is my message.
+							</div>
+						</div>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+		
+		<br/>
+		<a context="profile" name="model.fetchNext">View More</a>
+		<br/>
+		
+	</body>
+
+</html>
