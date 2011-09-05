@@ -700,36 +700,64 @@ BindingUtils.handlers.div = function( elem, controller, idx ){
  *
  * @author jaycverg
  *-----------------------------------*/
-BindingUtils.handlers.span = function( elem, controller, idx ) {
+BindingUtils.handlers.input_file = function( elem, controller, idx ) {
+	
+	var infile = $(elem);
+	var div = infile.data('_binded');
+	
+	if( !div ) {
+		div = $('<div></div>').insertBefore(elem)
+		 .css('display', 'block').addClass('file-uploader');
+		infile.data('_binded', div);
+	};
 
-	var div = $(elem);
+	div.empty();
 
-	if( div.attr('type') != 'fileupload' ) return;
-	if( div.data('_binded') ) return;
-
-	div.css('display', 'block').addClass('file-uploader').data('_binded', true);
+	//hide the original input file
+	infile.hide().css('opacity', 0);
 
 	//-- properties/callbacks
-	var oncomplete = div.attr('oncomplete')? controller.get(div.attr('oncomplete')) : null;
-	var onremove =   div.attr('onremove')? controller.get(div.attr('onremove')) : null;
-	var labelExpr =  div.attr('label');
+	var oncomplete = infile.attr('oncomplete');
+	var onremove =   infile.attr('onremove');
+	var labelExpr =  infile.attr('expression');
+	var name =       infile.attr('name');
+	var fieldValue = controller.get(name);
+	
+	var multiFile =  fieldValue instanceof Array;
 
 	//upload box design
 	var listBox =       $('<div class="files"></div>').appendTo(div);
-	var inputWrapper =  $('<div style="overflow: hidden; position: relative;"></div>');
-	var anchorLbl =     $('<a href="#">' + div.attr('caption') + '</a>');
-	var anchorBox =     $('<div class="selector"></div>');
+	var inputWrapper =  $('<div style="overflow: hidden; position: absolute;"></div>');
+	var anchorLbl =     $('<a href="#">' + infile.attr('caption') + '</a>');
+	var anchorBox =     $('<div class="selector" style="position: relative"></div>');
+	var lblWidth =  0;
 
-	anchorBox.appendTo( div )
-	.append( anchorLbl )
-	.append( inputWrapper );
-
-	var lblWidth =  anchorLbl[0].offsetWidth;
-	var lblHeight = anchorLbl[0].offsetHeight;
-	inputWrapper.css({left: 0, top: -lblHeight, width: lblWidth});
-	anchorBox.css('height', lblHeight);
-
-	attachInput();
+	if( fieldValue ) {
+		var items = multiFile? fieldValue : [fieldValue];
+		for(var i=0; i<items.length; ++i) addToFileList(null,null,null,null,items[i]);
+	}
+	
+	if( multiFile || !fieldValue ) {
+		anchorBox.appendTo( div )
+		.append( anchorLbl )
+		.append( inputWrapper );
+		
+		lblWidth = anchorLbl[0].offsetWidth;
+		inputWrapper.css({left: 0, top: 0, width: lblWidth});
+		
+		attachInput();
+	}
+	
+	
+	function attachInput() {
+		var input = $('<input type="file" name="file"/>');
+		input.appendTo( inputWrapper )
+		 .change(file_change)
+		 .css({
+			position:'relative', opacity: 0, cursor: 'pointer', 
+			left: -(input[0].offsetWidth - lblWidth)
+		 });
+	}
 
 	function file_change(e) {
 		var frameid = '__frame' + Math.floor( Math.random() * 200000 );
@@ -750,57 +778,71 @@ BindingUtils.handlers.span = function( elem, controller, idx ) {
 			req.start();
 		});
 
-		attachInput();
+		if( multiFile ) 
+			attachInput();
+		else
+			anchorBox.hide();
+		
 		form.submit();
+	}
+	
+	function getCaption( value ) {
+		return value? 
+		        (cap = labelExpr? labelExpr.evaluate(value) : $.toJSON(value)) : 
+		        'No Caption';
 	}
 
 	function frame_loaded(frame) {
 		var value = null;
 		var lbl = frame.parent().find('div.label')
 
+		var resptext = frame.contents().text();
 		try {
-			value = $.parseJSON(frame.contents().text());
-		}catch(e){;}
+			value = $.parseJSON(resptext);
+		}catch(e){
+			alert( resptext );
+			controller.refresh();
+			return;
+		}
 
-		if( oncomplete )         safeExecute(function() { oncomplete( value ); });
-		if( labelExpr && value ) lbl.html( labelExpr.evaluate(value) );
+		if( name ) {
+			if( multiFile )
+				controller.get(name).push(value);
+			else
+				controller.set(name, value);
+		}
+		lbl.html( getCaption(value) );
+		
+		if( oncomplete ) 
+			BeanUtils.invokeMethod( controller.code, oncomplete, value, true );
 
 		if( onremove ) {
 			$('<a href="#" class="remove">Remove</a>')
 			 .appendTo( lbl )
 			 .click(function(){
-				var res = safeExecute(function(){ return onremove( frame.parent().index(), value ); });
+				var res = BeanUtils.invokeMethod( controller.code, onremove, {index: frame.parent().index(), value: value}, true );
 				if( res == false || res == 'false' ) return;
 				frame.parent().animate({opacity: 0}, {duration:400, complete:function(){ $(this).remove(); }});
 			 });
 		}
 	}
 
-	function safeExecute( fn ) {
-		try {
-			return fn();
-		}
-		catch(e) {
-			if( window.console ) console.log( e.message );
-		}
-		return null;
-	}
-
-	function addToFileList(frame, form, pBar, input) {
+	function addToFileList(frame, form, pBar, input, value) {
 		var b = $.browser;
 
 		//decorate progress bar
-		pBar.find('div.progress')
-		.addClass( b.msie? '' : b.webkit? 'webk' : 'moz' )
-		.attr('id', frame.attr('id') + '_progress');
+		if( pBar && frame ) {
+			pBar.find('div.progress')
+			.addClass( b.msie? '' : b.webkit? 'webk' : 'moz' )
+			.attr('id', frame.attr('id') + '_progress');
+		}
 
 		//create the file item box
-		var fibox = $('<div class="file"></div>')
-		 .appendTo( listBox )
-		 .append( frame )
-		 .append( form )
-		 .append('<div class="label">' + input.val() + '</div>')
-		 .append( pBar );
+		var fibox = $('<div class="file"></div>').appendTo( listBox );
+		if( frame ) fibox.append( frame );
+		if( form )  fibox.append( form );
+		fibox.append('<div class="label">' + getCaption( value ) + '</div>')
+		if( pBar )  fibox.append( pBar );
 	}
 
 	function createFrame( id ) {
@@ -809,15 +851,10 @@ BindingUtils.handlers.span = function( elem, controller, idx ) {
 
 	function createForm( target, input ) {
 		return $('<form method="post" enctype="multipart/form-data"></form>')
-			    .attr({ 'target': target, 'action': div.attr('url') })
+			    .attr({ 'target': target, 'action': infile.attr('url') })
 			    .append( input )
 			    .append( '<input type="hidden" name="file_id" value="' +target+ '"/>' )
 			    .hide();
-	}
-
-	function attachInput() {
-		var input = $('<input type="file" name="file" style="position:relative;opacity:0;filter:alpha(opacity=0)"/>');
-		input.appendTo( inputWrapper ).change(file_change).css({left: -(input[0].offsetWidth - lblWidth)});
 	}
 
 	//-- utility inner class for file status pulling --
@@ -840,7 +877,7 @@ BindingUtils.handlers.span = function( elem, controller, idx ) {
 			if( completed ) return;
 
 			$.ajax({
-				url: div.attr('url'),
+				url: infile.attr('url'),
 				cache: false,
 				data: 'fileupload.status=' + reqId,
 				success: onPullResponse
