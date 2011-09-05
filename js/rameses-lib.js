@@ -1529,7 +1529,7 @@ function DefaultTableModel() {
 						_ctx[varName] = ctx;
 					}
 					else {
-						_ctx = bean;
+						_ctx = controller.code;
 					}
 				}
 
