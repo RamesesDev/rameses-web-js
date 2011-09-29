@@ -485,21 +485,6 @@ var ContextManager = new function() {
 
 }
 
-//load binding immediately
-$(document).ready (
-    function() {
-        BindingUtils.load();
-    }
-);
-
-
-
-//important keyword shortcuts used by the programmer
-function $get( name ) { return ContextManager.get(name); };
-function $put( name, code, pages ) {return ContextManager.create( name, code, pages );};
-function $ctx(name) {return ContextManager.get(name).code;};
-function $load(func) {  BindingUtils.loaders.push(func); };
-
 //******************************************************************************************************************
 // configure input controls
 //******************************************************************************************************************
@@ -1470,11 +1455,13 @@ var WindowUtil = new function() {
 		return decodeURIComponent(results[1].replace(/\+/g, " "));
 	}
 
-	this.getParameters = function(qryParams){
+	this.getParameters = function(qryParams) {
 		var params = this.parseParameters( window.location.href.slice(window.location.href.indexOf('?') + 1) );
 		if( qryParams !=null ) {
 			for(var n in qryParams ) {
-				params[n] = qryParams[n];
+				if( (typeof qryParams[n] != "function") && (typeof qryParams[n]!="object") ) {
+					params[n] = qryParams[n];
+				}
 			}
 		}
 		return params;
@@ -1654,22 +1641,6 @@ var Hash = new function() {
 	}
 }
 
-function DocOpener( id, params, qp ) {
-	
-	this.classname = "opener";
-    this.caller;
-	this.source;
-	
-	this.id = id;
-	this.params = params;
-	this.qryParams = qp;
-
-	this.load = function() {
-		Hash.navigate( this.id, this.params );
-	}
-	
-} 
-
 //OPENERS
 //******************************************************************************************************************
 // type of openers...
@@ -1693,7 +1664,7 @@ function Opener(id, params) {
 }
 
 
-function PopupOpener( id, params, qp ) {
+function PopupOpener( id, params ) {
 
     this.classname = "opener";
 	this.id = id;
@@ -1703,7 +1674,6 @@ function PopupOpener( id, params, qp ) {
 	this.title;
 	this.source;
 	this.options = {};
-	this.qryParams = qp;
 
 	var defaultOptions = {show: 'fade', hide: 'fade', height: 'auto'};
 
@@ -1729,7 +1699,7 @@ function PopupOpener( id, params, qp ) {
 		var options = $.extend(defaultOptions, this.options);
 		if( inv.options ) options = $.extend(options, inv.options);
 
-        div.load(page, WindowUtil.getParameters(this.qryParams), function() {
+        div.load(page, WindowUtil.getParameters(p), function() {
 			try {
 				if(p!=null) {
 					for( var key in p ) {
@@ -1750,7 +1720,7 @@ function PopupOpener( id, params, qp ) {
 }
 
 //-- DropdownOpener class
-function DropdownOpener( id, params, qry ) {
+function DropdownOpener( id, params ) {
 	this.classname = "opener";
 	this.caller;
     this.id = id;
@@ -1759,7 +1729,6 @@ function DropdownOpener( id, params, qry ) {
 	this.source;
 	this.options = {};
 	this.styleClass;
-	this.qryParams = qry;
 
     this.load = function() {
 		var inv = Registry.find(this.id);
@@ -1775,7 +1744,7 @@ function DropdownOpener( id, params, qry ) {
 		if( inv.options ) this.options = $.extend(this.options, inv.options);
 		
 		var w = new DropdownWindow(this.source, this.options, this.styleClass);
-        w.show( page, WindowUtil.getParameters(this.qryParams), function(div) {
+        w.show( page, WindowUtil.getParameters(p), function(div) {
 			if( n!=null ) {
 				if(p!=null) {
 					for( var key in p ) {
@@ -1836,3 +1805,18 @@ function DropdownOpener( id, params, qry ) {
 	}//-- end of DropdownWindow class
 
 }//-- end of DropdownOpener
+
+//load binding immediately
+$(document).ready (
+    function() {
+        BindingUtils.load();
+		Hash.init();
+    }
+);
+
+//important keyword shortcuts used by the programmer
+function $get( name ) { return ContextManager.get(name); };
+function $put( name, code, pages ) {return ContextManager.create( name, code, pages );};
+function $ctx(name) {return ContextManager.get(name).code;};
+function $load(func) {  BindingUtils.loaders.push(func); };
+function $register( config ) { Registry.add(config); };
