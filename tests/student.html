@@ -1,8 +1,9 @@
 <html>
 	<head>
-		<link rel="stylesheet" href="js/jq_dialog/jquery-ui.custom.css"/>
-		<script src="js/jquery-all.js"></script>
-		<script src="js/rameses-lib.js"></script>
+		<link rel="stylesheet" href="../js/css/jquery-ui/jquery.css"/>
+		<script src="../js/jquery-all.js"></script>
+		<script src="../js/rameses-ext-lib.js"></script>
+		<script src="../js/rameses-ui.js"></script>
 
 		<!--
 		<script src="services/clfc/StudentService.js"></script>
@@ -13,8 +14,10 @@
 			table .odd { background: #fff; }
 		</style>
 		<script>
-			$put( "student",
-
+			Registry.add({id:'subjectLookup',context:'subjectLookup',page:'student/subject_popup.html'});
+		
+			$put( 
+				"student",
 				new function() {
 					this.entity = {room:"RM2"}
 					this.roomList = [];
@@ -38,13 +41,7 @@
 					this.back = function() {  this.entity = {}; return "default"; }
 
 					this.lookupSubject = function() {
-						var d = $('#subjectLookup').load( "student/subject_popup.html" ).dialog({
-							close: function() {
-								$('#subjectLookup').html('');
-							}
-						});
-						$get('subjectLookup').window = {close: function() {d.dialog("close")} };
-						$ctx('subjectLookup').handler = function(o) { $ctx('profile').name = o; $get('profile').refresh(); }
+						return new PopupOpener('subjectLookup', {handler: function(){ alert('handled.'); }});
 					}
 				},
 				{

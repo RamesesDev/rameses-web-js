@@ -3,6 +3,17 @@
 	depends: rameses-extension library
 **/
 
+var R = {
+	PREFIX: 'r',
+	attr: function(elm, attr, value) {
+		attr = this.PREFIX + ':' + attr;
+		if( value )
+			return elm.jquery? elm.attr(attr, value) : $(elm).attr(attr, value);
+		else
+			return elm.jquery? elm.attr(attr) : $(elm).attr(attr);
+	}
+};
+
 var BindingUtils = new function() {
     //loads all controls and binds it to the context object
 
@@ -14,9 +25,9 @@ var BindingUtils = new function() {
 		var $e = $(elem);
 		var isVisible = true;
 
-		if( $e.attr('visibleWhen') ) {
-			var expr = $e.attr('visibleWhen');
-			var ctxName = $e.attr('context');
+		if( R.attr($e,'visibleWhen') ) {
+			var expr = R.attr($e, 'visibleWhen');
+			var ctxName = R.attr($e,'context');
 			try {
 				var res = expr.evaluate( $ctx(ctxName) );
 				isVisible = (res != 'false' && res != 'null');
@@ -36,13 +47,15 @@ var BindingUtils = new function() {
 		
 
 	    var _self = BindingUtils;
-		var contextName = $(elem).attr( 'context' );
+		var contextName = R.attr($(elem),  'context' );
+		if( !contextName ) return;
+		
         var controller = $get(contextName);
         if( controller != null ) {
 			if( controller.name == null ) controller.name = contextName;
 			
-			if( $e.attr('action') ) {
-				var action = $e.attr('action');
+			if( R.attr($e, 'action') ) {
+				var action = R.attr($e, 'action');
 				elem.onclick = function() { 
 					$get(controller.name).invoke( this, action );  
 				}
@@ -55,25 +68,27 @@ var BindingUtils = new function() {
     };
 
 	var containerLoader = function(idx, div ) {
-		var contextName = div.getAttribute('controller');
+		var contextName = R.attr(div, 'controller');
 		if(div.id==null || div.id=='') div.id = contextName;
 		var controller = $get(contextName);
 		if( controller != null ) {
 			if( controller.name == null ) controller.name = contextName;
-			if( div.getAttribute("loadAction")!=null) controller.loadAction = div.getAttribute("loadAction");
+			if( R.attr(div, "loadAction")!=null) controller.loadAction = R.attr(div, "loadAction");
 			controller.load();
 		}
 	};
 
     this.bind = function(ctxName, selector) {
 		//just bind all elements that has the attribute context
-        $("[context][context!='']", selector? selector : null).each ( controlLoader );
+		var expr = "[" + R.PREFIX + "\\:context]";
+        $(expr, selector? selector : null).each ( controlLoader );
     };
 
     this.loadViews = function(ctxName, selector) {
 		//var predicate = (ctxName!=null && ctxName!="") ? "[context][context='"+ctxName+"']" : "[context][context!='']";
         //loads all divs with context and displays the page into the div.
-        $('div[controller][controller!=""]', selector? selector : null).each ( containerLoader );
+		var expr = 'div[' + R.PREFIX + '\\:controller]';
+        $(expr, selector? selector : null).each ( containerLoader );
     };
 
     //utilities
@@ -88,7 +103,7 @@ var BindingUtils = new function() {
     * customFunc = refers to the custom function for additional decorations
     */
     this.initInput = function( elem, controller, customFunc ) {
-        var fldName = elem.name;
+        var fldName = R.attr(elem, 'name');
         if( fldName==null || fldName=='' ) return;
         var c = controller.get(fldName);
         var o = $(elem);
@@ -96,7 +111,7 @@ var BindingUtils = new function() {
             customFunc(elem, controller);
         }
         elem.value = (c ? c : "" );
-        var dtype = o.attr("datatype");
+        var dtype = R.attr(o, "datatype");
         if(dtype=="decimal") {
             elem.onchange = function () { $get(controller.name).set(fldName, NumberUtils.toDecimal(this.value) ); }
         }
@@ -112,7 +127,7 @@ var BindingUtils = new function() {
         }
 
 		//add hints
-		if( $(elem).attr("hint")!=null ) {
+		if( R.attr($(elem), "hint")!=null ) {
 			new InputHintDecorator( elem );
 		}
 
@@ -156,7 +171,7 @@ var BindingUtils = new function() {
 		 .data('hint_decorator', this);
 
 		var span = $('<span class="hint" style="position:absolute; z-index:100; overflow: hidden;"></span>')
-		 .html( input.attr('hint') )
+		 .html( R.attr(input, 'hint') )
 		 .hide()
 		 .disableSelection()
 		 .insertBefore( input )
@@ -340,20 +355,20 @@ function Controller( code, pages ) {
                 var target = this.name;
                 //check validation if not immediate.
                 if(control!=null ) {
-                    if(control.getAttribute("immediate")!=null && control.getAttribute("immediate")!=null) {
-                        immediate = control.getAttribute("immediate");
+                    if(R.attr(control, "immediate")!=null && R.attr(control, "immediate")!=null) {
+                        immediate = R.attr(control, "immediate");
                     }
-                    if(control.getAttribute("target")!=null && control.getAttribute("target")!='' ) {
-                        target = control.getAttribute("target");
+                    if(R.attr(control, "target")!=null && R.attr(control, "target")!='' ) {
+                        target = R.attr(control, "target");
                     }
                 }
                 if(immediate=="false" || immediate==false) this.validate();
                 if(this.code == null) throw new Error( "Code not set");
 				
 				/*added support for parameters that are set when firing a button or action.*/
-				if( $(control).attr("params") ) {
+				if( R.attr($(control), "params") ) {
 					try {
-						var _parms  = $.parseJSON($(control).attr('params'));
+						var _parms  = $.parseJSON(R.attr($(control), 'params'));
 						BeanUtils.setProperties( this.code, _parms );
 					}
 					catch(e) {
@@ -424,16 +439,16 @@ function Controller( code, pages ) {
     this.validate = function() {
         var errs = [];
         var _code = this.code;
-        var d = '[context="' + this.name + '"][required=true]';
+        var d = '[r\\:context="' + this.name + '"][r\\:required=true]';
         var filter = "input"+d+", select"+d+", textarea"+d;
         $(filter).each(
             function(idx, elem) {
                 var o = $(elem);
                 if( o.is(':hidden') ) return; //validate the visible elements only
                 
-                var fldName = elem.name;
+                var fldName = R.attr(elem, 'name');
                 var caption = fldName;
-                if( o.attr("caption")!=null ) caption = o.attr("caption");
+                if( R.attr(o, "caption")!=null ) caption = R.attr(o, "caption");
                 new RequiredValidator(fldName, caption ).validate( _code, errs );
             }
         )
@@ -491,8 +506,8 @@ var ContextManager = new function() {
 BindingUtils.handlers.input_text = function(elem, controller, idx ) {
 	BindingUtils.initInput(elem, controller, function(elem,controller) {
 		var input = $(elem);
-		if( input.attr('suggest') && input.autocomplete ) {
-			var src = controller.get(input.attr('suggest'));
+		if( R.attr(input, 'suggest') && input.autocomplete ) {
+			var src = controller.get(R.attr(input, 'suggest'));
 			if( typeof src ==  'function' ) {
 				var fn = src;
 				src = function(req, callback) {
@@ -509,21 +524,22 @@ BindingUtils.handlers.input_password = function(elem, controller, idx ) { Bindin
 BindingUtils.handlers.textarea = function(elem, controller, idx ) { BindingUtils.initInput(elem, controller); };
 BindingUtils.handlers.select = function(elem, controller, idx ) {
 	var i = 0;
-	$(elem).empty();
-	if($(elem).attr("allowNull")!=null) {
-		var txt = $(elem).attr("emptyText");
+	var name = R.attr($(elem), 'name');
+	var items = R.attr($(elem), "items");
+	var selected = controller.get( name );
+	
+	if( items ) $(elem).empty();
+	
+	if(R.attr($(elem), "allowNull")!=null) {
+		var txt = R.attr($(elem), "emptyText");
 		if(txt==null) txt = "-";
 		elem.options[0] = new Option(txt,"");
 		i = 1;
 	}
 	
-	var name = $(elem).attr('name');
-	var items = $(elem).attr("items");
-	var selected = controller.get( name );
-	
 	if( items!=null && items!='') {
-		var itemKey = $(elem).attr("itemKey");
-		var itemLabel = $(elem).attr("itemLabel");
+		var itemKey = R.attr($(elem), "itemKey");
+		var itemLabel = R.attr($(elem), "itemLabel");
 		var arr = controller.get(items);
 		$(arr).each( function(idx,value) {
 			var _key = value;
@@ -542,7 +558,8 @@ BindingUtils.handlers.select = function(elem, controller, idx ) {
 	if( name && !$(elem).data('___changed_attached') ) {
 		$(elem).change(function(){
 			var op = this.options[this.selectedIndex];
-			$get(controller.name).set(name, $(op).data('object_value') );
+			var objval = $(op).data('object_value');
+			$get(controller.name).set(name, objval? objval : op.value );
 		})
 		.data('___changed_attached', true);
 	}
@@ -552,21 +569,28 @@ BindingUtils.handlers.select = function(elem, controller, idx ) {
 }
 
 BindingUtils.handlers.input_radio = function(elem, controller, idx ) {
-	var c = controller.get(elem.name);
+	var name = R.attr(elem, 'name');
+	var c = controller.get(name);
+	
+	//set the name of all input type="radio" having the same r:name value
+	//so that it will be group by name
+	$(elem).attr('name', name);
+	
 	var value = $(elem).attr("value");
 	elem.checked = (c==value) ? true :  false;
 	elem.onchange = function () {
 		if( this.checked ) {
-			$get(controller.name).set(this.name, this.value );
+			$get(controller.name).set(name, this.value );
 		}
 	}
 }
 
 BindingUtils.handlers.input_checkbox = function(elem, controller, idx ) {
-	var c = controller.get(elem.name);
-	if( $(elem).attr("mode") == "set" ) {
+	var name = R.attr(elem, 'name');
+	var c = controller.get(name);
+	if( R.attr($(elem), "mode") == "set" ) {
 		try {
-			var checkedValue = $(elem).attr("checkedValue");
+			var checkedValue = R.attr($(elem), "checkedValue");
 
 			if( c.find( function(o) { return (o==checkedValue ) } ) !=null) {
 				elem.checked = true;
@@ -575,8 +599,8 @@ BindingUtils.handlers.input_checkbox = function(elem, controller, idx ) {
 				elem.checked = false;
 			}
 			elem.onclick = function () {
-				var _list = $get(controller.name).get(this.name);
-				var v = $(this).attr( "checkedValue" );
+				var _list = $get(controller.name).get(name);
+				var v = R.attr($(this),  "checkedValue" );
 				if( v == null ) alert( "checkedValue in checkbox must be specified" );
 				if(this.checked) {
 					_list.push( v );
@@ -590,7 +614,7 @@ BindingUtils.handlers.input_checkbox = function(elem, controller, idx ) {
 	}
 	else {
 		var isChecked = false;
-		var checkedValue = $(elem).attr("checkedValue");
+		var checkedValue = R.attr($(elem), "checkedValue");
 		if( checkedValue !=null && checkedValue == c ) {
 			isChecked = true;
 		}
@@ -599,15 +623,15 @@ BindingUtils.handlers.input_checkbox = function(elem, controller, idx ) {
 		}
 		elem.checked = isChecked;
 		elem.onclick = function () {
-			var v = ($(this).attr( "checkedValue" )==null) ? true : $(this).attr( "checkedValue" );
-			var uv = ($(this).attr( "uncheckedValue" )==null) ? false : $(this).attr( "uncheckedValue" );
-			$get(controller.name).set(this.name, (this.checked) ? v : uv );
+			var v = (R.attr($(this),  "checkedValue" )==null) ? true : R.attr($(this),  "checkedValue" );
+			var uv = (R.attr($(this),  "uncheckedValue" )==null) ? false : R.attr($(this),  "uncheckedValue" );
+			$get(controller.name).set(name, (this.checked) ? v : uv );
 		}
 	}
 }
 
 BindingUtils.handlers.input_button = function( elem, controller, idx ) {
-    var action = elem.getAttribute("name");
+    var action = R.attr(elem, "name");
     if(action==null || action == '') return;
     elem.onclick = function() { 
 		$get(controller.name).invoke( this, action );  
@@ -616,7 +640,7 @@ BindingUtils.handlers.input_button = function( elem, controller, idx ) {
 
 BindingUtils.handlers.a = function( elem, controller, idx ) {
 	var $e = $(elem);
-    var action = $e.attr("name");
+    var action = R.attr($e, "name");
     
     //add an href property if not specified,
     //css hover does not apply when no href is specified
@@ -636,7 +660,7 @@ BindingUtils.handlers.a = function( elem, controller, idx ) {
 }
 
 BindingUtils.handlers.input_submit = function( elem, controller, idx ) {
-    var action = elem.getAttribute("name");
+    var action = R.attr(elem, "name");
     if(action==null || action == '') return;
     elem.onclick = function() { $get(controller.name).invoke( this, action );  }
 };
@@ -660,10 +684,10 @@ BindingUtils.handlers.label = function( elem, controller, idx ){
 BindingUtils.handlers.div = function( elem, controller, idx ){
 	var div = $(elem);
 	var ctx = $ctx(controller.name);
-	var panelName = div.attr("name");
+	var panelName = R.attr(div, "name");
 	if(panelName!=null) {
 		
-		var o = controller.get( div.attr('name') );
+		var o = controller.get( R.attr(div, 'name') );
 		var parms = WindowUtil.getAllParameters();
 		if( typeof o == "string" ) {
 			div.load( o, parms );
@@ -702,10 +726,10 @@ BindingUtils.handlers.input_file = function( elem, controller, idx ) {
 	infile.hide().css('opacity', 0);
 
 	//-- properties/callbacks
-	var oncomplete = infile.attr('oncomplete');
-	var onremove =   infile.attr('onremove');
-	var labelExpr =  infile.attr('expression');
-	var name =       infile.attr('name');
+	var oncomplete = R.attr(infile, 'oncomplete');
+	var onremove =   R.attr(infile, 'onremove');
+	var labelExpr =  R.attr(infile, 'expression');
+	var name =       R.attr(infile, 'name');
 	var fieldValue = controller.get(name);
 	
 	var multiFile =  fieldValue instanceof Array;
@@ -713,7 +737,7 @@ BindingUtils.handlers.input_file = function( elem, controller, idx ) {
 	//upload box design
 	var listBox =       $('<div class="files"></div>').appendTo(div);
 	var inputWrapper =  $('<div style="overflow: hidden; position: absolute;"></div>');
-	var anchorLbl =     $('<a href="#">' + infile.attr('caption') + '</a>');
+	var anchorLbl =     $('<a href="#">' + R.attr(infile, 'caption') + '</a>');
 	var anchorBox =     $('<div class="selector" style="position: relative"></div>');
 	var lblWidth =  0;
 
@@ -836,7 +860,7 @@ BindingUtils.handlers.input_file = function( elem, controller, idx ) {
 
 	function createForm( target, input ) {
 		return $('<form method="post" enctype="multipart/form-data"></form>')
-			    .attr({ 'target': target, 'action': infile.attr('url') })
+			    .attr({ 'target': target, 'action': R.attr(infile, 'url') })
 			    .append( input )
 			    .append( '<input type="hidden" name="file_id" value="' +target+ '"/>' )
 			    .hide();
@@ -862,7 +886,7 @@ BindingUtils.handlers.input_file = function( elem, controller, idx ) {
 			if( completed ) return;
 
 			$.ajax({
-				url: infile.attr('url'),
+				url: R.attr(infile, 'url'),
 				cache: false,
 				data: 'fileupload.status=' + reqId,
 				success: onPullResponse
@@ -924,16 +948,16 @@ function DataTable( table, bean, controller ) {
 
 	var model = new DefaultTableModel( table );
 
-	var multiselect = table.attr('multiselect') == 'true';
-	var varStat =     table.attr('varStatus');
-	var varName =     table.attr('varName');
-	var name =        table.attr('name');
+	var multiselect = R.attr(table, 'multiselect') == 'true';
+	var varStat =     R.attr(table, 'varStatus');
+	var varName =     R.attr(table, 'varName');
+	var name =        R.attr(table, 'name');
 
-	if( table.attr('items') ) {
-		model.setList( controller.get(table.attr('items')) );
+	if( R.attr(table, 'items') ) {
+		model.setList( controller.get(R.attr(table, 'items')) );
 	}
-	if( table.attr('model') ) {
-		model.setDataModel( controller.get(table.attr('model')) );
+	if( R.attr(table, 'model') ) {
+		model.setDataModel( controller.get(R.attr(table, 'model')) );
 		table.data('_has_model', true);
 	}
 
@@ -981,7 +1005,7 @@ function DataTable( table, bean, controller ) {
 			if( animate ) row.hide().fadeIn('slow');
 			if( selected == item ) {
 				var pos = table.data('selected_position');
-				var td = pos ? $(row[pos.row]).find('td')[pos.col] : row.find('td:first:not([selectable])')[0];
+				var td = pos ? $(row[pos.row]).find('td')[pos.col] : row.find('td:first:not([r\\:selectable])')[0];
 				selectedTds.push( td )
 			};
 			status.index++;
@@ -1008,8 +1032,8 @@ function DataTable( table, bean, controller ) {
 			var origTr = $(tpl[i]);
 
 			evalAttr(origTr[0],e,item);
-			if( $(e).attr('visibleWhen') ) {
-				var visible = $(e).attr('visibleWhen').evaluate( function(n) { return resolve(n, item); } );
+			if( R.attr($(e), 'visibleWhen') ) {
+				var visible = R.attr($(e), 'visibleWhen').evaluate( function(n) { return resolve(n, item); } );
 				if( visible != 'true' ) $(e).css('display', 'none');
 			}
 
@@ -1025,10 +1049,10 @@ function DataTable( table, bean, controller ) {
 				td.each(function(idx,e){
 					var td = $(e).data('position', {row: i, col: idx }); //keep the td position
 					var value;
-					if( td.attr('name') )
-						value = resolve( td.attr('name'), item );
-					else if ( td.attr('expression') )
-						value = td.attr('expression').evaluate(  function(n) { return resolve(n, item); }  );
+					if( R.attr(td, 'name') )
+						value = resolve( R.attr(td, 'name'), item );
+					else if ( R.attr(td, 'expression') )
+						value = R.attr(td, 'expression').evaluate(  function(n) { return resolve(n, item); }  );
 					else
 						value = unescape(td.html()).evaluate(  function(n) { return resolve(n, item); }  );
 
@@ -1047,7 +1071,7 @@ function DataTable( table, bean, controller ) {
 	function td_mousedown(e, forced) {
 		var td = e.tagName? $(e) : $(this);
 
-		if( td.attr('selectable') == 'false' ) return;
+		if( R.attr(td, 'selectable') == 'false' ) return;
 		if( prevTd ) prevTd.removeClass('selected');
 
 		if( td.hasClass('selected') )
@@ -1084,14 +1108,14 @@ function DataTable( table, bean, controller ) {
 	}
 	
 	function td_mouseover() {
-		if( $(this).attr('selectable') == 'false' ) return;
+		if( R.attr($(this), 'selectable') == 'false' ) return;
 		
 		$(this).addClass('hover')
 		 .parent().addClass('hover');
 	}
 	
 	function td_mouseout() {
-		if( $(this).attr('selectable') == 'false' ) return;
+		if( R.attr($(this), 'selectable') == 'false' ) return;
 		
 		$(this).removeClass('hover')
 		 .parent().removeClass('hover');
@@ -1109,7 +1133,7 @@ function DataTable( table, bean, controller ) {
 				if( attrName.endsWith('expr') ) {
 					attrName = attrName.replace(/expr$/, '');
 				}
-				$(cloneElem).attr(attrName, attrValue);
+				R.attr($(cloneElem), attrName, attrValue);
 			}
 			catch(e) {;}
 		}
@@ -1322,7 +1346,7 @@ function DefaultTableModel() {
 	//shared renderer
 	function renderer( elem, controller, idx ) {
 		var $e = $(elem);
-		if( !$e.attr('items') ) return;
+		if( !R.attr($e, 'items') ) return;
 		
 		var tpl = $e.data('___template');
 		if( !tpl && !$e.data('___binded') ) {
@@ -1332,14 +1356,14 @@ function DefaultTableModel() {
 		}
 		
 		var selected;
-		if( $e.attr('name') ) selected = controller.get( $e.attr('name') );
+		if( R.attr($e, 'name') ) selected = controller.get( R.attr($e, 'name') );
 		
-		var varName = $e.attr('varName');
-		var varStat = $e.attr('varStatus');
+		var varName = R.attr($e, 'varName');
+		var varStat = R.attr($e, 'varStatus');
 		var status = { index: 0 };
 		
 		$e.empty();
-		$(controller.get($e.attr('items'))).each(function(i,o){
+		$(controller.get(R.attr($e, 'items'))).each(function(i,o){
 			var li;
 			if( tpl ) {
 				var html = tpl;
@@ -1357,9 +1381,9 @@ function DefaultTableModel() {
 			status.index++;
 		});
 		
-		if( $e.attr('name') ) {
+		if( R.attr($e, 'name') ) {
 			$e.find('li').mousedown(function(){
-				controller.set($e.attr('name'), $(this).data('value'));
+				controller.set(R.attr($e, 'name'), $(this).data('value'));
 				$e.find('li').removeClass('selected');
 				$(this).addClass('selected');
 			});
@@ -1473,8 +1497,9 @@ var WindowUtil = new function() {
 		if(f==null) f = {};
 		if( selector ) {
 			$("input[type='hidden'][context!='']", selector).each(function(i,elm){
-				if( elm.name ) {
-					f[elm.name] = $get($(elm).attr('context')).get( elm.name );
+				var name = R.attr(elm, 'name');
+				if( name ) {
+					f[name] = $get(R.attr($(elm), 'context')).get( name );
 				}
 			});
 		}
