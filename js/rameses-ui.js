@@ -80,15 +80,14 @@ var BindingUtils = new function() {
 
     this.bind = function(ctxName, selector) {
 		//just bind all elements that has the attribute context
-		var expr = "[" + R.PREFIX + "\\:context]";
-        $(expr, selector? selector : null).each ( controlLoader );
+		var expr = R.PREFIX + ":context";
+        $('*', selector || document).filter(function() { return $(this).attr(expr); }).each ( controlLoader );
     };
 
     this.loadViews = function(ctxName, selector) {
-		//var predicate = (ctxName!=null && ctxName!="") ? "[context][context='"+ctxName+"']" : "[context][context!='']";
         //loads all divs with context and displays the page into the div.
-		var expr = 'div[' + R.PREFIX + '\\:controller]';
-        $(expr, selector? selector : null).each ( containerLoader );
+		var expr = R.PREFIX + ':controller';
+        $('*', selector || document).filter(function() { return $(this).attr(expr); }).each ( containerLoader );
     };
 
     //utilities
@@ -148,6 +147,7 @@ var BindingUtils = new function() {
             this.loaders[i]();
         }
         this.loaders = [];
+
         this.bind(null,selector);
         this.loadViews(null,selector);
 	};
@@ -667,6 +667,7 @@ BindingUtils.handlers.input_submit = function( elem, controller, idx ) {
 
 BindingUtils.handlers.label = function( elem, controller, idx ){
 	var lbl = $(elem);
+	
 	var ctx = $ctx(controller.name);
 	var expr;
 	if( lbl.data('expr')!=null ) {
@@ -675,6 +676,7 @@ BindingUtils.handlers.label = function( elem, controller, idx ){
 		expr = lbl.html();
 		lbl.data('expr', expr);
 	}
+
 	lbl.html( expr.evaluate(ctx) );
 	
 	//bind label elements
@@ -1655,7 +1657,8 @@ var Hash = new function() {
 					refresh: function() {$get(inv.context).refresh(); },
 					reload : function() { self.reload(); }
 				}
-			}	
+			}
+
 			BindingUtils.load( content );
 		});
 		
@@ -1737,7 +1740,7 @@ function PopupOpener( id, params ) {
 				};	
 			}
 			catch(e) {;}
-            BindingUtils.load( div);
+            BindingUtils.load( div );
             //make into a dialog after the content is loaded.
             div.dialog(options);
         });
