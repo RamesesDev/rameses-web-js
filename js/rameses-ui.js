@@ -7,10 +7,16 @@ var R = {
 	PREFIX: 'r',
 	attr: function(elm, attr, value) {
 		attr = this.PREFIX + ':' + attr;
-		if( value )
-			return elm.jquery? elm.attr(attr, value) : $(elm).attr(attr, value);
-		else
-			return elm.jquery? elm.attr(attr) : $(elm).attr(attr);
+		try {
+			if( value )
+				return elm.jquery? elm.attr(attr, value) : $(elm).attr(attr, value);
+			else
+				return elm.jquery? elm.attr(attr) : $(elm).attr(attr);
+		}
+		catch(e) {
+			if( window.console ) console.log( e.message );
+			return null;
+		}
 	}
 };
 
@@ -73,21 +79,25 @@ var BindingUtils = new function() {
 		var controller = $get(contextName);
 		if( controller != null ) {
 			if( controller.name == null ) controller.name = contextName;
-			if( R.attr(div, "loadAction")!=null) controller.loadAction = R.attr(div, "loadAction");
+			if( R.attr(div, "loadAction")!=null ) controller.loadAction = R.attr(div, "loadAction");
 			controller.load();
 		}
 	};
 
     this.bind = function(ctxName, selector) {
 		//just bind all elements that has the attribute context
-		var expr = R.PREFIX + ":context";
-        $('*', selector || document).filter(function() { return $(this).attr(expr); }).each ( controlLoader );
+		var idx = 0;
+        $('*', selector || document).filter(function() {
+			if( R.attr(this, 'context') ) controlLoader( idx++, this );
+		});
     };
 
     this.loadViews = function(ctxName, selector) {
         //loads all divs with context and displays the page into the div.
-		var expr = R.PREFIX + ':controller';
-        $('*', selector || document).filter(function() { return $(this).attr(expr); }).each ( containerLoader );
+		var idx = 0;
+        $('*', selector || document).filter(function() { 
+			if( R.attr(this, 'controller') ) containerLoader( idx++, this );
+		});
     };
 
     //utilities
@@ -126,7 +136,7 @@ var BindingUtils = new function() {
         }
 
 		//add hints
-		if( R.attr($(elem), "hint")!=null ) {
+		if( R.attr(elem, "hint")!=null ) {
 			new InputHintDecorator( elem );
 		}
 
@@ -137,8 +147,12 @@ var BindingUtils = new function() {
     };
 
 	this.notifyDependents = function(dependName, selector) {
-		var predicate = "[depends*='"+dependName+"'][context!='']";
-		$(predicate, selector).each( controlLoader );
+		var idx = 0;
+		$('*', selector).filter(function(){
+			var attr = R.attr(this, 'depends');
+			if( attr && attr.match('.*' + dependName + '.*') ) 
+				controlLoader( idx++, this );
+		});
 	};
 
 
@@ -164,13 +178,14 @@ var BindingUtils = new function() {
 			return;
 		}
 
-		input.keyup(input_keyup)
+		input.wrap('<span style="display:inline-block;position:relative"></span>')
+		 .keyup(input_keyup)
 		 .keypress(input_keypress)
 		 .focus(input_focus)
 		 .blur(input_blur)
 		 .data('hint_decorator', this);
 
-		var span = $('<span class="hint" style="position:absolute; z-index:100; overflow: hidden;"></span>')
+		var span = $('<span class="hint" style="position:absolute;z-index:100;overflow:hidden;top:0px;left:0px;"></span>')
 		 .html( R.attr(input, 'hint') )
 		 .hide()
 		 .disableSelection()
@@ -184,10 +199,6 @@ var BindingUtils = new function() {
 		
 		if( document.activeElement == input[0] ) input_focus();
 
-		//reposition span on window resize
-		$(window).bind('resize', position);
-		$(document).bind('resize', position);
-
 		function refresh(){
 			if( !input.val() )
 				showHint();
@@ -195,28 +206,21 @@ var BindingUtils = new function() {
 				hideHint();
 		}
 
-		var isPositioned;
-
 		function position() {
 			var pos = input.position();
-			var css = {left: pos.left + parseInt( input.css('paddingLeft') ) + 5};
-			var paddingTop = parseInt( input.css('paddingTop') );
-			var inpHeight = input[0].offsetHeight;
-			var spanHeight = span[0].offsetHeight;
-
-			if( inp.type == 'text' || inp.type == 'password' ) {
-				css.top = pos.top + inpHeight/2 - spanHeight/2;
-			}
-			else {
-				css.top = pos.top + paddingTop;
-			}
-						
+			var css = {};
+			css.left = parseValue(input.css('padding-left')) + parseValue(input.css('margin-left')) + parseValue(input.css('border-left-width'))+2;
+			css.top = parseValue(input.css('padding-top')) + parseValue(input.css('margin-top')) + parseValue(input.css('border-top-width'));
+			css.width = span[0].offsetWidth > input.width() ? input.width() : span[0].offsetWidth;
 			span.css( css );
-			isPositioned = true;
+		}
+		
+		function parseValue( value ) {
+			return value=='auto'? 0 : parseInt( value );
 		}
 
 		function showHint() {
-			span.css('width', input.width()).show();
+			span.show();
 			position();
 		}
 
@@ -300,13 +304,18 @@ var BeanUtils = new function(){
 }
 
 //VALIDATORS
-function RequiredValidator( fieldName, caption ) {
+function RequiredValidator( fieldName, caption, elem ) 
+{
     this.fieldName = fieldName;
     this.caption = caption;
+	this.elem = elem;
 
-    this.validate = function( obj, errs ) {
+    this.validate = function( obj, errs, errElems ) {
         var data = BeanUtils.getProperty( obj, this.fieldName );
-        if( data == "" || data == null ) errs.push( this.caption + " is required" );
+        if( data == "" || data == null ) {
+			if( errElems ) errElems.push( this.elem );
+			errs.push( this.caption + " is required" );
+		}
     }
 }
 
@@ -337,7 +346,9 @@ function Controller( code, pages ) {
 
     this.refresh = function( fieldNames ) {
         //try to use jquery here.
-        if(this.name!=null) BindingUtils.bind( this.name )
+		var selector;
+		if( this.container && this.container.element ) selector = this.container.element;
+        if(this.name!=null) BindingUtils.bind( this.name, selector )
     }
 
     this.reload = function() {
@@ -345,24 +356,26 @@ function Controller( code, pages ) {
     }
 
     this.invoke = function( control, action, args, immed  ) {
-        if( action.startsWith("_") ) {
-            this.navigate( action, control );
-        }
-        else {
-            try {
-                var immediate =  false;
-				if( immed !=null ) immediate = immed;
+		try {
+			var immediate =  false;
+			if( immed !=null ) immediate = immed;
+			//check validation if not immediate.
+			if( control ) {
+				if( R.attr(control, "immediate") ) {
+					immediate = R.attr(control, "immediate");
+				}
+				if( R.attr(control, "target") ) {
+					target = R.attr(control, "target");
+				}
+			}
+			if(immediate=="false" || immediate==false) this.validate();
+			
+			//-- process action name
+			if( action.startsWith("_") ) {
+				this.navigate( action, control );
+			}
+			else {
                 var target = this.name;
-                //check validation if not immediate.
-                if(control!=null ) {
-                    if(R.attr(control, "immediate")!=null && R.attr(control, "immediate")!=null) {
-                        immediate = R.attr(control, "immediate");
-                    }
-                    if(R.attr(control, "target")!=null && R.attr(control, "target")!='' ) {
-                        target = R.attr(control, "target");
-                    }
-                }
-                if(immediate=="false" || immediate==false) this.validate();
                 if(this.code == null) throw new Error( "Code not set");
 				
 				/*added support for parameters that are set when firing a button or action.*/
@@ -382,10 +395,10 @@ function Controller( code, pages ) {
                 }
                 this.navigate( outcome, control );
             }
-            catch(e) {
-                alert( e.message, "ERROR!" );
-            }
         }
+		catch(e) {
+			alert( e.message, "ERROR!" );
+		}
     }
 
     this.navigate = function(outcome, control) {
@@ -436,23 +449,30 @@ function Controller( code, pages ) {
         }
     }
 
-    this.validate = function() {
+    this.validate = function( selector ) {
         var errs = [];
-        var _code = this.code;
-        var d = '[r\\:context="' + this.name + '"][r\\:required=true]';
-        var filter = "input"+d+", select"+d+", textarea"+d;
-        $(filter).each(
-            function(idx, elem) {
-                var o = $(elem);
-                if( o.is(':hidden') ) return; //validate the visible elements only
+		var errElems = [];
+        var code = this.code;
+		var name = this.name;
+		var selector;
+		if( this.container && this.container.element ) selector = this.container.element;
+        $('select,input,textarea', selector || document).filter(
+            function() {
+                var o = $(this);
+                if( o.is(':hidden') ) return;
+				if( R.attr(this, 'required') != 'true' ) return;
+				if( R.attr(this, 'context') != name ) return;
                 
-                var fldName = R.attr(elem, 'name');
+				$(this).removeClass('error');
+                var fldName = R.attr(this, 'name');
                 var caption = fldName;
-                if( R.attr(o, "caption")!=null ) caption = R.attr(o, "caption");
-                new RequiredValidator(fldName, caption ).validate( _code, errs );
+                if( R.attr(this, "caption") ) caption = R.attr(this, "caption");
+                new RequiredValidator(fldName, caption, this ).validate( code, errs, errElems );
             }
         )
         if( errs.length > 0 ) {
+			if(errElems) errElems[0].focus();
+			$(errElems).addClass('error');
             throw new Error( errs.join("\n") );
         }
     }
@@ -524,8 +544,9 @@ BindingUtils.handlers.input_password = function(elem, controller, idx ) { Bindin
 BindingUtils.handlers.textarea = function(elem, controller, idx ) { BindingUtils.initInput(elem, controller); };
 BindingUtils.handlers.select = function(elem, controller, idx ) {
 	var i = 0;
-	var name = R.attr($(elem), 'name');
-	var items = R.attr($(elem), "items");
+	var name = R.attr(elem, 'name');
+	var items = R.attr(elem, 'items');
+	var selectedItem = R.attr(elem, 'selectedItem');
 	var selected = controller.get( name );
 	
 	if( items ) $(elem).empty();
@@ -544,43 +565,54 @@ BindingUtils.handlers.select = function(elem, controller, idx ) {
 		$(arr).each( function(idx,value) {
 			var _key = value;
 			if( itemKey != null ) _key = value[itemKey];
-			var _val = value+'';
-			if( itemLabel != null ) _val = value[itemLabel];
+			var _label = value+'';
+			if( itemLabel != null ) _label = value[itemLabel];
 
-			var op = new Option(_val,_key+'');
+			var op = new Option(_label,_key+'');
 			
-			$(op).data('object_value', _key);
+			$(op).data('value', _key);
+			$(op).data('object_value', value);
 			elem.options[idx+i] = op;
 			op.selected = (_key == selected);
 		});
 	}
-
-	if( name && !$(elem).data('___changed_attached') ) {
-		$(elem).change(function(){
-			var op = this.options[this.selectedIndex];
-			var objval = $(op).data('object_value');
-			$get(controller.name).set(name, objval? objval : op.value );
-		})
-		.data('___changed_attached', true);
+	else if( elem.options.length > 0 ) {
+		$(elem.options).each(function(i,option){
+			option.selected = (option.value == selected);
+		});
 	}
 
-	//fire change after bind to set default value
-	$(elem).change();
+	if( !$(elem).data('_binded') ) {
+		$(elem).change(function(){
+			var op = this.options[this.selectedIndex];
+			var objval = $(op).data('value');
+			if( name )
+				$get(controller.name).set(name, objval? objval : op.value );
+				
+			objval = $(op).data('object_value');
+			if( selectedItem )
+				$get(controller.name).set(selectedItem, objval);
+		})
+		.data('_binded', true);
+		
+		//fire change after bind to set default value
+		$(elem).change();
+	}
 }
 
 BindingUtils.handlers.input_radio = function(elem, controller, idx ) {
 	var name = R.attr(elem, 'name');
 	var c = controller.get(name);
-	
+
 	//set the name of all input type="radio" having the same r:name value
 	//so that it will be group by name
 	$(elem).attr('name', name);
 	
-	var value = $(elem).attr("value");
+	var value = elem.value;
 	elem.checked = (c==value) ? true :  false;
 	elem.onchange = function () {
 		if( this.checked ) {
-			$get(controller.name).set(name, this.value );
+			controller.set(name, this.value );
 		}
 	}
 }
@@ -645,6 +677,23 @@ BindingUtils.handlers.a = function( elem, controller, idx ) {
     //add an href property if not specified,
     //css hover does not apply when no href is specified
     if( !$e.attr('href') ) $e.attr('href', '#');
+    
+    elem.onclick = function() { 
+		if( action ) {
+			try {
+				$get(controller.name).invoke( this, action ); 
+			}
+			catch(e) {
+				if( window.console ) console.log( e.message );	
+			}
+		}
+		return false; 
+	}
+}
+
+BindingUtils.handlers.button = function( elem, controller, idx ) {
+	var $e = $(elem);
+    var action = R.attr($e, "name");
     
     elem.onclick = function() { 
 		if( action ) {
@@ -935,7 +984,6 @@ BindingUtils.handlers.input_file = function( elem, controller, idx ) {
  * @author jaycverg
  *-----------------------------------*/
 BindingUtils.handlers.table = function( elem, controller, idx ) {
-
 	if( $(elem).data('_has_model') ) return;
 	if( !window.___table_ctr ) window.___table_ctr = 0;
 
@@ -947,7 +995,6 @@ BindingUtils.handlers.table = function( elem, controller, idx ) {
 
 /*------ DataTable class ---------*/
 function DataTable( table, bean, controller ) {
-
 	var model = new DefaultTableModel( table );
 
 	var multiselect = R.attr(table, 'multiselect') == 'true';
@@ -1692,8 +1739,14 @@ function Opener(id, params) {
 }
 
 
-function PopupOpener( id, params ) {
-
+/**
+ * This is the opener used to open a popup dialog
+ * You can set global options using:
+ *   PopupOpener.options = {}
+ * the value of PopupOpener.options is global unless explicitly overriden
+ */
+function PopupOpener( id, params, options ) 
+{
     this.classname = "opener";
 	this.id = id;
     this.params = params;
@@ -1701,9 +1754,14 @@ function PopupOpener( id, params ) {
 	this.parentTarget;
 	this.title;
 	this.source;
-	this.options = {};
+	this.options = options || {};
 
 	var defaultOptions = {show: 'fade', hide: 'fade', height: 'auto'};
+	
+	//merge values of PopupOpener.options if specified
+	if( PopupOpener.options )
+		defaultOptions = $.extend(defaultOptions, PopupOpener.options);
+
 
     this.load = function() {
 		var inv = Registry.find(this.id);
@@ -1735,6 +1793,7 @@ function PopupOpener( id, params ) {
 					}
 				}
 				$get(n).container = {
+					element: div,
 					close: function() { div.dialog("close"); if(caller) caller.refresh(); },
 					refresh: function() { $get(n).refresh(); }
 				};	
@@ -1747,8 +1806,17 @@ function PopupOpener( id, params ) {
     }
 }
 
-//-- DropdownOpener class
-function DropdownOpener( id, params ) {
+
+/**
+ * DropdownOpener class
+ *
+ * This is the opener used to open a dropdown window
+ * You can set global options using:
+ *   DropdownOpener.options = {}
+ * the value of DropdownOpener.options is global unless explicitly overriden
+ */
+function DropdownOpener( id, params ) 
+{
 	this.classname = "opener";
 	this.caller;
     this.id = id;
@@ -1757,6 +1825,13 @@ function DropdownOpener( id, params ) {
 	this.source;
 	this.options = {};
 	this.styleClass;
+	
+	var defaultConfig = { my: 'left top', at: 'left bottom' };
+	
+	//merge values from DropdownOpener.options if specified
+	if( DropdownOpener.options )
+		defaultConfig = $.extend(defaultConfig, DropdownOpener.options);
+	
 
     this.load = function() {
 		var inv = Registry.find(this.id);
@@ -1780,7 +1855,8 @@ function DropdownOpener( id, params ) {
 					}
 				}
 				BindingUtils.load( div );
-				$get(n).container = { 
+				$get(n).container = {
+					element: w.getElement(),
 					close:   function() { w.close(); if(caller) caller.refresh() },
 					refresh: function() { $get(n).refresh(); }
 				}
@@ -1793,8 +1869,6 @@ function DropdownOpener( id, params ) {
 	function DropdownWindow( source, options, styleClass ) {
 
 		var div = $('<div class="dropdown-window" style="position: absolute; z-index: 200000; top: 0; left: 0;"></div>');
-
-		var defaultConfig = { my: 'left top', at: 'left bottom' };
 
 		if( styleClass ) div.addClass( styleClass );
 
@@ -1811,6 +1885,8 @@ function DropdownOpener( id, params ) {
 				callback(div);
 			});
 		};
+		
+		this.getElement = function() { return div; }
 
 		this.close = function() { hide(); };
 

@@ -1,15 +1,57 @@
 <html>
 	<head>
+		<link href="../js/css/jquery-ui/jquery.css" rel="stylesheet" />
+		<link href="../js/css/rameses-lib.css" rel="stylesheet" />
+		
 		<script src="../js/jquery-all.js"></script>
-		<script src="../js/rameses-lib.js"></script>
+		<script src="../js/rameses-ext-lib.js"></script>
+		<script src="../js/rameses-ui.js"></script>
 
+		<style>
+			body { text-align: center; background: #eee; }
+			ol, ul {margin:0px; padding:0px;}
+			ol li, ul li {list-style-position:inside;}
+			
+			.wrapper {
+				background: #fff;
+				border: solid 3px #369;
+				box-shadow: 0px 5px 15px #aaa;
+				padding: 20px;
+				text-align: left;
+				width: 800px;
+				margin: 0px auto;
+			}
+			
+			.ui-dialog {
+				border: solid 5px #369;
+				box-shadow: 0px 4px 10px #369;
+			}
+			.ui-dialog-titlebar { display: none; }
+			
+			input { margin: 3px 0px; font-size: 1.5em; border: solid 1px #ccc; }
+			span.hint { font-size: 1.5em; }
+			
+			ul li.selected { background: green; }
+		</style>
+		
 		<script>
+			Registry.add({id:'news_panel', context:'news_panel', page:'test/news_panel.html'});
+			Registry.add({id:'popup', context:'popup', page:'test/popup.html'});
+			
+			//default global settings for PopupOpener
+			PopupOpener.options = {show: '', hide: 'fade', resizable: false};
+		
 			$put(
 				'test',
 				new function() {
 
+					var self = this;
+					this._controller;
+					
 					this.itemCode;
 					this.item;
+					this.theme;
+					this.entity = {};
 
 					this.items = [
 						{code: 'bn', caption: 'Banana'},
@@ -20,20 +62,48 @@
 					];
 
 					this.showSelected = function(){
-						alert('selected is code ' + this.itemCode + '\nselected object is [code=${code}, caption=${caption}]'.evaluate(this.item) );
+						alert('selected is code ' + this.itemCode + '\nselected object is [code=#{code}, caption=#{caption}]'.evaluate(this.item) );
 					};
 
+					this.change = function() {
+						return new PopupOpener('popup', {item:this.theme, handler:function(theme){
+							self.theme = theme;
+							this._controller.refresh();
+						}}, {width: '300', height: '400'});
+					}
+				},
+				{
+					'default' : 'test/page1.html',
+					'page2' : 'test/page2.html'
 				}
 			);
 		</script>
 	</head>
 
 	<body>
-		<select context="test" name="itemCode" selectedItem="item"
-		        items="items" itemKey="code" itemLabel="caption"
-		        emptyText="-- Select Item --" allowNull="true">
-		</select>
-		<input type="button" context="test" name="showSelected" value="Show Selected Value"/>
+		<div class="wrapper">
+			<div>
+				<label r:context="test">Theme: #{theme}</label>
+				<button r:context="test" r:name="change">Change</button>
+			</div>
+			<br/>
+			
+			<select r:context="test" r:name="itemCode" r:selectedItem="item" r:required="true"
+					r:items="items" r:itemKey="code" r:itemLabel="caption"
+					r:emptyText="-- Select Item --" r:allowNull="true">
+			</select>
+			<label r:context="test" r:depends="item">Selected: #{itemCode}</label>
+			<button r:context="test" r:name="showSelected" r:immediate="true">Show Selected Value</button>
+			
+			<ul r:context="test" r:items="items" r:name="selected">
+				<li>#{code} - #{caption}</li>
+			</ul>
+			
+			<div r:controller="test"></div>
+			<hr/>
+			
+			<div id="content"></div>
+		</div>
 	</body>
 
 </html>

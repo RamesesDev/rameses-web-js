@@ -1,58 +1,26 @@
 <html>
 	<head>
-		<script type="text/javascript">
-			if( !window.console ) window.console = { log: function(msg){  }};
-		</script>
-		<script src="js/jquery-all.js"></script>
-		<script src="js/rameses-lib.js"></script>
-
+		<script src="../js/jquery-all.js"></script>
 		<script>
-
-			$put("sample",
-				new function() {
-
-					this.propertyChangeListener = {
-						"checkAll" : function(o) {
-							$(_this.list).each(function(i,e){ e.selected = o; });
-						}
-					}
-
-
-					this.list = [
-						{id:"001", name:"jay", status: "ACTIVE"},
-						{id:"003", name:"elmo", status: "INACTIVE"}
-					];
-
-
-					this.save = function() {
-						return "page1";
-					}
-					this.onload = function() {
-						//alert("onload" );
-					}
-
-					var _this = this;
-
-					this.display = function() {
-						for(var i=0; i < _this.list.length; ++i) {
-							var e = _this.list[i];
-							console.log( "selected: " + e.selected + ", id: " + e.id );
-						}
-					}
-
-					this.checkAll = false;
-
-				},
-				{
-					"default": "sample/page1.htm",
-					"page1": "sample/page2.htm"
+			$(function(){
+				var tbl = $('table')[0];
+				try {
+					alert( tbl.getAttribute('r:context') );
 				}
-			);
-
+				catch(e) {
+					alert( 'error: ' + e.message );
+				}
+			});
 		</script>
 	</head>
 	<body>
-		<div context="sample"></div>
+		<table>
+			<tr>
+				<td>Sample Content</td>
+				<td>Sample Content</td>
+			</tr>
+		</table>
+		<span></span>
 	</body>
 </html>
 

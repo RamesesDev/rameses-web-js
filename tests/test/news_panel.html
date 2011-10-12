@@ -1,0 +1,60 @@
+<script>
+	$put(
+		'news_panel',
+		new function() {
+		
+			this.message = 'no new message.';
+			
+			this.propertyChangeListener = {
+				'entity.type' : function( val ) {
+					console.log( 'updating entity.type ' + val );
+				}
+			};
+			
+			this.entity = {type: 'sms'};
+			this.list = [];
+			
+			this.add = function() {
+				this.list.push( this.entity );
+				this.entity = {type: 'sms'};
+			}
+			
+		}
+	);
+	
+</script>
+		
+<div style="border: solid 1px lightgrey">
+	<h3>News Panel</h3>
+	
+	Subject:<br/>
+	<input type="text" r:context="news_panel" r:name="entity.subject" r:hint="Subject"/><br/>
+	Messagge:<br/>
+
+	<textarea r:context="news_panel" r:name="entity.message" r:hint="Messagge"></textarea><br/>
+	
+	<label>
+		<input type="radio" r:context="news_panel" r:name="entity.type" value="news">News
+	</label>
+	<label>
+		<input type="radio" r:context="news_panel" r:name="entity.type" value="announcement">Announcement
+	</label>
+	<label>
+		<input type="radio" r:context="news_panel" r:name="entity.type" value="notification">Notification
+	</label>
+	<label>
+		<input type="radio" r:context="news_panel" r:name="entity.type" value="sms">SMS
+	</label>
+	<br/>
+	
+	<button r:context="news_panel" r:name="add">Add</button>
+	
+	<br/>
+
+	<table r:context="news_panel" r:items="list">
+		<tr>
+			<td><i>(#{type}) #{subject}</i><br/>#{message}<br/></td>
+		</tr>
+	</table>
+	
+</div>
