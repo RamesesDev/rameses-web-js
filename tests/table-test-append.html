@@ -4,7 +4,8 @@
 			if( !window.console ) window.console = { log: function(msg){  }};
 		</script>
 		<script src="../js/jquery-all.js"></script>
-		<script src="../js/rameses-lib.js"></script>
+		<script src="../js/rameses-ext-lib.js"></script>
+		<script src="../js/rameses-ui.js"></script>
 
 		<style>
 			body, table { font: 10pt/145% 'arial', 'verdana'; }
@@ -25,15 +26,7 @@
 							idx++;
 							return [
 								{id: idx+'001', firstname:"elmo", lastname:"nazareno"},
-								{id: idx+'002', firstname:"jess", lastname:"zamora"},
-								{id: idx+'003', firstname:"worgie", lastname:"flores"},
-								{id: idx+'004', firstname:"michael", lastname:"ramos"},
-								{id: idx+'005', firstname:"johana", lastname:"cardona"},
-								{id: idx+'006', firstname:"chariss", lastname:"villarosa"},
-								{id: idx+'007', firstname:"rojean", lastname:"vergara"},
-								{id: idx+'008', firstname:"robert", lastname:"yap"},
-								{id: idx+'009', firstname:"james", lastname:"yap"},
-								{id: idx+'010', firstname:"loren", lastname:"pedrito"}
+								{id: idx+'002', firstname:"jess", lastname:"zamora"}
 							];
 						}
 					};
@@ -44,8 +37,8 @@
 	</head>
 	<body>
 
-		<table context="profile" model="model" varStatus="stat" cellpadding="0" 
-			   cellspacing="0" width="400">
+		<table r:context="profile" r:model="model" r:varStatus="stat" r:appendtype="before"
+			   cellpadding="0" cellspacing="0" width="400">
 			<thead>
 				<th>
 					Posts
@@ -67,7 +60,7 @@
 		</table>
 		
 		<br/>
-		<a context="profile" name="model.fetchNext">View More</a>
+		<a r:context="profile" r:name="model.fetchNext">View More</a>
 		<br/>
 		
 	</body>

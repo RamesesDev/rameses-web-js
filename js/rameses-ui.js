@@ -609,7 +609,12 @@ BindingUtils.handlers.input_radio = function(elem, controller, idx ) {
 	$(elem).attr('name', name);
 	
 	var value = elem.value;
-	elem.checked = (c==value) ? true :  false;
+	var checked = (c==value) ? true :  false;
+	if( checked )
+		$(elem).attr('checked', 'checked');
+	else
+		$(elem).removeAttr('checked');
+
 	elem.onchange = function () {
 		if( this.checked ) {
 			controller.set(name, this.value );
@@ -1033,24 +1038,27 @@ function DataTable( table, bean, controller ) {
 		var list = model.getList();
 		if(list==null) list = [];
 		
-		var items = renderItemsAdded( list, false );
+		var items = renderItemsAdded( list, null, false );
 		$(items).each(function(i,e){ td_mousedown(e, true); });
 		tbody.show();
 		BindingUtils.bind( null, table );
 	}
 	
-	function renderItemsAdded( list, animate ) {
+	function renderItemsAdded( list, type, animate ) {
 		animate = (animate!=null)? animate : true;
 		var selected = name? controller.get(name) : null;
 		var selectedTds = [];
+		var appendtype = type? type : R.attr(table, 'appendtype');
 
 		//render the rows
+		var rows = [];
 		for(var i=0; i<list.length; ++i) {
 			var item = list[i];
 			status.prevItem = (i > 0)? list[i-1] : null;
 			status.nextItem = (i < list.length-1)? list[i+1] : null;
 
-			var row = createRow(i, item).appendTo( tbody );
+			var row = createRow(i, item);
+			rows.push( row );
 			if( animate ) row.hide().fadeIn('slow');
 			if( selected == item ) {
 				var pos = table.data('selected_position');
@@ -1059,6 +1067,11 @@ function DataTable( table, bean, controller ) {
 			};
 			status.index++;
 		};
+		
+		if( appendtype == 'before' )
+			$(rows).prependTo(tbody);
+		else
+			$(rows).appendTo(tbody);
 
 		var rows = model.getRows();
 		if( rows != -1 && list.length < rows ) {
@@ -1314,7 +1327,8 @@ function DefaultTableModel() {
 	
 	function fetchNext() {
 		if( _dataModel && $.isFunction( _dataModel.fetchList ) ) {
-			var result = _dataModel.fetchList({});
+			var last = _list? _list[ _list.length-1 ] : null;
+			var result = _dataModel.fetchList({}, last);
 			if( typeof result != 'undefined' ) {
 				if( $.isFunction( _this.onAppend ) ) {
 					_this.getList().addAll( result );
@@ -1342,6 +1356,31 @@ function DefaultTableModel() {
 		}
 		doRefresh(true);
 	}
+	
+	function appendItem( item ) {
+		appendAll( [item] );
+	}
+	
+	function appendAll( list ) {
+		if( !list ) return;
+		if( $.isFunction( _this.onAppend ) ) {
+			_this.getList().addAll( list );
+			_this.onAppend( list, 'after' );
+		}
+	}
+	
+	function prependItem( item ) {
+		prependAll( [item] );
+	}
+	
+	function prependAll( list ) {
+		if( !list ) return;
+		if( $.isFunction( _this.onAppend ) ) {
+			_this.getList();
+			_list = list.concat( _list );
+			_this.onAppend( list, 'before' );
+		}
+	}
 
 	/**
 	 * inject callback methods to the passed dataModel
@@ -1364,6 +1403,10 @@ function DefaultTableModel() {
 		_dataModel.moveFirst = moveFirst;
 		_dataModel.moveNext = moveNext;
 		_dataModel.movePrev = movePrev;
+		_dataModel.appendItem = appendItem;
+		_dataModel.appendAll = appendAll;
+		_dataModel.prependItem = prependItem;
+		_dataModel.prependAll = prependAll;
 
 		_dataModel.getSelectedItem = function() {
 			var len = _selectedItems.length;
