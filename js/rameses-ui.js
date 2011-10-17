@@ -1329,7 +1329,7 @@ function DefaultTableModel() {
 		if( _dataModel && $.isFunction( _dataModel.fetchList ) ) {
 			var last = _list? _list[ _list.length-1 ] : null;
 			var result = _dataModel.fetchList({}, last);
-			if( typeof result != 'undefined' ) {
+			if( result ) {
 				if( $.isFunction( _this.onAppend ) ) {
 					_this.getList().addAll( result );
 					_this.onAppend( result );
@@ -1958,6 +1958,14 @@ $(document).ready (
     function() {
         BindingUtils.load();
 		Hash.init();
+		
+		$(function(){ $(window).scroll( onScroll ); });
+
+		function onScroll() {
+			if  ($(window).scrollTop() == $(document).height() - $(window).height()){
+			   Scroller.onScrollToBottom();
+			}
+		}
     }
 );
 
@@ -1967,3 +1975,61 @@ function $put( name, code, pages ) {return ContextManager.create( name, code, pa
 function $ctx(name) {return ContextManager.get(name).code;};
 function $load(func) {  BindingUtils.loaders.push(func); };
 function $register( config ) { Registry.add(config); };
+
+//scroller manager
+var Scroller = new function(){
+
+	var globalListners = []; //array
+	var localListeners = {}; //map of id(hashid) and listener array pair
+
+	/**
+	 * @param listener
+	 *		the callback function
+	 * @param hashid
+	 *		optional, if you pass an id(hashid), the listener will be treated as a local listener for a particular hashid
+	 */
+	this.register = function( listener, hashid ) {
+		if( !hashid ) {
+			if( $.inArray( listener, globalListners ) >= 0 ) return;
+			globalListners.push( listener );
+		}
+		else {
+			if( !(localListeners[hashid] instanceof Array) )
+				localListeners[hashid] = [];
+
+			if( $.inArray( listener, localListeners[hashid] ) >= 0 ) return;
+			localListeners[hashid].push(listener);
+		}
+	}
+	
+	/**
+	 * @param listener 
+	 *		if no hashid passed, it will look for the listener passed on the globalListners and removes it
+	 * @param hashid
+	 *		optional, if a hashid is passed, it will look for the listener passed on the localListeners and removes it
+	 */
+	this.unregister = function( listener, hashid ) {
+		if( !hashid ) {
+			globalListners.remove( listener );
+		}
+		else {
+			if( localListeners[hashid] ) localListeners[hashid].remove( listener );
+		}
+	}
+	
+	this.onScrollToBottom = function() {
+		for(var i=0; i<globalListners.length; ++i) globalListners[i]();
+		
+		var currentHash = location.hash.length > 1 ? location.hash.substring(1) : '';
+		if( !currentHash ) return;
+		
+		for(var i in localListeners) {
+			if( i != currentHash ) continue;
+			if( localListeners[i] && localListeners[i].length == 0 ) continue;
+			for(var j=0; j<localListeners[i].length; ++j) {
+				localListeners[i][j]();
+			}
+		}
+	}
+	
+};

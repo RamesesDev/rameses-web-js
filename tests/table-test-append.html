@@ -20,9 +20,15 @@
 				new function() {
 
 					var idx = 0;
+					var self = this;
+					
+					Scroller.register(function(){
+						self.model.fetchNext();
+					});
 				
 					this.model = {
 						fetchList: function() {
+							if( idx >= 30 ) return null;
 							idx++;
 							return [
 								{id: idx+'001', firstname:"elmo", lastname:"nazareno"},
@@ -37,7 +43,7 @@
 	</head>
 	<body>
 
-		<table r:context="profile" r:model="model" r:varStatus="stat" r:appendtype="before"
+		<table r:context="profile" r:model="model" r:varStatus="stat"
 			   cellpadding="0" cellspacing="0" width="400">
 			<thead>
 				<th>
