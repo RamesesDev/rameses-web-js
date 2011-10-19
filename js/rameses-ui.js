@@ -4,6 +4,7 @@
 **/
 
 var R = {
+	DEBUG: false,
 	PREFIX: 'r',
 	attr: function(elm, attr, value) {
 		attr = this.PREFIX + ':' + attr;
@@ -14,7 +15,7 @@ var R = {
 				return elm.jquery? elm.attr(attr) : $(elm).attr(attr);
 		}
 		catch(e) {
-			if( window.console ) console.log( e.message );
+			if( window.console && R.DEBUG ) console.log( e.message );
 			return null;
 		}
 	}
@@ -39,7 +40,7 @@ var BindingUtils = new function() {
 				isVisible = (res != 'false' && res != 'null');
 			}
 			catch(e) {
-				if( window.console ) console.log('error evaluating visibleWhen: ' + e.message);
+				if( window.console && R.DEBUG ) console.log('error evaluating visibleWhen: ' + e.message);
 				isVisible = false;
 			}
 		}
@@ -280,7 +281,9 @@ var BeanUtils = new function(){
 		try {
         	return eval( 'bean.' + fieldName );
         }
-        catch(e) {;}
+        catch(e) {
+			if( window.console && R.DEBUG ) console.log('BeanUtils.getProperty warning: ' + e.message);
+		}
     }
 
 	this.setProperties = function( bean, map ) {
@@ -355,10 +358,12 @@ function Controller( code, pages ) {
         this.navigate( "_reload" );
     }
 
-    this.invoke = function( control, action, args, immed  ) {
+    this.invoke = function( control, action, args, immed, refresh  ) {
 		try {
 			var immediate =  false;
 			if( immed !=null ) immediate = immed;
+			if( refresh != false ) refresh = true;
+			
 			//check validation if not immediate.
 			if( control ) {
 				if( R.attr(control, "immediate") ) {
@@ -367,12 +372,16 @@ function Controller( code, pages ) {
 				if( R.attr(control, "target") ) {
 					target = R.attr(control, "target");
 				}
+				if( R.attr(control, "refresh") ) {
+					refresh = R.attr(control, "refresh");
+				}
 			}
 			if(immediate=="false" || immediate==false) this.validate();
 			
 			//-- process action name
 			if( action.startsWith("_") ) {
-				this.navigate( action, control );
+				if( refresh == true || refresh == 'true' )
+					this.navigate( action, control );
 			}
 			else {
                 var target = this.name;
@@ -385,7 +394,7 @@ function Controller( code, pages ) {
 						BeanUtils.setProperties( this.code, _parms );
 					}
 					catch(e) {
-						if(window.console) console.log("error in control params " + e.message );
+						if(window.console && R.DEBUG) console.log("error in control params " + e.message );
 					}
 				}
 				
@@ -393,7 +402,8 @@ function Controller( code, pages ) {
                 if( !outcome.startsWith("_")) {
                     outcome = BeanUtils.invokeMethod( this.code, action, args );
                 }
-                this.navigate( outcome, control );
+				if( refresh == true || refresh == 'true' )
+					this.navigate( outcome, control );
             }
         }
 		catch(e) {
@@ -689,7 +699,7 @@ BindingUtils.handlers.a = function( elem, controller, idx ) {
 				$get(controller.name).invoke( this, action ); 
 			}
 			catch(e) {
-				if( window.console ) console.log( e.message );	
+				if( window.console && R.DEBUG ) console.log( e.message );	
 			}
 		}
 		return false; 
@@ -706,7 +716,7 @@ BindingUtils.handlers.button = function( elem, controller, idx ) {
 				$get(controller.name).invoke( this, action ); 
 			}
 			catch(e) {
-				if( window.console ) console.log( e.message );	
+				if( window.console && R.DEBUG ) console.log( e.message );	
 			}
 		}
 		return false; 
@@ -1020,12 +1030,14 @@ function DataTable( table, bean, controller ) {
 
 	var tpl = table.data('template');
 	if( !tpl ) {
-		tpl = tbody.find('tr').remove();
+		tpl = tbody.find('tr').remove().clone(true);
 		table.data('template', tpl);
 	}
 
 	model.onRefresh = doRender;
-	model.onAppend = renderItemsAdded;
+	model.onAppend = function(list, type, animate) { 
+		renderItemsAdded(list, type, animate, true);
+	};
 	model.load();
 
 	var tabIdx;
@@ -1044,7 +1056,7 @@ function DataTable( table, bean, controller ) {
 		BindingUtils.bind( null, table );
 	}
 	
-	function renderItemsAdded( list, type, animate ) {
+	function renderItemsAdded( list, type, animate, bindItems ) {
 		animate = (animate!=null)? animate : true;
 		var selected = name? controller.get(name) : null;
 		var selectedTds = [];
@@ -1059,7 +1071,7 @@ function DataTable( table, bean, controller ) {
 
 			var row = createRow(i, item);
 			rows.push( row );
-			if( animate ) row.hide().fadeIn('slow');
+			if( animate ) row.css('opacity', 0).animate({opacity: 1});
 			if( selected == item ) {
 				var pos = table.data('selected_position');
 				var td = pos ? $(row[pos.row]).find('td')[pos.col] : row.find('td:first:not([r\\:selectable])')[0];
@@ -1081,6 +1093,8 @@ function DataTable( table, bean, controller ) {
 				status.index++;
 			}
 		}
+		
+		if( bindItems ) BindingUtils.bind( rows );
 		
 		return selectedTds;
 	}
@@ -1221,7 +1235,7 @@ function DataTable( table, bean, controller ) {
 			return BeanUtils.getProperty( _ctx, name );
 		}
 		catch(e) {
-			if( window.console ) console.log( e.message );
+			if( window.console && R.DEBUG ) console.log( e.message );
 		}
 		return null;
 	}
@@ -1427,7 +1441,7 @@ function DefaultTableModel() {
 
 /**
  *  <OL> and <UL> plugin
- *    @author  jaycvergS
+ *    @author  jaycverg
  */
 
 (function(){
@@ -1446,7 +1460,7 @@ function DefaultTableModel() {
 			$e.data('___template', tpl);
 			$e.data('___binded', true);
 		}
-		
+
 		var selected;
 		if( R.attr($e, 'name') ) selected = controller.get( R.attr($e, 'name') );
 		
@@ -1505,7 +1519,7 @@ function DefaultTableModel() {
 				return BeanUtils.getProperty( _ctx, name );
 			}
 			catch(e) {
-				if( window.console ) console.log( e.message );
+				if( window.console && R.DEBUG ) console.log( e.message );
 			}
 			return null;
 		}
@@ -1514,6 +1528,35 @@ function DefaultTableModel() {
 })();
 
 //-- end of <OL> and <UL> plugin
+
+/**
+ *  template tag plugin
+ *    @author  jaycverg
+ */
+BindingUtils.handlers.template = function(elem, controller, idx) {
+	var tag = $(elem);
+	var div = $(tag).next('div.template');
+	if( div.length == 0 ) {
+		div = $('<div class="template"></div>').insertAfter(tag);
+	}
+	
+	var p = {};
+	var pjson = R.attr(tag, 'params');
+	if( pjson ) {
+		try{  p = eval('(' + pjson + ')'); }
+		catch(e) {
+			if( window.console ) console.log('Template params error: ' + e.message);
+		}				
+	}
+	window.params = p;
+	
+	if( div.children().length == 0 ) {
+		var tpl = $('div#' + R.attr(tag,'id'));
+		div.empty().append( tpl.clone(true).show().removeAttr('id') );
+		BindingUtils.bind( null, div );
+	}
+};
+//-- end of <template> tag plugin --
 
 
 var WindowUtil = new function() {
@@ -1816,19 +1859,30 @@ function PopupOpener( id, params, options )
 		var page = inv.page;
         var p = this.params;
 		var caller = this.caller;
-		
-        var id = 'popup_' + Math.floor( Math.random() * 200000 );
-        var	div = $('<div id="' + id + '"></div>').appendTo('body');
+
+		var dynamic = !this.id.startsWith('#');
+		var	div;
+		if( dynamic )
+			div = $('<div></div>').appendTo('body');
+		else
+			div = $(this.id);
 
 		//remove div if dynamically created
-		this.options.close = function() { div.remove();	}
+		if( dynamic ) {
+			this.options.close = function() { div.remove();	}
+		}
 		this.options.modal = true;
 		this.options.title = this.title || inv.title;
 
 		var options = $.extend(defaultOptions, this.options);
 		if( inv.options ) options = $.extend(options, inv.options);
 
-        div.load(page, WindowUtil.getParameters(p), function() {
+		if( dynamic )
+			div.load(page, WindowUtil.getParameters(p), createDialog);
+		else
+			createDialog();
+		
+		function createDialog() {
 			try {
 				if(p!=null) {
 					for( var key in p ) {
@@ -1845,7 +1899,7 @@ function PopupOpener( id, params, options )
             BindingUtils.load( div );
             //make into a dialog after the content is loaded.
             div.dialog(options);
-        });
+		}
     }
 }
 
@@ -1871,11 +1925,7 @@ function DropdownOpener( id, params )
 	
 	var defaultConfig = { my: 'left top', at: 'left bottom' };
 	
-	//merge values from DropdownOpener.options if specified
-	if( DropdownOpener.options )
-		defaultConfig = $.extend(defaultConfig, DropdownOpener.options);
 	
-
     this.load = function() {
 		var inv = Registry.find(this.id);
 		if(inv==null) {
@@ -1884,9 +1934,14 @@ function DropdownOpener( id, params )
 		}
         var n = inv.context;
         var p = this.params;
-		var page = inv.page;
 		var caller = this.caller;
+		var page;
+		if( this.id.startsWith('#') )
+			page = $(this.id);
+		else
+			page = inv.page;
 		
+		if( DropdownOpener.options ) this.options = $.extend(DropdownOpener.options, this.options);
 		if( inv.options ) this.options = $.extend(this.options, inv.options);
 		
 		var w = new DropdownWindow(this.source, this.options, this.styleClass);
@@ -1912,29 +1967,57 @@ function DropdownOpener( id, params )
 	function DropdownWindow( source, options, styleClass ) {
 
 		var div = $('<div class="dropdown-window" style="position: absolute; z-index: 200000; top: 0; left: 0;"></div>');
-
+		var dynamic = false;
+		
 		if( styleClass ) div.addClass( styleClass );
 
 		this.show = function( page, params, callback ) {
 			var posConfig = $.extend(defaultConfig, options.position || {});
 			posConfig.of = $(source);
-
-			div.hide().load( page, params, function(){
+			
+			dynamic = (typeof page == 'string');
+			
+			if( isFixedPositioned( posConfig.of ) )
+				div.css('position', 'fixed');
+			
+			if( dynamic ) {
+				div.hide().load( page, params, initDailog);
+			}
+			else {
+				page.show();
+				div.append(page);
+				initDailog();
+			}				
+			
+			function initDailog(){
 				div.appendTo('body')
 				 .position( posConfig )
 				 .show('slide', {direction:"up"});
 
 				bindWindowEvt();
 				callback(div);
-			});
+				if( options.onShow ) options.onShow( div );
+			}
 		};
 		
 		this.getElement = function() { return div; }
 
 		this.close = function() { hide(); };
+		
+		function isFixedPositioned( elem ) {
+			return elem.css('position') == 'fixed' || 
+			      (elem[0].offsetParent && isFixedPositioned( $(elem[0].offsetParent) ));
+		}
 
 		function hide() {
-			div.hide('slide', {direction:"up"}, function() { $(this).remove(); });
+			div.hide('slide', {direction:"up"}, function() {
+				if( !dynamic ) {
+					var ch = $(this).children().hide().remove();
+					ch.insertAfter(this);
+				}
+				$(this).remove(); 
+				if( options.onClose ) options.onClose( this );
+			});
 			$(document).unbind('mouseup', onWindowClicked);
 		}
 
@@ -1958,14 +2041,7 @@ $(document).ready (
     function() {
         BindingUtils.load();
 		Hash.init();
-		
-		$(function(){ $(window).scroll( onScroll ); });
-
-		function onScroll() {
-			if  ($(window).scrollTop() == $(document).height() - $(window).height()){
-			   Scroller.onScrollToBottom();
-			}
-		}
+		Scroller.init();
     }
 );
 
@@ -1981,6 +2057,16 @@ var Scroller = new function(){
 
 	var globalListners = []; //array
 	var localListeners = {}; //map of id(hashid) and listener array pair
+	
+	this.init = function() {
+		$(function(){
+			$(window).scroll(function() {
+				if  ($(window).scrollTop() == $(document).height() - $(window).height()){
+				   Scroller.onScrollToBottom();
+				}
+			});
+		});
+	}
 
 	/**
 	 * @param listener

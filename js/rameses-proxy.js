@@ -1,9 +1,7 @@
 /**
   Serializes services that can be used by the client
 */
-var Env = new function() {
-	this.data = {};
-}
+var Env = {}
 
 function DynamicProxy( context ) {
     this.context = context;
@@ -65,7 +63,7 @@ function DynamicProxy( context ) {
 			var data = {};
 			if( args )     { data.args = $.toJSON( args ); }
 			
-			data.env = $.toJSON( Env.data );
+			data.env = $.toJSON( Env );
 			
 			if(handler==null) {
 				var result = $.ajax( {

@@ -122,9 +122,13 @@ String.prototype.evaluate = function( ctx ) {
     var handler = (typeof ctx === 'function')? ctx : defaultHandler;
 
     var str = this, match;
-    while( (match = str.match(/(?:\$|#){([^{]+)}/)) ) {
-        str = str.replace( match[0], _evaluate(match[1]) );
-    }    
+    while( (match = str.match(/\\?[\$|#]{([^{}]+)}/)) ) {
+		if( match[0].length > 3 && match[0][0] == '\\' )
+			str = str.replace( match[0], '@@' + match[0].substring(2) );
+		else
+			str = str.replace( match[0], _evaluate(match[1]) );
+    }
+	str = str.replace('@@{', '#{');
     return str+''; //return the parsed value
 
     //-- helper methods

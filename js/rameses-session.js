@@ -3,48 +3,32 @@
   This code is used to track session of the user and receive notifications
   from the server. 
 **/
-var Session = new function() {
+function Notifier(sessionid) {
 
 	this.handler;
 	this.handlers = {}
-	var token;
-	var host;
-	var started = false;
-	
-	this.onstart;
-	this.onexpired;
-	
-	this.connect = function(h) {
-		if(started) return;
-		started = true;		
-		host = h;
-		setTimeout(poll, 1000);
-	}
-	
+	this.connectionListener = {};
 	var self = this;
-
 	
-	//when adding session set the expire date at 5 minutes
-	this.create = function( sessionId ) {
-		$.cookie("sessionid",sessionId)
+	this.sessionid = sessionid;
+	this.tokenid;
+	
+	//the session must exist for this to start properly
+	this.connect = function() {
+		if( this.sessionid == null ) {
+			alert('cannot connect. No session found');
+		}	
+		else {
+			setTimeout(poll, 100);
+		}
 	}
-	
-	this.getId = function() {
-		return $.cookie( "sessionid" );
-	}
-	
-	this.destroy = function() {
-		$.cookie( "sessionid", null );
-	}
-	
 	
 	var poll = function() {
-		var sid = self.getId();
+		var sid = self.sessionid;
 		//start polling for server updates.
 		var d = {};
 		d.sessionid = sid;
-		d.host = host;	
-		if(token) d.tokenid = token;
+		if(self.tokenid) d.tokenid = self.tokenid;
 		
 		$.ajax( 
 			{
@@ -53,43 +37,42 @@ var Session = new function() {
 				data: d,
 				error: function( xhr ) { 
 					if(window.console) window.console.log( "error " + xhr.responseText );
-					setTimeout(poll, 1000); 
+					alert("error " + xhr.status);
 				},
 				success: function( data ) {
-					if( data!=null && data.trim().length > 0  ) {
-						if( data.startsWith("TOKEN")) {
-							token = data;
-							if(this.onstart) this.onstart( token );
-							else if(window.console){
-								window.console.log('connection started...new token id '+token+" .please provide onstart handler to remove this message");
-							}	
-							poll();
-						}
-						else if(data == "session-expired" || data == "-1") {
-							self.destroy();
-							if( self.onexpired ) self.onexpired();
-							else alert("Session expired! Please provide an onexpired handler to remove this message");
-						}
-						else {
-							try {
-								if(data.trim().startsWith("{")) {
-									data = $.parseJSON(data);
-								}
-								if( self.handler ) self.handler(data); 
-								for(var n in self.handlers) {
-									self.handlers[n](data);
-								}
-							}
-							catch(e) {
-								if(window.console) window.console.log( "error " + e.message );
-							}
-							finally {
-								poll();
-							}
+					if( data == null || data.trim().length == 0) {
+						setTimeout(poll, 1000);
+					}
+					else if( data.startsWith("TOKEN")) {
+						self.tokenid = data;
+						if(self.connectionListener.started) {
+							self.connectionListener.started();
 						}	
+						else if(window.console){
+							window.console.log('connection started...new token id '+self.tokenid+" .please provide  handler connectionListener.started to remove this message");
+						}	
+						poll();
+					}					
+					else if(data == "_:expired" || data=="_:aborted" || data=="_:destroyed" || data=="_:ended") {
+						if( self.connectionListener.ended ) self.connectionListener.ended(data);
+						else alert("Session " + data + "! Please provide a connectionListener to remove this message");
 					}
 					else {
-						setTimeout(poll, 1000);
+						try {
+							if(data.trim().startsWith("{")) {
+								data = $.parseJSON(data);
+							}
+							if( self.handler ) self.handler(data); 
+							for(var n in self.handlers) {
+								self.handlers[n](data);
+							}
+						}
+						catch(e) {
+							if(window.console) window.console.log( "error " + e.message );
+						}
+						finally {
+							poll();
+						}
 					}
 				}
 			}

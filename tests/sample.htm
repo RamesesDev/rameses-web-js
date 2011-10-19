@@ -1,26 +1,31 @@
 <html>
 	<head>
 		<script src="../js/jquery-all.js"></script>
-		<script>
-			$(function(){
-				var tbl = $('table')[0];
-				try {
-					alert( tbl.getAttribute('r:context') );
-				}
-				catch(e) {
-					alert( 'error: ' + e.message );
-				}
-			});
-		</script>
+		<style>
+			#cal td {
+				background: #ccc;
+			}
+		</style>
 	</head>
 	<body>
-		<table>
-			<tr>
-				<td>Sample Content</td>
-				<td>Sample Content</td>
-			</tr>
-		</table>
-		<span></span>
+		<div id="cal"></div>
+		
+		<script>
+			var tbody = document.createElement('tbody');
+			var ctr = 1;
+			for( var i=0; i<5; ++i ) {
+				var tr = document.createElement('tr');
+				for( var j=0; j<7; ++j ) {
+					var td = document.createElement('td');
+					td.innerHTML = ctr++ + '';
+					tr.appendChild(td);
+				}
+				tbody.appendChild(tr);
+			}
+			var tbl = document.createElement('table');
+			tbl.appendChild(tbody);
+			document.getElementById('cal').appendChild(tbl);
+		</script>
 	</body>
 </html>
 
