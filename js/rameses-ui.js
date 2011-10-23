@@ -447,10 +447,18 @@ function Controller( code, pages ) {
 				var _outcome = this.currentPage;	
 				var _target = this.name;
 				var _controller = this;
-				$('#'+_target).load( this.pages[_outcome], WindowUtil.getAllParameters('#'+_target), function() { 
-					if( _controller.code.onpageload != null ) _controller.code.onpageload(_outcome);
-					_controller.refresh(); 
-				} );
+				
+				var tgt = $('#'+_target);
+				//if  target is specified reload the content of the target element
+				if( tgt.length > 0 ) {
+					tgt.load( this.pages[_outcome], WindowUtil.getAllParameters('#'+_target), function() { 
+						if( _controller.code.onpageload != null ) _controller.code.onpageload(_outcome);
+						_controller.refresh(); 
+					});
+				}
+				else { //otherwise just reload the current page
+					window.location.reload();
+				}
 			}
 		}
         else {

@@ -1,0 +1,77 @@
+<html>
+	<head>
+		<link href="../js/css/jquery-ui/jquery.css" rel="stylesheet" />
+		<link href="../js/css/rameses-lib.css" rel="stylesheet" />
+		
+		<script src="../js/jquery-all.js"></script>
+		<script src="../js/rameses-ext-lib.js"></script>
+		<script src="../js/rameses-ui.js"></script>
+		
+		<script type="text/javascript">
+			$register({id:'#popup', context:'popup'});
+		
+			$put(
+				"test",
+				new function() {
+					
+					var self = this;
+					this._controller;
+					this.list = [];
+					
+					this.addItem = function() {
+						return new PopupOpener('#popup', {handler: function(item){
+							try {
+								self.list.push( item );
+								self._controller.reload();
+							}
+							catch(e) {
+								console.log( e );
+								alert( e.message );
+							}
+						}}, {});
+					}
+					
+				}
+			);
+			
+			$put(
+				"popup",
+				new function() {
+				
+					this.entity = {};
+					this.handler;
+					
+					this.addItem = function() {
+						if( this.handler ) this.handler( this.entity );
+						this.entity = {};
+						return '_close';
+					}
+				}
+			);
+		</script>
+	</head>
+
+	<body>
+		<table r:context="test" r:items="list">
+			<thead>
+				<tr>
+					<td>Name</td>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td>#{name}</td>
+				</tr>
+			</tbody>
+		</table>
+		<button r:context="test" r:name="addItem">Add Item</button>
+		
+		<div id="popup" style="display:none">
+			Name:
+			<input type="text" r:context="popup" r:name="entity.name" />
+			<br/>
+			<button r:context="popup" r:name="addItem">Add</button>
+		</div>
+	</body>
+
+</html>
