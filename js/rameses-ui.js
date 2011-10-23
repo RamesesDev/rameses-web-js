@@ -184,6 +184,7 @@ var BindingUtils = new function() {
 		 .keypress(input_keypress)
 		 .focus(input_focus)
 		 .blur(input_blur)
+		 .change(input_change)
 		 .data('hint_decorator', this);
 
 		var span = $('<span class="hint" style="position:absolute;z-index:100;overflow:hidden;top:0px;left:0px;"></span>')
@@ -248,6 +249,13 @@ var BindingUtils = new function() {
 
 		function input_keypress(evt) {
 			if( isCharacterPressed(evt) ) hideHint();
+		}
+		
+		function input_change(evt) {
+			if( !input.val() )
+				showHint();
+			else
+				hideHint();
 		}
 
 		function isCharacterPressed(evt) {
@@ -446,18 +454,43 @@ function Controller( code, pages ) {
 			}
 		}
         else {
-			//intended only for <div context="name"></div>
+			//intended only for <div r:controller="name"></div>
 			if( outcome == null ) outcome = "default";
             if(outcome.startsWith("_")) outcome = outcome.substring(1);
+			
+			var qrystr;
+			if( outcome.indexOf('?') >= 0 ) {
+				outcome = outcome.split('?');
+				qrystr = outcome[1];
+				outcome = outcome[0];
+			}
+			
 			this.currentPage = outcome;
             var target = this.name;
             var _controller = this;
-            $('#'+target).load( this.pages[outcome], WindowUtil.getAllParameters(), function() { 
+			var params = WindowUtil.getAllParameters();
+			if( qrystr ) {
+				var p = buildParamFromStr( qrystr );
+				params = $.extend(params,p);
+			}
+			
+			$('#'+target).load( this.pages[outcome], params, function() { 
                 if( _controller.code.onpageload != null ) _controller.code.onpageload(outcome);
                 _controller.refresh(); 
             } );
         }
     }
+	
+	function buildParamFromStr( str ) {
+		var vars = {}, hash;
+		var hashes = str.split('&');
+		for(var i = 0; i < hashes.length; i++)
+		{
+			hash = hashes[i].split('=');
+			vars[hash[0]] = hash[1];
+		}
+		return vars;
+	}
 
     this.validate = function( selector ) {
         var errs = [];
