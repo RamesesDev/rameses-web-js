@@ -31,6 +31,15 @@
 						}}, {});
 					}
 					
+					this.counter = 0;
+					
+					this.onload = function() {
+						setInterval(function(){
+							self.counter++;
+							self._controller.refresh();
+						}, 1000);
+					}
+					
 				}
 			);
 			
@@ -52,6 +61,10 @@
 	</head>
 
 	<body>
+		<label r:context="test">
+			Time: #{counter}
+		</label>
+		<br/>
 		<table r:context="test" r:items="list">
 			<thead>
 				<tr>

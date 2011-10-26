@@ -179,19 +179,33 @@ var BindingUtils = new function() {
 			return;
 		}
 
-		input.wrap('<span style="display:inline-block;position:relative"></span>')
-		 .keyup(input_keyup)
+		//find or create the wrapper
+		var wrapper;
+		if( input.parent('.hint-wrapper').length > 0 )
+			wrapper = input.parent('.hint-wrapper');
+		else
+			wrapper = input.wrap('<span class="hint-wrapper"></span>').parent();
+		
+		wrapper.css({display:'inline-block', position:'relative'});
+		
+		input.keyup(input_keyup)
 		 .keypress(input_keypress)
 		 .focus(input_focus)
 		 .blur(input_blur)
 		 .change(input_change)
+		 .bind('paste', hideHint)
 		 .data('hint_decorator', this);
 
-		var span = $('<span class="hint" style="position:absolute;z-index:100;overflow:hidden;top:0px;left:0px;"></span>')
-		 .html( R.attr(input, 'hint') )
+		var span;
+		if( wrapper.find('span.hint:first').length > 0 )
+			span = wrapper.find('span.hint:first');
+		else
+			span =  $('<span class="hint"></span>').insertBefore( input );
+		
+		span.html( R.attr(input, 'hint') )
+		 .css({position:'absolute', 'z-index':100, overflow:'hidden', top:'0', left:'0'})
 		 .hide()
 		 .disableSelection()
-		 .insertBefore( input )
 		 .click(onClick);
 
 		this.refresh = refresh;
@@ -257,7 +271,7 @@ var BindingUtils = new function() {
 			else
 				hideHint();
 		}
-
+		
 		function isCharacterPressed(evt) {
 			if (typeof evt.which == "undefined") {
 				return true;
@@ -912,7 +926,7 @@ BindingUtils.handlers.input_file = function( elem, controller, idx ) {
 		var value = null;
 		var lbl = frame.parent().find('div.label')
 
-		var resptext = frame.contents().text();
+		var resptext = frame.contents().text().trim();
 		try {
 			value = $.parseJSON(resptext);
 		}catch(e){
@@ -1601,6 +1615,7 @@ BindingUtils.handlers.template = function(elem, controller, idx) {
 
 
 var WindowUtil = new function() {
+
 	this.load = function( page, args, hash ) {
 		var qry = "";
 		if(args!=null ) {
@@ -1784,7 +1799,11 @@ var Hash = new function() {
 		if(params!=null) {
 			hash = hash + "?" + WindowUtil.stringifyParams( params );
 		}
-		window.location.hash = hash;
+		
+		if( window.location.hash == '#' + hash )
+			$(window).trigger('hashchange');
+		else
+			window.location.hash = hash;
 	}
 	
 	
@@ -2007,7 +2026,7 @@ function DropdownOpener( id, params )
 	//--- DropdownWindow class ----
 	function DropdownWindow( source, options, styleClass ) {
 
-		var div = $('<div class="dropdown-window" style="position: absolute; z-index: 200000; top: 0; left: 0;"></div>');
+		var div = $('<div class="dropdown-window" style="position: absolute; z-index: 999999; top: 0; left: 0;"></div>');
 		var dynamic = false;
 		
 		if( styleClass ) div.addClass( styleClass );
@@ -2020,7 +2039,7 @@ function DropdownOpener( id, params )
 			
 			if( isFixedPositioned( posConfig.of ) )
 				div.css('position', 'fixed');
-			
+
 			if( dynamic ) {
 				div.hide().load( page, params, initDailog);
 			}

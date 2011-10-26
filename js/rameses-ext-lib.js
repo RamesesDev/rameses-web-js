@@ -137,7 +137,7 @@ String.prototype.evaluate = function( ctx ) {
     }
 
     function _evaluate(str) {
-        var match = str.match(/[a-zA-Z_\$]+[\w\.]*(?:\([^\)]*\))?|'[^']*'|"[^"]*"/g);
+        var match = str.match(/[a-zA-Z_\$]+[\w\.]*(?:\([^\)]*\)|\[[^\]]*\])?|'[^']*'|"[^"]*"/g);
         for(var i=0; i<match.length; ++i) {
             var o = '';
             if( match[i].charAt(0) === "'" || match[i].charAt(0) === '"' ) {
