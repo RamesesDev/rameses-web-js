@@ -776,7 +776,24 @@ BindingUtils.handlers.button = function( elem, controller, idx ) {
 		}
 		return false; 
 	}
-}
+};
+
+BindingUtils.handlers.input_image = function( elem, controller, idx ) {
+	var $e = $(elem);
+    var action = R.attr($e, "name");
+    
+    elem.onclick = function() { 
+		if( action ) {
+			try {
+				$get(controller.name).invoke( this, action ); 
+			}
+			catch(e) {
+				if( window.console && R.DEBUG ) console.log( e.message );	
+			}
+		}
+		return false; 
+	}
+};
 
 BindingUtils.handlers.input_submit = function( elem, controller, idx ) {
     var action = R.attr(elem, "name");
