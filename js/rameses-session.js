@@ -3,11 +3,13 @@
   This code is used to track session of the user and receive notifications
   from the server. 
 **/
-function Notifier(sessionid) {
+function Notifier(sessionid, url) {
 
 	this.handler;
 	this.handlers = {}
 	this.connectionListener = {};
+	this.url = url;
+	
 	var self = this;
 	
 	this.sessionid = sessionid;
@@ -24,6 +26,11 @@ function Notifier(sessionid) {
 	}
 	
 	var poll = function() {
+		//check first if ever url is specified, the current url must match with it.
+		if( self.url && self.url != window.location.href ) {
+			return;
+		}	
+	
 		var sid = self.sessionid;
 		//start polling for server updates.
 		var d = {};
