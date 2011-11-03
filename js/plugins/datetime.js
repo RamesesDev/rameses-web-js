@@ -6,6 +6,7 @@ function DateTimeModel()
 	this.hour = "";
 	this.minute = "";
 	this.minYear = 1900;
+	this.maxYear;
 	
 	/**
 	 * modes: datetime(default), date, time
@@ -45,14 +46,16 @@ function DateTimeModel()
 		if( _years ) return _years;
 		
 		_years = [{id:"", name:"-"}];
-		var curDate = new Date();
+		if( !this.maxYear ) {
+			this.maxYear = new Date().getFullYear();
+		}
 		if( this.yearAscending ) {
-			for( var i=this.minYear; i<= curDate.getFullYear(); ++i ) {
+			for( var i=this.minYear; i<= this.maxYear; ++i ) {
 				_years.push({id:i, name:i});
 			}
 		}
 		else {
-			for( var i=curDate.getFullYear(); i>=this.minYear; --i ) {
+			for( var i=this.maxYear; i>=this.minYear; --i ) {
 				_years.push({id:i, name:i});
 			}
 		}
