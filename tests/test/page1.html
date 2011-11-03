@@ -1,8 +1,21 @@
 <h3>Page 1</h3>
 
-
+First Name<br/>
 <input type="text" r:context="test" r:name="entity.firstname" r:required="true" r:hint="Firstname"/>*<br/>
+Last Name<br/>
 <input type="text" r:context="test" r:name="entity.lastname" r:required="true" r:hint="Lastname"/>*<br/>
+Middle Name<br/>
 <input type="text" r:context="test" r:name="entity.middlename" r:hint="Middlename"/><br/>
+Birthdate<br/>
+<span r:type="datetime" r:context="test" r:name="entity.birthdate" r:required="true" r:caption="Birthdate" r:options="{mode:'date'}"/><br/>
+Duty Hours:<br/>
+Start Time<br/>
+<span r:type="datetime" r:context="test" r:name="entity.start_time" r:required="true" r:caption="Start Time" r:options="{mode:'time'}"/><br/>
+End Time<br/>
+<span r:type="datetime" r:context="test" r:name="entity.end_time" r:required="true" r:caption="End Time" r:options="{mode:'time',timeFormat:'12'}"/><br/>
 
+<div id="entity_content">
+</div>
+
+<button r:context="test" r:name="showEntity">Show Entity Values</button>
 <input type="button" r:context="test" r:name="_page2" value="Next" />

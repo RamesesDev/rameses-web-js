@@ -68,9 +68,14 @@ var BindingUtils = new function() {
 				}
 			}
 			
-            var n = elem.tagName.toLowerCase()
-            if(n == "input") n = n + "_" + elem.type ;
-			if( _self.handlers[n] ) _self.handlers[n]( elem, controller, idx );
+            var nodeName = elem.tagName.toLowerCase()
+            if(nodeName == "input") {
+				nodeName = nodeName + "_" + elem.type ;
+			}
+			else if( R.attr(elem, 'type') ) {
+				nodeName = nodeName + "_" + R.attr(elem, 'type');
+			}
+			if( _self.handlers[nodeName] ) _self.handlers[nodeName]( elem, controller, idx );
         }
     };
 
@@ -521,12 +526,13 @@ function Controller( code, pages ) {
 		var name = this.name;
 		var selector;
 		if( this.container && this.container.element ) selector = this.container.element;
-        $('select,input,textarea', selector || document).filter(
+        $('*', selector || document).filter(
             function() {
-                var o = $(this);
+				if( !R.attr(this, 'name') || R.attr(this, 'context') != name ) return;
+				
+				var o = $(this);
                 if( o.is(':hidden') ) return;
 				if( R.attr(this, 'required') != 'true' ) return;
-				if( R.attr(this, 'context') != name ) return;
                 
 				$(this).removeClass('error');
                 var fldName = R.attr(this, 'name');
