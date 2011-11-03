@@ -52,7 +52,7 @@ function Notifier(sessionid) {
 							window.console.log('connection started...new token id '+self.tokenid+" .please provide  handler connectionListener.started to remove this message");
 						}	
 						poll();
-					}					
+					}		
 					else if(data == "_:expired" || data=="_:aborted" || data=="_:destroyed" || data=="_:ended") {
 						if( self.connectionListener.ended ) self.connectionListener.ended(data);
 						else alert("Session " + data + "! Please provide a connectionListener to remove this message");
