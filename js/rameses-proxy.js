@@ -8,30 +8,6 @@ function DynamicProxy( context ) {
     this.create = function( svcName ) {
         return new _DynamicProxyService( svcName, this.context );
     }
-
-	var processAsync = function(reqId, handler) {
-		var contextPath = window.location.pathname.substring(1);
-		contextPath = contextPath.substring(0,contextPath.indexOf('/'));
-		var urlaction = "/" + contextPath + "/async/poll";
-		$.ajax( 
-			{
-				url: urlaction,
-				type: "POST",
-				error: function( xhr ) { alert(xhr.responseText); },
-				data: {requestId: reqId},
-				async: true,
-				success: function( data ) { 
-					var o = $.parseJSON(data);
-					if(o.status != "EOF") {
-						if( o.status == "OK" ) {
-							if(handler) handler(o.result);
-						}	
-						setTimeout( function() { processAsync( o.requestId, handler ) }, 5 );
-					}	   	
-				}
-			}
-		);		
-	}	
 	
 	/* DynamicProxy */
 	function _DynamicProxyService( name, context ) {
@@ -76,15 +52,7 @@ function DynamicProxy( context ) {
 				if( err!=null ) {
 					throw new Error(err);
 				}
-				
-				var r = convertResult( result );
-				if( r && r.classname=="com.rameses.common.AsyncResponse") {
-					processAsync( r.id, handler );
-					return null;
-				}
-				else {
-					return r;
-				}
+				return convertResult( result );
 			}
 			else {
 				$.ajax( {
@@ -95,12 +63,7 @@ function DynamicProxy( context ) {
 					async: true,
 					success: function( data) { 
 						var r = convertResult(data);
-						if(r && r.classname=="com.rameses.common.AsyncResponse") {
-							processAsync( r.id, handler );
-						}
-						else {
-							handler(r); 
-						}	
+						handler(r); 
 					}
 				});
 			}
