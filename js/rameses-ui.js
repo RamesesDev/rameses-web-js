@@ -37,7 +37,7 @@ var BindingUtils = new function() {
 			var ctxName = R.attr($e,'context');
 			try {
 				var res = expr.evaluate( $ctx(ctxName) );
-				isVisible = (res != 'false' && res != 'null');
+				isVisible = (res && res != 'false' && res != 'null' && res != 'undefined')
 			}
 			catch(e) {
 				if( window.console && R.DEBUG ) console.log('error evaluating visibleWhen: ' + e.message);
@@ -1145,13 +1145,13 @@ function DataTable( table, bean, controller ) {
 	}
 	
 	function checkTableVisibility() {
-		var emptyText = table.attr('emptyText');
+		var emptyText = R.attr(table,'emptyText');
 		if( emptyText && model.isEmpty() ) {
 			var emptyDiv = table.next('div.emptyText');
 			if( emptyDiv.length == 0 ) {
 				emptyDiv = $('<div class="emptyText"></div>').html(emptyText).insertAfter(table);
-				if( table.attr('emptyTextClass') ) emptyDiv.addClass(table.attr('emptyTextClass'));
-				if( table.attr('emptyTextStyle') ) emptyDiv.attr('style', table.attr('emptyTextStyle'));
+				if( R.attr(table,'emptyTextClass') ) emptyDiv.addClass(R.attr(table,'emptyTextClass'));
+				if( R.attr(table,'emptyTextStyle') ) emptyDiv.attr('style', R.attr(table,'emptyTextStyle'));
 			}
 			emptyDiv.show();
 			table.css('display', 'none');

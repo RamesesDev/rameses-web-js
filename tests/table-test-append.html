@@ -54,12 +54,15 @@
 					}
 					
 					this.test = function() {};
+					
+					this.value = 'a';
 				}
 			);
 		</script>
 
 	</head>
 	<body>
+		<b r:context="profile" r:visibleWhen="#{value}">Test Value</b>
 		<!--
 		<table r:context="profile" r:model="model" r:varStatus="stat"
 			   cellpadding="0" cellspacing="0" width="400">
@@ -116,8 +119,8 @@
 		-->
 		<table r:context="profile" r:model="model3" r:varStatus="stat"
 			   cellpadding="0" cellspacing="0" width="400"
-			   emptyText="No record for post 3."
-			   emptyTextStyle="color: red;font-weight: bold;">
+			   r:emptyText="No record for post 3."
+			   r:emptyTextStyle="color: red;font-weight: bold;">
 			<thead>
 				<th>
 					Posts 3
@@ -142,7 +145,6 @@
 		<a r:context="profile" r:name="model3.load">Clear</a>
 		<br/>
 		<button r:context="profile" r:name="test">Refresh</button>
-
 	</body>
 
 </html>
