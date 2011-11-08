@@ -41,6 +41,7 @@
 					
 					this.addRecord = function() {
 						alert('adding record');
+						alert( this.model.isEmpty() );
 						studentList.push( this.entry );
 						this.entry = {};
 						this.model.refresh( true );
@@ -61,7 +62,8 @@
 					this.model = {
 						rows: 8,
 						fetchList: function( p ) {
-							return studentList.slice(p._start, p._start + p._limit);
+							return [];
+							//return studentList.slice(p._start, p._start + p._limit);
 						}
 					};
 					

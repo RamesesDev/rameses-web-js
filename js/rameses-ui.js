@@ -1389,6 +1389,10 @@ function DefaultTableModel() {
 		if( typeof _list == 'undefined' ) _list = [];
 		return _list;
 	};
+	
+	_this.isEmpty = function() {
+		return !_list || _list.length == 0;
+	};
 
 	_this.load = function() {
 		if( _listParam ) _listParam._start = 0;
@@ -1489,6 +1493,8 @@ function DefaultTableModel() {
 		_listParam = null;
 
 		_dataModel.setList = _this.setList;
+		_dataModel.getList = _this.getList;
+		_dataModel.isEmpty = _this.isEmpty;
 		_dataModel.load = _this.load;
 		_dataModel.fetchNext = fetchNext;
 		_dataModel.refresh = doRefresh;
