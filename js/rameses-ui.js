@@ -1972,6 +1972,7 @@ function PopupOpener( id, params, options )
 						try{ $ctx(n)[key] = p[key]; }catch(e){;}
 					}
 				}
+				$ctx(n)._caller = caller.code;
 				$get(n).container = {
 					element: div,
 					close: function() { div.dialog("close"); if(caller) caller.refresh(); },
@@ -2035,6 +2036,7 @@ function DropdownOpener( id, params )
 						try{ $ctx(n)[key] = p[key]; }catch(e){;}
 					}
 				}
+				$ctx(n)._caller = caller.code;
 				BindingUtils.load( div );
 				$get(n).container = {
 					element: w.getElement(),
