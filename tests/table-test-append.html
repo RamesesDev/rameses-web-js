@@ -23,7 +23,7 @@
 					var self = this;
 					
 					Scroller.register(function(){
-						self.model.fetchNext();
+						//self.model.fetchNext();
 					});
 				
 					this.model = {
@@ -36,13 +36,31 @@
 							];
 						}
 					};
+					
+					this.model2 = {
+						fetchList: function() {
+							return [];	
+						}
+					};
+					
+					this.model3 = {
+						fetchList: function() {
+							return [];
+						}
+					};
+					
+					this.addItemToModel3 = function() {
+						this.model3.setList([{id: '001', firstname:"elmo", lastname:"nazareno"}]);
+					}
+					
+					this.test = function() {};
 				}
 			);
 		</script>
 
 	</head>
 	<body>
-
+		<!--
 		<table r:context="profile" r:model="model" r:varStatus="stat"
 			   cellpadding="0" cellspacing="0" width="400">
 			<thead>
@@ -64,11 +82,67 @@
 				</tr>
 			</tbody>
 		</table>
-		
 		<br/>
 		<a r:context="profile" r:name="model.fetchNext">View More</a>
 		<br/>
 		
+		<br/>
+		<br/>
+		
+		<table r:context="profile" r:model="model2" r:varStatus="stat"
+			   cellpadding="0" cellspacing="0" width="400">
+			<thead>
+				<th>
+					Posts 2
+					<hr/>
+				</th>
+			</thead>
+			<tbody>
+				<tr>
+					<td>
+						<div class="post">
+							<div class="poster">#{id} - #{firstname} #{lastname}</div>
+							<div class="message">
+								Hi, this is my message.
+							</div>
+						</div>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+		
+		<br/>
+		<br/>
+		-->
+		<table r:context="profile" r:model="model3" r:varStatus="stat"
+			   cellpadding="0" cellspacing="0" width="400"
+			   emptyText="No record for post 3."
+			   emptyTextStyle="color: red;font-weight: bold;">
+			<thead>
+				<th>
+					Posts 3
+					<hr/>
+				</th>
+			</thead>
+			<tbody>
+				<tr>
+					<td>
+						<div class="post">
+							<div class="poster">#{id} - #{firstname} #{lastname}</div>
+							<div class="message">
+								Hi, this is my message.
+							</div>
+						</div>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+		<br/>
+		<a r:context="profile" r:name="addItemToModel3">View More</a> | 
+		<a r:context="profile" r:name="model3.load">Clear</a>
+		<br/>
+		<button r:context="profile" r:name="test">Refresh</button>
+
 	</body>
 
 </html>

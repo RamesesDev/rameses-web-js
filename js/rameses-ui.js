@@ -1077,7 +1077,11 @@ BindingUtils.handlers.input_file = function( elem, controller, idx ) {
  * @author jaycverg
  *-----------------------------------*/
 BindingUtils.handlers.table = function( elem, controller, idx ) {
-	if( $(elem).data('_has_model') ) return;
+	if( $(elem).data('_has_model') ) {
+		var model = $(elem).data('_has_model');
+		if( model ) model.refresh(false);
+		return;
+	}
 	if( !window.___table_ctr ) window.___table_ctr = 0;
 
 	var tbl = $(elem);
@@ -1100,7 +1104,7 @@ function DataTable( table, bean, controller ) {
 	}
 	if( R.attr(table, 'model') ) {
 		model.setDataModel( controller.get(R.attr(table, 'model')) );
-		table.data('_has_model', true);
+		table.data('_has_model', model);
 	}
 
 	var status = {prevItem: null, nextItem: null};
@@ -1113,7 +1117,8 @@ function DataTable( table, bean, controller ) {
 	}
 
 	model.onRefresh = doRender;
-	model.onAppend = function(list, type, animate) { 
+	model.onAppend = function(list, type, animate) {
+		checkTableVisibility();
 		renderItemsAdded(list, type, animate, true);
 	};
 	model.load();
@@ -1121,17 +1126,41 @@ function DataTable( table, bean, controller ) {
 	var tabIdx;
 
 	function doRender() {
-		tbody.hide().empty();
-		tabIdx = table.data('index');
-		status.index = 0;
-		
-		var list = model.getList();
-		if(list==null) list = [];
-		
-		var items = renderItemsAdded( list, null, false );
-		$(items).each(function(i,e){ td_mousedown(e, true); });
-		tbody.show();
+		checkTableVisibility();
+	
+		if( !table.is(':hidden') ) {
+			tbody.hide().empty();
+			tabIdx = table.data('index');
+			status.index = 0;
+			
+			var list = model.getList();
+			if(list==null) list = [];
+			
+			var items = renderItemsAdded( list, null, false );
+			$(items).each(function(i,e){ td_mousedown(e, true); });
+			tbody.show();
+		}
+
 		BindingUtils.bind( null, table );
+	}
+	
+	function checkTableVisibility() {
+		var emptyText = table.attr('emptyText');
+		if( emptyText && model.isEmpty() ) {
+			var emptyDiv = table.next('div.emptyText');
+			if( emptyDiv.length == 0 ) {
+				emptyDiv = $('<div class="emptyText"></div>').html(emptyText).insertAfter(table);
+				if( table.attr('emptyTextClass') ) emptyDiv.addClass(table.attr('emptyTextClass'));
+				if( table.attr('emptyTextStyle') ) emptyDiv.attr('style', table.attr('emptyTextStyle'));
+			}
+			emptyDiv.show();
+			table.css('display', 'none');
+		}
+		else {
+			table.css('display', 'table');
+			var emptyDiv = table.next('div.emptyText');
+			if( emptyDiv.length > 0 ) emptyDiv.hide();
+		}
 	}
 	
 	function renderItemsAdded( list, type, animate, bindItems ) {
@@ -1372,7 +1401,7 @@ function DefaultTableModel() {
 	_this.getDataModel = function() { return _dataModel; };
 
 	_this.setList = function( list ) {
-		_list = list;
+		_list = list || [];
 		_selectedItems = [];
 		if( _listParam ) {
 			if( _list.length == _listParam._limit ) {
@@ -1383,6 +1412,7 @@ function DefaultTableModel() {
 				_isLast = true;
 			}
 		}
+		doRefresh(false);
 	};
 
 	_this.getList = function() {
@@ -1407,14 +1437,15 @@ function DefaultTableModel() {
 		var len = _selectedItems.length;
 		return len > 0? _selectedItems[len-1] : null;
 	};
+	
+	_this.refresh = doRefresh;
 
 	function doRefresh( fetch ) {
 		if( fetch == true ) {
 			if( _dataModel && $.isFunction( _dataModel.fetchList ) ) {
 				var result = _dataModel.fetchList( _listParam );
-				if( typeof result != 'undefined' ) {
-					_this.setList( result );
-				}
+				_this.setList( result );
+				return;
 			}
 		}
 		if( $.isFunction( _this.onRefresh ) )
