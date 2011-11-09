@@ -1,9 +1,0 @@
-<schema>
-    <element tablename="role">
-        <field name="objid" primary="true" />
-        <field name="name" />
-        <field name="masterrole" />
-        <field name="permissions" serializer="default"/>
-        <field name="disallowed" serializer="default"/>
-    </element>
-</schema>
