@@ -1,0 +1,62 @@
+<html>
+	<head>
+		<link href="../js/css/jquery-ui/jquery.css" rel="stylesheet" />
+		<link href="../js/css/rameses-lib.css" rel="stylesheet" />
+		<link href="../js/plugins/colorpicker/colorpicker.css" rel="stylesheet" />
+		
+		<script src="../js/jquery-all.js"></script>
+		<script src="../js/rameses-ext-lib.js"></script>
+		<script src="../js/rameses-ui.js"></script>
+		<script src="../js/plugins/colorpicker/colorpicker.js"></script>
+		<style>
+			
+		</style>
+		
+		<script>
+			$register({id:'#dialog', context:'test'});
+			$put(
+				'test',
+				new function() 
+				{
+					var self = this;
+					this._controller;
+					this.background = '730e8c';
+
+					this.refresh = function() {
+						
+					}
+					
+					this.showCPicker = function() {
+						return new PopupOpener('#dialog');
+						/*
+						return new ColorPicker({
+							color: this.background, 
+							onselect: function(hex){
+								self.background = hex;
+								self._controller.refresh();
+							}
+						});
+						*/
+					}
+				}
+			);
+		</script>
+	</head>
+
+	<body>
+		<label r:context="test">
+			<span style="background: ##{background};border: solid 1px green;">&nbsp;&nbsp;</span>
+		</label>
+		<span r:context="test" r:type="colorpicker" r:name="background" r:onChange="onChange"></span>
+		<button r:context="test" r:name="refresh">Refresh</button>
+		<br/>
+		<br/>
+		<button r:context="test" r:name="showCPicker">Show</button>
+		
+		<div id="dialog" style="display:none">
+			<span r:context="test" r:type="colorpicker" r:name="background" r:onChange="onChange"></span>
+			<button r:context="test" r:name="_close">Close</button>
+		</div>
+	</body>
+
+</html>

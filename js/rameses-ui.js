@@ -27,6 +27,23 @@ var BindingUtils = new function() {
     this.handlers = {};
     this.loaders = [];
     this.input_attributes = [];
+	this.controlLoaders = [];
+	
+	var decorators = {};
+	
+	this.addDecorator = function( elemName, fn ) {
+		var list = decorators[elemName];
+		if( list == null ) {
+			list = [];
+			decorators[elemName] = list;
+		}
+		
+		list.push( fn );
+	};
+	
+	this.getDecorators = function( elemName ) {
+		return decorators[elemName] || [];
+	};
 
 	var controlLoader =  function(idx, elem) {
 		var $e = $(elem);
@@ -76,7 +93,13 @@ var BindingUtils = new function() {
 				nodeName = nodeName + "_" + R.attr(elem, 'type');
 			}
 			if( _self.handlers[nodeName] ) _self.handlers[nodeName]( elem, controller, idx );
+			if( decorators[nodeName] ) {
+				$(decorators[nodeName]).each(function(i,d){ d(elem, controller, idx); });
+			}
         }
+		
+		//if there are controlLoaders, invoke them
+		$(_self.controlLoaders).each(function(i,c){ c(idx,elem); });
     };
 
 	var containerLoader = function(idx, div ) {
@@ -146,10 +169,6 @@ var BindingUtils = new function() {
 			new InputHintDecorator( elem );
 		}
 
-        //add additional input behaviors
-        //$(this.input_attributes).each(
-        //    function(idx,func) { func(elem, controller); }
-        //)
     };
 
 	this.notifyDependents = function(dependName, selector) {
@@ -595,8 +614,13 @@ var ContextManager = new function() {
 // configure input controls
 //******************************************************************************************************************
 BindingUtils.handlers.input_text = function(elem, controller, idx ) {
-	BindingUtils.initInput(elem, controller, function(elem,controller) {
+	BindingUtils.initInput(elem, controller, function(elem,controller) 
+	{
 		var input = $(elem);
+		var suggExpr = R.attr(input, 'suggestExpression');
+		var suggTpl = R.attr(input, 'suggestTemplate');
+		var suggName = R.attr(input, 'suggestName');
+		
 		if( R.attr(input, 'suggest') && input.autocomplete ) {
 			var src = controller.get(R.attr(input, 'suggest'));
 			if( typeof src ==  'function' ) {
@@ -606,7 +630,55 @@ BindingUtils.handlers.input_text = function(elem, controller, idx ) {
 					if( result ) callback(result);
 				}
 			}
-			input.autocomplete({ source: src });
+			input.autocomplete({ source: src, focus: suggestFocus, select: suggestSelect, change: suggestChange });
+
+			if( suggTpl ) {
+				input.data('autocomplete')._renderItem = suggestItemRenderer;
+			}
+		}
+		
+		//helper functions
+		function suggestItemRenderer(ul, item) {
+			var html = $('#'+suggTpl).html();
+			html = unescape(html).evaluate(item);
+			return $( "<li></li>" )
+				.data( "item.autocomplete", item )
+				.append( html )
+				.appendTo( ul );
+		}
+		
+		function suggestFocus( event, ui ) {
+			if( suggExpr ) {
+				var lbl = suggExpr.evaluate( ui.item );
+				input.val( lbl );
+				return false;
+			}
+		}
+		
+		function suggestSelect( event, ui ) {
+			var value;
+			if( suggExpr ) {
+				value = suggExpr.evaluate( ui.item );
+			}
+			else if( ui.item.value ) {
+				value = ui.item.value;
+			}
+			else {
+				value = $.toJSON( ui.item );
+			}
+			
+			input.val( value );
+			input.trigger('change');
+
+			if( suggName ) {
+				controller.set(suggName, ui.item);
+			}
+			
+			return false;
+		}
+		
+		function suggestChange() {
+			input.trigger('change');
 		}
 	});
 };
@@ -1082,16 +1154,22 @@ BindingUtils.handlers.table = function( elem, controller, idx ) {
 		if( model ) model.refresh(false);
 		return;
 	}
-	if( !window.___table_ctr ) window.___table_ctr = 0;
-
-	var tbl = $(elem);
-	if( !tbl.data('index') ) tbl.data('index', ( window.___table_ctr += 1000));
-	new DataTable( tbl, $ctx(controller.name), controller );
-
+	
+	new DataTable( $(elem), controller );
 };
 
-/*------ DataTable class ---------*/
-function DataTable( table, bean, controller ) {
+/*
+ * DataTable class
+ * @author			jaycverg
+ * @description		default table renderer of rameses-ui table handler
+ * 
+ * decorators:
+ * 		to add decorators just register your decorator using:
+ *   	  DataTable.decorators.push( fn );
+ * 		decorator signature:
+ *   	  fn( table(jquery object), controller, partial(only item(s) inserted) )
+ */
+function DataTable( table, controller ) {
 	var model = new DefaultTableModel( table );
 
 	var multiselect = R.attr(table, 'multiselect') == 'true';
@@ -1120,6 +1198,8 @@ function DataTable( table, bean, controller ) {
 	model.onAppend = function(list, type, animate) {
 		checkTableVisibility();
 		renderItemsAdded(list, type, animate, true);
+		//fire decorators
+		$(DataTable.decorators).each(function(i,dc){ dc(table, controller, true); });
 	};
 	model.load();
 
@@ -1142,6 +1222,9 @@ function DataTable( table, bean, controller ) {
 		}
 
 		BindingUtils.bind( null, table );
+		
+		//fire decorators
+		$(DataTable.decorators).each(function(i,dc){ dc(table, controller); });
 	}
 	
 	function checkTableVisibility() {
@@ -1347,7 +1430,13 @@ function DataTable( table, bean, controller ) {
 		return null;
 	}
 
-} //-- end of DataTable class
+} 
+
+// decorator support
+DataTable.decorators = [];
+
+
+//-- end of DataTable class
 
 
 /*-------- default internal table model ------------------*/
@@ -2241,3 +2330,5 @@ var Scroller = new function(){
 	}
 	
 };
+
+

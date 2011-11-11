@@ -13,10 +13,28 @@ String.prototype.endsWith = function(str) {return (this.match(str+"$")==str)};
 //******************************************************************************************************************
 // Array extensions
 //******************************************************************************************************************
+if(!Array.indexOf){ //some lower versions of IE doesn't have indexOf
+	Array.prototype.indexOf = function(obj){
+		for(var i=0; i<this.length; i++){
+			if(this[i]==obj){
+				return i;
+			}
+		}
+		return -1;
+	}
+}
+
 Array.prototype.remove = function( from, to ) {
-	var rest = this.slice((to || from) + 1 || this.length);
-	this.length = from < 0 ? this.length + from : from;
-	return this.push.apply(this, rest);
+	if( typeof from == 'object' ) {
+		var idx = this.indexOf( from );
+		if( idx >= 0 ) return this.remove( idx );
+		return this;
+	}
+	else {
+		var rest = this.slice((to || from) + 1 || this.length);
+		this.length = from < 0 ? this.length + from : from;
+		return this.push.apply(this, rest);
+	}
 };
 Array.prototype.removeAll = function( func ) {
 	var _retained = [];
