@@ -13,7 +13,7 @@
 			inAction,
 			charMin = 65,
 			visible,
-			tpl = '<div class="colorpicker" style="z-index:100000"><div class="colorpicker_color"><div><div></div></div></div><div class="colorpicker_hue"><div></div></div><div class="colorpicker_new_color"></div><div class="colorpicker_current_color"></div><div class="colorpicker_hex"><input type="text" maxlength="6" size="6" /></div><div class="colorpicker_rgb_r colorpicker_field"><input type="text" maxlength="3" size="3" /><span></span></div><div class="colorpicker_rgb_g colorpicker_field"><input type="text" maxlength="3" size="3" /><span></span></div><div class="colorpicker_rgb_b colorpicker_field"><input type="text" maxlength="3" size="3" /><span></span></div><div class="colorpicker_hsb_h colorpicker_field"><input type="text" maxlength="3" size="3" /><span></span></div><div class="colorpicker_hsb_s colorpicker_field"><input type="text" maxlength="3" size="3" /><span></span></div><div class="colorpicker_hsb_b colorpicker_field"><input type="text" maxlength="3" size="3" /><span></span></div><div class="colorpicker_submit"></div></div>',
+			tpl = '<div class="colorpicker" style="z-index:100000;"><div class="colorpicker_color"><div><div></div></div></div><div class="colorpicker_hue"><div></div></div><div class="colorpicker_new_color"></div><div class="colorpicker_current_color"></div><div class="colorpicker_hex"><input type="text" maxlength="6" size="6" /></div><div class="colorpicker_rgb_r colorpicker_field"><input type="text" maxlength="3" size="3" /><span></span></div><div class="colorpicker_rgb_g colorpicker_field"><input type="text" maxlength="3" size="3" /><span></span></div><div class="colorpicker_rgb_b colorpicker_field"><input type="text" maxlength="3" size="3" /><span></span></div><div class="colorpicker_hsb_h colorpicker_field"><input type="text" maxlength="3" size="3" /><span></span></div><div class="colorpicker_hsb_s colorpicker_field"><input type="text" maxlength="3" size="3" /><span></span></div><div class="colorpicker_hsb_b colorpicker_field"><input type="text" maxlength="3" size="3" /><span></span></div><div class="colorpicker_submit"></div></div>',
 			defaults = {
 				eventName: 'click',
 				onShow: function () {},
@@ -395,9 +395,10 @@
 							id = 'collorpicker_' + parseInt(Math.random() * 1000);
 
 						$(this).data('colorpickerId', id);
-						var cal = $(tpl).attr('id', id);
+						var cal = document.getElementById(id);
 						
-						if( !document.getElementById(id) ) {
+						if( !cal ) {
+							cal = $(tpl).attr('id', id);
 							if (options.flat) {
 								cal.appendTo(this).show();
 							} else {
@@ -405,6 +406,10 @@
 								//cal.insertAfter(this);
 							}
 						}
+						else {
+							cal = $(cal);
+						}
+						
 						options.fields = cal
 											.find('input')
 												.bind('keyup', keyDown)
@@ -433,6 +438,8 @@
 						setSelector(options.color, cal.get(0));
 						setCurrentColor(options.color, cal.get(0));
 						setNewColor(options.color, cal.get(0));
+						
+						cal.hide();
 						if (options.flat) {
 							cal.css({
 								position: 'relative',
@@ -440,7 +447,7 @@
 							});
 						} else {
 							$(this).bind(options.eventName, show);
-						}
+						}						
 					}
 				});
 			},
@@ -500,8 +507,7 @@
  */
 BindingUtils.handlers.span_colorpicker = function(elem, controller, idx) {
 	var name = R.attr(elem, 'name');
-	var value = controller.get(name) || '0000ff';
-	value = '#' + value;
+	var value = controller.get(name) || '#0000ff';
 	
 	$(elem).css('backgroundColor', value);
 	
@@ -519,12 +525,10 @@ BindingUtils.handlers.span_colorpicker = function(elem, controller, idx) {
 		color: value,
 		onChange: function (hsb, hex, rgb) {
 			$(elem).css('backgroundColor', '#' + hex);
-			controller.set(name, hex);
+			controller.set(name, '#' + hex);
 			if( onChange ) onChange( hex );
 		},
-		onSubmit: function(hsb, hex, rgb, el) {
-			
-		}
+		onSubmit: function(hsb, hex, rgb, el) {}
 	});
 };
 
