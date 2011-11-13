@@ -37,14 +37,31 @@ a):b.trigger(F)}})(jQuery);
  */
 (function(){
 
-	BindingUtils.addDecorator('textarea', decorator);
+	BindingUtils.handlers.div_richtext = renderer;
 	
-	function decorator( elem, controller, idx ) {
-		if( R.attr(elem, 'mode') != 'richtext' ) return;
-		if( $(elem).data('richtext') ) return;
-		console.log('binding....');
+	function renderer( elem, controller, idx ) 
+	{
+		var n = R.attr(elem,'name');
+		var value = n? controller.get(n) : null;
 		
-		$(elem).data('richtext', true).cleditor();
+		if( $(elem).data('richtext') ) {
+			var o = $(elem).data('richtext');
+			if( n ) {
+				o.txt.val( value );
+				o.cle[0].updateFrame();
+			}
+			return;
+		}
+		
+		var ta = $('<textarea></textarea');
+		ta.val( value );
+		var cle = ta.appendTo(elem)
+		.cleditor({width:'100%',height:'100%',})
+		.change(function(evt){
+			if( n ) controller.set(n, ta.val());
+		});
+		
+		$(elem).data('richtext', {txt: ta, cle: cle});
 	}
 
 })();

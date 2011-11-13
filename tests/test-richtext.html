@@ -21,6 +21,7 @@
 
 					this.refresh = function() {
 						alert( this.value );
+						this.value += ' -- ';
 					}
 				}
 			);
@@ -28,7 +29,7 @@
 	</head>
 
 	<body>
-		<textarea r:context="test" r:name="value" r:mode="richtext"></textarea>
+		<div r:type="richtext" r:context="test" r:name="value" style="height:300px;width:400px;"></div>
 		<button r:context="test" r:name="refresh">Refresh</button>
 		<br/>
 		<p>
