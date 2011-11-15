@@ -19,7 +19,8 @@
 					this.selectedItem;
 					this._controller;
 				
-					this.search = function() {
+					this.search = function( o ) {
+						console.log( o );
 						return projects;
 					}
 					
@@ -111,7 +112,7 @@
 							<img src="#{icon}"/>
 						</td>
 						<td valign="top">
-							#{label}<br/>
+							#{label? label : 'No description.'}<br/>
 							<span style="color:#aaa">#{desc}</span>
 						</td>
 					</tr>

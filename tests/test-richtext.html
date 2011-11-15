@@ -17,11 +17,10 @@
 				'test',
 				new function() 
 				{
-					this.value;
+					this.value = 'this is the default value.';
 
 					this.refresh = function() {
 						alert( this.value );
-						this.value += ' -- ';
 					}
 				}
 			);
@@ -29,7 +28,7 @@
 	</head>
 
 	<body>
-		<div r:type="richtext" r:context="test" r:name="value" style="height:300px;width:400px;"></div>
+		<div r:type="richtext" r:context="test" r:name="value" style="height:300px;width:600px;"></div>
 		<button r:context="test" r:name="refresh">Refresh</button>
 		<br/>
 		<p>

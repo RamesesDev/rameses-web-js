@@ -45,7 +45,9 @@ function DynamicProxy( context ) {
 				var result = $.ajax( {
 					url:urlaction,
 					type:"POST",
-					error: function( xhr ) { err = xhr.responseText },
+					error: function( xhr ) { 
+						err = xhr.responseText; 
+					},
 					data: data,
 					async : false }).responseText;
 

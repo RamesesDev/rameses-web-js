@@ -154,6 +154,10 @@ BindingUtils.handlers.span_datetime = function( elem, controller, idx )
 		e.data('model', model);
 	}
 	
+	if( R.attr(elem, 'mode') ) {
+		model.mode = R.attr(elem, 'mode');
+	}
+	
 	if( R.attr(elem, 'options') ) {
 		try {
 			var options = eval( '(' + R.attr(elem, 'options') + ')' );
