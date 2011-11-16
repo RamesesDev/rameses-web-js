@@ -602,7 +602,10 @@ BindingUtils.handlers.input_text = function(elem, controller, idx ) {
 		var input = $(elem);
 		var suggExpr = R.attr(input, 'suggestExpression');
 		var suggTpl = R.attr(input, 'suggestTemplate');
+		var suggPreview = R.attr(input, 'suggestPreview');
+		
 		var suggName = R.attr(input, 'suggestName');
+		if( R.attr(input, 'selectedItem') ) suggName = R.attr(input, 'selectedItem');
 		
 		if( R.attr(input, 'suggest') && input.autocomplete ) {
 			var src = controller.get(R.attr(input, 'suggest'));
@@ -631,6 +634,8 @@ BindingUtils.handlers.input_text = function(elem, controller, idx ) {
 		}
 		
 		function suggestFocus( event, ui ) {
+			if( suggPreview != 'true' ) return false;
+			
 			if( suggExpr ) {
 				var lbl = suggExpr.evaluate( ui.item );
 				input.val( lbl );

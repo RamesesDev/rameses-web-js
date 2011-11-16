@@ -3,46 +3,61 @@ BindingUtils.handlers.div_textarea = function( elem, controller, idx )
    var e = $(elem);
    var name = R.attr(e, 'name');
    var cols = R.attr(e, 'cols') || 30;
+   var textarea;
+   var controls;
+   var close;
    
 	var textarea = $(elem).data('_textarea');
-	if( !textarea ) 
-	{	   
-		var textarea = $('<textarea style="display:block;width:100%;padding-right:24px;"></textarea>');
-		var close = $('<a href="#">x</a>').css('opacity',0);
-		
-		textarea.css('overflow', 'hidden')
-		.css('resize', 'none')
-		.keydown(function(){ resize(this, 30); })
-		.keyup(function(){ resize(this, 30); })
-		.focus(function(){ 
-			resize(this, 30); 
-			close.stop().animate({opacity: 1},100); 
-		})
-		.change(function(){
-			if( name ) controller.set(name, this.value);
-		});
-
-		var wrp = $('<div style="position: relative;"></div>').addClass('txt-wrapper').prependTo(e)
-		wrp.append( textarea );
-		wrp.append(
-			close
-			.addClass('txt-close')
-			.css({display:'block',width:'24px',height:'24px','line-height':'24px','text-align':'center'})
-			.css({position:'absolute',top:0,right:0})
-			.click(function(){ 
-				resize(textarea[0], 10); 
-				$(this).stop().animate({opacity:0},100);
-				return false; 
-			})
-		);
-		e.data('_textarea', textarea);
+	if( !textarea ) {	   
+		init();
 	}
-		
-	if( name ) textarea.val( controller.get(name) );
+	else {
+		controls = e.data('_controls');
+		close = e.data('_close');
+	}
+
+	var value = controller.get(name) || '';
+	if( name ) textarea.val( value );
+	if( R.attr(elem, 'hint') ) {
+		new InputHintDecorator( textarea[0], R.attr(elem,'hint') );
+	}
 	
-	resize( textarea[0], 10 );
-	
+	if( value )
+		textarea.trigger('focus');
+	else
+		close.trigger('click');
+
 	//helper
+	function init() {
+		if( e.children().length > 0 ) {
+			controls = e.children().wrap('<div class="txt-controls"></div>').parent().hide();
+		}
+		
+		var tpl = $('<table width="100%"><tr><td><textarea/></td><td valign="top" width="24px"><a href="#">x</a></td></tr></table>').prependTo(e);
+		textarea = tpl.find('textarea')
+		 .wrap('<div class="hint-wrapper" style="width:100%"></div>')
+		 .css({
+			width:'100%',outline:'none',
+			resize:'none',overflow:'hidden'
+		 });
+		
+		close = tpl.find('a')
+		 .css('opacity',0)
+		 .addClass('txt-close')
+		 .css({display:'block',width:'24px',height:'24px','line-height':'24px','text-align':'center'})
+		 .click(a_click);
+		
+		textarea
+		 .keydown(function(){ resize(this, 30); })
+		 .keyup(function(){ resize(this, 30); })
+		 .focus(ta_focus)
+		 .change(update_bean);
+		
+		e.data('_textarea', textarea)
+		 .data('_close', close)
+		 .data('_controls', controls);
+	}
+	
 	function resize( ta, offset ) {
 		var origH = $(ta).data('height');
 		$(ta).css('height', 0 );
@@ -50,10 +65,28 @@ BindingUtils.handlers.div_textarea = function( elem, controller, idx )
 		
 		if( origH != newH ) {
 			if( origH ) $(ta).css('height', origH);
-			$(ta).data('height', newH).stop().animate({'height': newH},100);
+			$(ta).data('height', newH).stop().animate({'height': newH},50);
 		}
 		else {
 			$(ta).css('height', newH);
 		}
+	}
+	
+	function ta_focus() {
+		resize(this, 30); 
+		close.stop().animate({opacity: 1},50);
+		if( controls ) controls.show();
+	}
+	
+	function a_click(){ 
+		resize(textarea[0], 0);
+		textarea.val('').trigger('change');
+		$(this).stop().animate({opacity:0},50);
+		if( controls ) controls.hide();
+		return false; 
+	}
+	
+	function update_bean() {
+		if( name ) controller.set(name, this.value);
 	}
 };

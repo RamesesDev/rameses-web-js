@@ -61,6 +61,7 @@ a):b.trigger(F)}})(jQuery);
 			if( n ) controller.set(n, ta.val());
 		});
 		
+		cle[0].updateFrame();
 		$(elem).data('richtext', {txt: ta, cle: cle});
 	}
 
