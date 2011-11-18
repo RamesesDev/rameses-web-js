@@ -870,19 +870,23 @@ BindingUtils.handlers.input_submit = function( elem, controller, idx ) {
 BindingUtils.handlers.label = function( elem, controller, idx ){
 	var lbl = $(elem);
 	
-	var ctx = $ctx(controller.name);
-	var expr;
-	if( lbl.data('expr')!=null ) {
-		expr = lbl.data('expr');
-	} else {
-		expr = lbl.html();
-		lbl.data('expr', expr);
+	if( R.attr(lbl, 'name') ) {
+		var v = controller.get(R.attr(lbl, 'name'));
+		lbl.html( v? v : '' );
 	}
+	else {
+		var expr;
+		if( lbl.data('expr')!=null ) {
+			expr = lbl.data('expr');
+		} else {
+			expr = unescape(lbl.html());
+			lbl.data('expr', expr);
+		}
 
-	lbl.html( expr.evaluate(ctx) );
-	
-	//bind label elements
-	BindingUtils.bind( null, lbl );
+		//bind label elements
+		BindingUtils.bind( null, lbl );
+		lbl.html( expr.evaluate(controller.code) );
+	}
 };
 
 BindingUtils.handlers.div = function( elem, controller, idx ){
@@ -1054,7 +1058,7 @@ BindingUtils.handlers.input_file = function( elem, controller, idx ) {
 		var fibox = $('<div class="file"></div>').appendTo( listBox );
 		if( frame ) fibox.append( frame );
 		if( form )  fibox.append( form );
-		fibox.append('<div class="label">' + getCaption( value ) + '</div>')
+		fibox.append('<div class="label">' + (pBar && input? input.val() : getCaption( value )) + '</div>')
 		if( pBar )  fibox.append( pBar );
 	}
 
@@ -1949,7 +1953,7 @@ var Hash = new function() {
 		
 		//load the page into the target content
 		var content = $('#'+this.target);
-		content.load(inv.page, qryParams, function() {
+		content.css('opacity',0).load(inv.page, qryParams, function() {
 			//attach the bookmark;
 			$get(inv.context).bookmark = self;
 			if(params!=null) {
@@ -1973,6 +1977,7 @@ var Hash = new function() {
 			}
 
 			BindingUtils.load( content );
+			content.css('opacity',1);
 		});
 		
 		//pass the registered object (based on hashkey) and the parameters passed
@@ -2077,9 +2082,9 @@ function PopupOpener( id, params, options )
 				};	
 			}
 			catch(e) {;}
-            BindingUtils.load( div );
             //make into a dialog after the content is loaded.
             div.dialog(options);
+			BindingUtils.load( div );
 		}
     }
 }
