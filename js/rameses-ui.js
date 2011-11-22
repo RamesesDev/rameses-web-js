@@ -1280,7 +1280,7 @@ function DataTable( table, bean, controller ) {
 
 			evalAttr(origTr[0],e,item);
 			if( R.attr($(e), 'visibleWhen') ) {
-				var visible = R.attr($(e), 'visibleWhen').evaluate( function(n) { return resolve(n, item); } );
+				var visible = R.attr($(e), 'visibleWhen').evaluate( createEvalCtx(item) );
 				if( visible != 'true' ) $(e).css('display', 'none');
 			}
 
@@ -1297,11 +1297,11 @@ function DataTable( table, bean, controller ) {
 					var td = $(e).data('position', {row: i, col: idx }); //keep the td position
 					var value;
 					if( R.attr(td, 'name') )
-						value = resolve( R.attr(td, 'name'), item );
+					value = "#{"+ R.attr(td, 'name') +"}".evaluate( createEvalCtx(item) );
 					else if ( R.attr(td, 'expression') )
-						value = R.attr(td, 'expression').evaluate(  function(n) { return resolve(n, item); }  );
+						value = R.attr(td, 'expression').evaluate( createEvalCtx(item) );
 					else
-						value = unescape(td.html()).evaluate(  function(n) { return resolve(n, item); }  );
+						value = unescape(td.html()).evaluate( createEvalCtx(item) );
 
 					td.html( value? value+'' : '&nbsp;' );
 					evalAttr(origTd[idx],e,item);
@@ -1376,7 +1376,7 @@ function DataTable( table, bean, controller ) {
 
 			try {
 				var attrName = attr.name.toLowerCase();
-				var attrValue = $(origElem).attr(attrName).evaluate( function(n) { return resolve(n, ctx); } );
+				var attrValue = $(origElem).attr(attrName).evaluate( createEvalCtx(ctx) );
 				if( attrName.endsWith('expr') ) {
 					attrName = attrName.replace(/expr$/, '');
 				}
@@ -1385,30 +1385,16 @@ function DataTable( table, bean, controller ) {
 			catch(e) {;}
 		}
 	}
+	
+	function createEvalCtx( item ) {
+		var ctx = $.extend({},bean);
+		if( varStat ) ctx[varStat] = status;
+		if( varName ) 
+			ctx[varName] = item;
+		else
+			ctx = $.extend(ctx, item);
 
-	function resolve( name, ctx ) {
-		try {
-			var _ctx = ctx;
-			if( varStat && name.startsWith( varStat + '\.' ) ) {
-				_ctx = [];
-				_ctx[varStat] = status;
-			}
-			else if( varName ) {
-				if( name.startsWith( varName + '\.' ) ) {
-					_ctx = [];
-					_ctx[varName] = ctx;
-				}
-				else {
-					_ctx = bean;
-				}
-			}
-
-			return BeanUtils.getProperty( _ctx, name );
-		}
-		catch(e) {
-			if( window.console && R.DEBUG ) console.log( e.message );
-		}
-		return null;
+		return ctx;
 	}
 
 } //-- end of DataTable class
@@ -1652,7 +1638,7 @@ function DefaultTableModel() {
 			var li;
 			if( tpl ) {
 				var html = tpl;
-				li = $( (html+'').evaluate( function(n) { return resolve(n, o); } ) );
+				li = $( (html+'').evaluate( createEvalCtx(o) ) );
 			}
 			else {
 				li = $( '<li>' + o + '</li>' );
@@ -1678,29 +1664,16 @@ function DefaultTableModel() {
 			BindingUtils.bind( null, $e );
 		}
 		
-		function resolve( name, ctx ) {
-			try {
-				var _ctx = ctx;
-				if( varStat && name.startsWith( varStat + '\.' ) ) {
-					_ctx = [];
-					_ctx[varStat] = status;
-				}
-				else if( varName ) {
-					if( name.startsWith( varName + '\.' ) ) {
-						_ctx = [];
-						_ctx[varName] = ctx;
-					}
-					else {
-						_ctx = controller.code;
-					}
-				}
+		//helper function
+		function createEvalCtx( item ) {
+			var ctx = $.extend({},controller.code);
+			if( varStat ) ctx[varStat] = status;
+			if( varName ) 
+				ctx[varName] = item;
+			else
+				ctx = $.extend(ctx, item);
 
-				return BeanUtils.getProperty( _ctx, name );
-			}
-			catch(e) {
-				if( window.console && R.DEBUG ) console.log( e.message );
-			}
-			return null;
+			return ctx;
 		}
 	}
 
@@ -1954,25 +1927,35 @@ var Hash = new function() {
 		//load the page into the target content
 		var content = $('#'+this.target);
 		content.css('opacity',0).load(inv.page, qryParams, function() {
+			var controller;
+			
+			try{ controller = $get(inv.context); }
+			catch(e){ 
+				if(window.console && R.DEBUG)
+					console.log(e); 
+			}
+			
 			//attach the bookmark;
-			$get(inv.context).bookmark = self;
-			if(params!=null) {
-				for( var key in params ) {
-					try{ $ctx(inv.context)[key] = params[key]; }catch(e){;}
+			if( controller ) {
+				controller.bookmark = self;
+				if(params!=null) {
+					for( var key in params ) {
+						try{ $ctx(inv.context)[key] = params[key]; }catch(e){;}
+					}
 				}
-			}
-			if( inv.parent ) {
-				$get(inv.context).container = {
-					close :  function() { self.navigate(inv.parent); },
-					refresh: function() { $get(inv.context).refresh(); },
-					reload : function() { self.reload(); }
+				if( inv.parent ) {
+					controller.container = {
+						close :  function() { self.navigate(inv.parent); },
+						refresh: function() { controller.refresh(); },
+						reload : function() { self.reload(); }
+					}
 				}
-			}
-			else {
-				$get(inv.context).container = {
-					close :  function() { },
-					refresh: function() {$get(inv.context).refresh(); },
-					reload : function() { self.reload(); }
+				else {
+					controller.container = {
+						close :  function() { },
+						refresh: function() { controller.refresh(); },
+						reload : function() { self.reload(); }
+					}
 				}
 			}
 

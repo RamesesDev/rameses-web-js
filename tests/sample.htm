@@ -1,33 +1,44 @@
 <html>
 	<head>
-		<script src="../js/jquery-all.js"></script>
-		<style>
-			#cal td {
-				background: #ccc;
-			}
-		</style>
-	</head>
-	<body>
-		<div id="cal"></div>
+		<link href="../js/css/jquery-ui/jquery.css" rel="stylesheet" />
+		<link href="../js/css/rameses-lib.css" rel="stylesheet" />
 		
+		<script src="../js/jquery-all.js"></script>
+		<script src="../js/rameses-ext-lib.js"></script>
+		<script src="../js/rameses-ui.js"></script>
+		<script src="../js/plugins/datetime.js"></script>
+
 		<script>
-			var tbody = document.createElement('tbody');
-			var ctr = 1;
-			for( var i=0; i<5; ++i ) {
-				var tr = document.createElement('tr');
-				for( var j=0; j<7; ++j ) {
-					var td = document.createElement('td');
-					td.innerHTML = ctr++ + '';
-					tr.appendChild(td);
+			Registry.add({id:'news_panel', context:'news_panel', page:'test/news_panel.html'});
+			Registry.add({id:'popup', context:'popup', page:'test/popup.html'});
+			
+			//default global settings for PopupOpener
+			PopupOpener.options = {show: '', hide: 'fade', resizable: false};
+		
+			$put(
+				'test',
+				new function() 
+				{
+					this.list = [{ id: '01' },{ id: '02' }];
+					this.links = {
+						'01': 'hello world'
+					};
 				}
-				tbody.appendChild(tr);
-			}
-			var tbl = document.createElement('table');
-			tbl.appendChild(tbody);
-			document.getElementById('cal').appendChild(tbl);
+			);
 		</script>
+	</head>
+
+	<body>
+		<table r:context="test" r:items="list" r:varStatus="stat">
+			<tbody>
+				<tr>
+					<td>
+						#{stat.index}<br/>
+						#{id} = #{links[id]? links[id] : ''}
+					</td>
+				</tr>
+			</tbody>
+		</table>
 	</body>
+
 </html>
-
-
-

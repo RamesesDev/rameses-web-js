@@ -128,7 +128,6 @@ Array.prototype.collect = function( func ) {
  * string expression support
  * @param ctx
  *          - the context of the expression (window is the default context)
- *          - the context can be a function that handles the variable resolution of an expression
  * usage: "hello ${name}".evaluate( [optional context] );
  *        - where name is a property of the context
  *
@@ -137,7 +136,6 @@ Array.prototype.collect = function( func ) {
 String.prototype.evaluate = function( ctx ) {
 
     ctx = ctx? ctx : window;
-    var handler = (typeof ctx === 'function')? ctx : defaultHandler;
 
     var str = this, match;
     while( (match = str.match(/\\?[\$|#]{([^{}]+)}/)) ) {
@@ -150,40 +148,17 @@ String.prototype.evaluate = function( ctx ) {
     return str+''; //return the parsed value
 
     //-- helper methods
-    function defaultHandler(name) {
-        return BeanUtils.getProperty( ctx, name );
-    }
-
     function _evaluate(str) {
-        var match = str.match(/[a-zA-Z_\$]+[\w\.]*(?:\([^\)]*\))?|'[^']*'|"[^"]*"/g);
-        for(var i=0; i<match.length; ++i) {
-            var o = '';
-            if( match[i].charAt(0) === "'" || match[i].charAt(0) === '"' ) {
-                o = match[i];
-            }
-            else {
-                try {
-                    o = handler( match[i] );
-                }catch(e) {
-                    if( window.console ) window.console.log( e.message );
-                }
-                if( typeof o === 'number' || typeof o === 'boolean' ); //do nothing
-                else if( typeof o === 'string' )
-                    o = "'" + strEscape(o) + "'";
-                else if ( o == null || typeof o === 'undefined' )
-                    o = 'null';
-                else
-                    o = "'[object]'";                    
-            }
-            str = str.replace( match[i], o);
-        }
-
 		try {
-        	return str? eval( str )+'' : '';
+			var result;
+			with( ctx ) {
+				result = eval( str );
+			}
+			return result+'';
 		}
 		catch(e) {
-			if( window.console ) console.log( 'Error: ' + e.message + ', expr: ' + str );
-			return '';	
+			if( String.DEBUG_EVAL && window.console ) console.log( 'Error: ' + e.message + ', expr: ' + str );
+			return '';
 		}
     }
     
