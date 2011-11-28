@@ -19,7 +19,7 @@
 				'test',
 				new function() 
 				{
-					this.list = [{ id: '01' },{ id: '02' }];
+					this.list = [{ id: '01' },{ id: '02' },{ id: '01' },{ id: '02' }];
 					this.links = {
 						'01': 'hello world'
 					};
@@ -39,6 +39,17 @@
 				</tr>
 			</tbody>
 		</table>
+		
+		<br/>
+		<br/>
+		<style>
+			li { list-style:none; float: left; width: 50px; height: 50px; border: solid 1px green; margin-right: 2px; }
+		</style>
+		<ul r:context="test" r:items="list">
+			<li>
+				#{id}
+			</li>
+		</ul>
 	</body>
 
 </html>

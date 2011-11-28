@@ -37,9 +37,7 @@ a):b.trigger(F)}})(jQuery);
  */
 (function(){
 
-	BindingUtils.handlers.div_richtext = renderer;
-	
-	function renderer( elem, controller, idx ) 
+	BindingUtils.handlers.div_richtext = function( elem, controller, idx ) 
 	{
 		var n = R.attr(elem,'name');
 		var value = n? controller.get(n) : null;
@@ -56,13 +54,13 @@ a):b.trigger(F)}})(jQuery);
 		var ta = $('<textarea></textarea');
 		ta.val( value );
 		var cle = ta.appendTo(elem)
-		.cleditor({width:'100%',height:'100%',})
+		.cleditor({width:'100%',height:'100%'})
 		.change(function(evt){
 			if( n ) controller.set(n, ta.val());
 		});
 		
 		cle[0].updateFrame();
 		$(elem).data('richtext', {txt: ta, cle: cle});
-	}
+	};
 
 })();

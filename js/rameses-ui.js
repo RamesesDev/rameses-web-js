@@ -1192,7 +1192,7 @@ function DataTable( table, bean, controller ) {
 	function doRender() {
 		checkTableVisibility();
 	
-		if( !table.is(':hidden') ) {
+		if( table.css('display') == 'table' ) {
 			tbody.hide().empty();
 			tabIdx = table.data('index');
 			status.index = 0;
