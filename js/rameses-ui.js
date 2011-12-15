@@ -63,8 +63,20 @@ var BindingUtils = new function() {
 			
 			if( R.attr($e, 'action') ) {
 				var action = R.attr($e, 'action');
-				elem.onclick = function() { 
-					$get(controller.name).invoke( this, action );  
+				if( elem.type == 'text' ) {
+					if( !$e.data('_keyup_binded') ) {
+						$e.data('_keyup_binded',true)
+						 .keyup(function(event){
+							if(event.keyCode == 13){
+								$get(controller.name).invoke( this, action );
+							}
+						});
+					}
+				}
+				else {
+					elem.onclick = function() { 
+						$get(controller.name).invoke( this, action );  
+					}
 				}
 			}
 			
@@ -269,6 +281,7 @@ function InputHintDecorator( inp, hint ) {
 	}
 
 	function input_keypress(evt) {
+		if( span.is(':hidden') ) return;
 		if( isCharacterPressed(evt) ) hideHint();
 	}
 	
@@ -500,7 +513,7 @@ function Controller( code, pages ) {
 			var params = WindowUtil.getAllParameters();
 			if( qrystr ) {
 				var p = buildParamFromStr( qrystr );
-				params = $.extend(params,p);
+				$.extend(params,p);
 			}
 			
 			$('#'+target).load( this.pages[outcome], params, function() { 
@@ -802,7 +815,8 @@ BindingUtils.handlers.input_button = function( elem, controller, idx ) {
     var action = R.attr(elem, "name");
     if(action==null || action == '') return;
     elem.onclick = function() { 
-		$get(controller.name).invoke( this, action );  
+		$get(controller.name).invoke( this, action ); 
+		return false;
 	}
 };
 
@@ -864,7 +878,10 @@ BindingUtils.handlers.input_image = function( elem, controller, idx ) {
 BindingUtils.handlers.input_submit = function( elem, controller, idx ) {
     var action = R.attr(elem, "name");
     if(action==null || action == '') return;
-    elem.onclick = function() { $get(controller.name).invoke( this, action );  }
+    elem.onclick = function() { 
+		$get(controller.name).invoke( this, action );  
+		return false;
+	};
 };
 
 BindingUtils.handlers.label = function( elem, controller, idx ){
@@ -1392,7 +1409,7 @@ function DataTable( table, bean, controller ) {
 		if( varName ) 
 			ctx[varName] = item;
 		else
-			ctx = $.extend(ctx, item);
+			$.extend(ctx, item);
 
 		return ctx;
 	}
@@ -1671,7 +1688,7 @@ function DefaultTableModel() {
 			if( varName ) 
 				ctx[varName] = item;
 			else
-				ctx = $.extend(ctx, item);
+				$.extend(ctx, item);
 
 			return ctx;
 		}
@@ -2014,7 +2031,7 @@ function PopupOpener( id, params, options )
 	
 	//merge values of PopupOpener.options if specified
 	if( PopupOpener.options )
-		defaultOptions = $.extend(defaultOptions, PopupOpener.options);
+		$.extend(defaultOptions, PopupOpener.options);
 
 
     this.load = function() {
@@ -2035,15 +2052,17 @@ function PopupOpener( id, params, options )
 		else
 			div = $(this.id);
 
+			
+		var options = $.extend({},defaultOptions);
 		//remove div if dynamically created
 		if( dynamic ) {
-			this.options.close = function() { div.remove();	}
+			options.close = function() { div.remove();	}
 		}
-		this.options.modal = true;
-		this.options.title = this.title || inv.title;
+		options.modal = true;
+		options.title = this.title || inv.title;
 
-		var options = $.extend(defaultOptions, this.options);
-		if( inv.options ) options = $.extend(options, inv.options);
+		if( inv.options ) $.extend(options, inv.options);
+		$.extend(options, this.options);
 
 		if( dynamic )
 			div.load(page, WindowUtil.getParameters(p), createDialog);
@@ -2081,111 +2100,153 @@ function PopupOpener( id, params, options )
  *   DropdownOpener.options = {}
  * the value of DropdownOpener.options is global unless explicitly overriden
  */
-function DropdownOpener( id, params ) 
-{
-	this.classname = "opener";
-	this.caller;
-    this.id = id;
-    this.params = params;
-	this.title;
-	this.source;
-	this.options = {};
-	this.styleClass;
-	
-	var defaultConfig = { my: 'left top', at: 'left bottom' };
+(function()
+{		
+	var defaultConfig = { my: 'left top', at: 'left bottom' };	
+	var positionNames = {
+		'bottom-left' : { my: 'left top', at: 'left bottom' },
+		'bottom-right' : {my: 'right top', at: 'right bottom'},
+		'top-left' : { my: 'left bottom', at: 'left top' },
+		'top-right' : { my: 'right bottom', at: 'right top' }
+	};
 	
 	
-    this.load = function() {
-		var inv = Registry.find(this.id);
-		if(inv==null) {
-			alert( this.id + " is not registered" );
-			return;
-		}
-        var n = inv.context;
-        var p = this.params;
-		var caller = this.caller;
-		var page;
-		if( this.id.startsWith('#') )
-			page = $(this.id);
-		else
-			page = inv.page;
+	function DropdownOpener( id, params, options ) 
+	{
+		this.classname = "opener";
+		this.caller;
+		this.id = id;
+		this.params = params;
+		this.title;
+		this.source;
+		this.options = options || {};
 		
-		if( DropdownOpener.options ) this.options = $.extend(DropdownOpener.options, this.options);
-		if( inv.options ) this.options = $.extend(this.options, inv.options);
+		var dwindow;
 		
-		var w = new DropdownWindow(this.source, this.options, this.styleClass);
-        w.show( page, WindowUtil.getParameters(p), function(div) {
-			if( n!=null ) {
-				if(p!=null) {
-					for( var key in p ) {
-						try{ $ctx(n)[key] = p[key]; }catch(e){;}
+		this.load = function() {
+			if( dwindow && this.source == dwindow.getSource() && dwindow.show() ) return;
+			
+			var inv = Registry.find(this.id);
+			if(inv==null) {
+				alert( this.id + " is not registered" );
+				return;
+			}
+			var n = inv.context;
+			var p = this.params;
+			var caller = this.caller;
+			var page;
+			if( this.id.startsWith('#') )
+				page = $(this.id);
+			else
+				page = inv.page;
+			
+			var options = $.extend({}, DropdownOpener.options);
+			if( inv.options ) $.extend(options, inv.options);
+			$.extend(options, this.options);
+			
+			dwindow = new DropdownWindow(this.source, options);
+			dwindow.show( page, WindowUtil.getParameters(p), function(div) {
+				if( n!=null ) {
+					if(p!=null) {
+						for( var key in p ) {
+							try{ $ctx(n)[key] = p[key]; }catch(e){;}
+						}
+					}
+					$ctx(n)._caller = caller.code;
+					BindingUtils.load( div );
+					$get(n).container = {
+						element: dwindow.getElement(),
+						close:   function() { dwindow.close(); if(caller) caller.refresh() },
+						refresh: function() { $get(n).refresh(); }
 					}
 				}
-				$ctx(n)._caller = caller.code;
-				BindingUtils.load( div );
-				$get(n).container = {
-					element: w.getElement(),
-					close:   function() { w.close(); if(caller) caller.refresh() },
-					refresh: function() { $get(n).refresh(); }
-				}
-			}
-        });
-    };
-
-
+			});
+		};
+	}//-- end of DropdownOpener
+	
 	//--- DropdownWindow class ----
-	function DropdownWindow( source, options, styleClass ) {
+	function DropdownWindow( elem, options ) {
 
+		var source = $(elem);
 		var div = $('<div class="dropdown-window" style="position: absolute; z-index: 999999; top: 0; left: 0;"></div>');
 		var dynamic = false;
 		
-		if( styleClass ) div.addClass( styleClass );
-
+		if( options.styleClass ) div.addClass( options.styleClass );
+		
 		this.show = function( page, params, callback ) {
-			var posConfig = $.extend(defaultConfig, options.position || {});
-			posConfig.of = $(source);
+			var reshow = arguments.length == 0;
+			if( reshow ) {
+				div.stop();
+				if( div.is(":hidden") ) return false;
+			}
+
+			//if options.position is string, it should be one of the positionNames key
+			if( typeof options.position == 'string' ) {
+				if( positionNames[options.position] ) {
+					options.position = positionNames[options.position];
+				}
+				else {
+					options.position = null;
+				}
+			}
 			
-			dynamic = (typeof page == 'string');
-			
+			var posConfig = {};
+			$.extend(posConfig, defaultConfig, options.position);
+			posConfig.of = source;
+
 			if( isFixedPositioned( posConfig.of ) )
 				div.css('position', 'fixed');
-
-			if( dynamic ) {
-				div.hide().load( page, params, initDailog);
+			
+			if( !reshow ) {
+				dynamic = (typeof page == 'string');
+				if( dynamic ) {
+					div.hide().load( page, params, initDailog);
+				}
+				else {
+					page.show();
+					div.append(page);
+					initDailog();
+				}
 			}
 			else {
-				page.show();
-				div.append(page);
-				initDailog();
-			}				
+				div.animate({height: div.data('height')},200);
+				bindWindowEvt();
+				return true;
+			}
 			
+			//-- show helper
 			function initDailog(){
 				div.appendTo('body')
 				 .position( posConfig )
-				 .show('slide', {direction:"up"});
+				 .show();
+				 
+				var h = div[0].offsetHeight;
+				div.data('height',h).css('height',0).animate({height: h},200);
 
 				bindWindowEvt();
 				callback(div);
+				if( options.handleClassOnOpen ) source.addClass(options.handleClassOnOpen);
 				if( options.onShow ) options.onShow( div );
 			}
 		};
 		
 		this.getElement = function() { return div; }
-
 		this.close = function() { hide(); };
+		this.getSource = function() { return source[0]; }
 		
 		function isFixedPositioned( elem ) {
 			return elem.css('position') == 'fixed' || 
-			      (elem[0].offsetParent && isFixedPositioned( $(elem[0].offsetParent) ));
+				  (elem[0].offsetParent && isFixedPositioned( $(elem[0].offsetParent) ));
 		}
 
 		function hide() {
-			div.hide('slide', {direction:"up"}, function() {
+			div.animate({height: 0}, 200, function() {
 				if( !dynamic ) {
 					var ch = $(this).children().hide().remove();
 					ch.insertAfter(this);
 				}
-				$(this).remove(); 
+				$(this).remove();
+				if( options.handleClassOnOpen ) source.removeClass(options.handleClassOnOpen);
 				if( options.onClose ) options.onClose( this );
 			});
 			$(document).unbind('mouseup', onWindowClicked);
@@ -2203,8 +2264,12 @@ function DropdownOpener( id, params )
 		}
 
 	}//-- end of DropdownWindow class
+	
+	//make the classes visible globally
+	window.DropdownOpener = DropdownOpener;
+	DropdownOpener.DropdownWindow = DropdownWindow;
 
-}//-- end of DropdownOpener
+})();
 
 //load binding immediately
 $(document).ready (

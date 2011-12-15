@@ -161,7 +161,7 @@ BindingUtils.handlers.span_datetime = function( elem, controller, idx )
 	if( R.attr(elem, 'options') ) {
 		try {
 			var options = eval( '(' + R.attr(elem, 'options') + ')' );
-			model = $.extend(model, options);
+			$.extend(model, options);
 		}
 		catch(e) {
 			throw new Error('Error evaluating r:options value for ' + elem.tagName + ', message: ' + e.message);

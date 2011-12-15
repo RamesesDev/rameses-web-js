@@ -1,3 +1,12 @@
+/*
+ * jQuery autoResize (textarea auto-resizer)
+ * @copyright James Padolsey http://james.padolsey.com
+ * @version 1.04
+ */
+
+(function(a){a.fn.autoResize=function(j){var b=a.extend({onResize:function(){},animate:true,animateDuration:150,animateCallback:function(){},extraSpace:20,limit:1000},j);this.filter('textarea').each(function(){var c=a(this).css({resize:'none','overflow-y':'hidden'}),k=c.height(),f=(function(){var l=['height','width','lineHeight','textDecoration','letterSpacing'],h={};a.each(l,function(d,e){h[e]=c.css(e)});return c.clone().removeAttr('id').removeAttr('name').css({position:'absolute',top:0,left:-9999}).css(h).attr('tabIndex','-1').insertBefore(c)})(),i=null,g=function(){f.height(0).val(a(this).val()).scrollTop(10000);var d=Math.max(f.scrollTop(),k)+b.extraSpace,e=a(this).add(f);if(i===d){return}i=d;if(d>=b.limit){a(this).css('overflow-y','');return}b.onResize.call(this);b.animate&&c.css('display')==='block'?e.stop().animate({height:d},b.animateDuration,b.animateCallback):e.height(d)};c.unbind('.dynSiz').bind('keyup.dynSiz',g).bind('keydown.dynSiz',g).bind('change.dynSiz',g)});return this}})(jQuery);
+
+
 BindingUtils.handlers.div_textarea = function( elem, controller, idx ) 
 {
    var e = $(elem);
@@ -18,14 +27,15 @@ BindingUtils.handlers.div_textarea = function( elem, controller, idx )
 
 	var value = controller.get(name) || '';
 	if( name ) textarea.val( value );
-	if( R.attr(elem, 'hint') ) {
-		new InputHintDecorator( textarea[0], R.attr(elem,'hint') );
+	
+	if( value ) {
+		ta_focus(null,false);
+	}
+	else {
+		a_click(null,false);
 	}
 	
-	if( value )
-		textarea.trigger('focus');
-	else
-		close.trigger('click');
+	
 
 	//helper
 	function init() {
@@ -38,7 +48,7 @@ BindingUtils.handlers.div_textarea = function( elem, controller, idx )
 		 .wrap('<div class="hint-wrapper" style="width:100%"></div>')
 		 .css({
 			width:'100%',outline:'none',
-			resize:'none',overflow:'hidden'
+			resize:'none',display:'block',overflow:'auto'
 		 });
 		
 		close = tpl.find('a')
@@ -48,40 +58,53 @@ BindingUtils.handlers.div_textarea = function( elem, controller, idx )
 		 .click(a_click);
 		
 		textarea
-		 .keydown(function(){ resize(this, 30); })
-		 .keyup(function(){ resize(this, 30); })
 		 .focus(ta_focus)
-		 .change(update_bean);
+		 .blur(ta_blur)
+		 .change(update_bean)
+		 .autoResize({
+			animate: false,
+			extraSpace : 20
+		});
 		
 		e.data('_textarea', textarea)
 		 .data('_close', close)
 		 .data('_controls', controls);
 	}
 	
-	function resize( ta, offset ) {
-		var origH = $(ta).data('height');
-		$(ta).css('height', 0 );
-		var newH = ta.scrollHeight + offset;
-		
-		if( origH != newH ) {
-			if( origH ) $(ta).css('height', origH);
-			$(ta).data('height', newH).stop().animate({'height': newH},50);
+	function ta_focus(event,animate) {
+		if( R.attr(elem, 'hint') && textarea.hasClass('input-hint') ) {
+			textarea.val('').removeClass('input-hint');
+		}
+
+		if( animate == false ) {
+			textarea.height(50);
+			textaera.trigger('blur').focus();
 		}
 		else {
-			$(ta).css('height', newH);
+			textarea.stop().animate({height:50},100,function(){ textarea.trigger('blur').focus(); });
 		}
-	}
-	
-	function ta_focus() {
-		resize(this, 30); 
+
 		close.stop().animate({opacity: 1},50);
 		if( controls ) controls.show();
 	}
 	
-	function a_click(){ 
-		resize(textarea[0], 0);
+	function ta_blur() {
+		if( !textarea[0].value.trim() && !textarea.hasClass('input-hint') && R.attr(elem, 'hint') ) {
+			textarea.val(R.attr(elem, 'hint')).addClass('input-hint');
+		}
+	}
+	
+	function a_click(event,animate){
 		textarea.val('').trigger('change');
-		$(this).stop().animate({opacity:0},50);
+		if( animate == false )
+			textarea.height(20);
+		else
+			textarea.stop().animate({height:20},100);
+		
+		if( R.attr(elem, 'hint') ) {
+			textarea.val(R.attr(elem, 'hint')).addClass('input-hint');
+		}
+		close.stop().animate({opacity:0},50);
 		if( controls ) controls.hide();
 		return false; 
 	}
