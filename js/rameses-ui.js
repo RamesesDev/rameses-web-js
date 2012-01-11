@@ -1397,7 +1397,7 @@ function DataTable( table, bean, controller ) {
 				if( attrName.endsWith('expr') ) {
 					attrName = attrName.replace(/expr$/, '');
 				}
-				R.attr($(cloneElem), attrName, attrValue);
+				$(cloneElem).attr(attrName, attrValue);
 			}
 			catch(e) {;}
 		}

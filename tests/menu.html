@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<link href="../js/css/rameses-lib.css" rel="stylesheet" />
+		
+		<script src="../js/jquery-all.js"></script>
+		<script src="../js/rameses-ext-lib.js"></script>
+		<script src="../js/rameses-ui.js"></script>
+		
+		<style>
+			body, table, p { 
+				font-family: arial, verdana, sans-serif; 
+				font-size: 12px;
+				line-height: 1.45em;
+			}
+			
+			.menu {
+				background: #fff;
+				border: solid 1px lightgrey;
+				box-shadow: 0 1px 2px #ccc;
+				overflow: auto; zoom: 1;
+			}
+			
+			.menu ul, .menu li { margin: 0; padding: 0; list-style: none; }
+			
+			.menu {
+				position: relative;
+				height: 30px; line-height: 30px;
+			}
+			
+			.menu .item {
+				float: left;
+				line-height: inherit;
+				height: 100%;
+			}
+			
+			.menu .item a {
+				height: 100%; display: block;
+				text-decoration: none;
+				padding: 0 10px;
+			}
+			
+			.menu .item a:hover { background: #eee; }
+			.menu .item a.opened { background: lightgrey; }
+
+			.submenu { height: auto; overflow: visible; padding: 2px 0; }
+			.submenu .item { float: none; }			
+			.submenu .item a { padding-right: 15px; overflow: hidden; zoom: 1; }
+			
+			.submenu .icon-box, .submenu .caption { float: left; height: 100%; }
+			.submenu .icon-box { border-right: solid 1px #eee; padding-right: 5px; }
+			.submenu .caption { border-left: solid 1px #efefef; padding-left: 5px; }
+			
+			.submenu .separator {
+				width: auto; height: 0; line-height: 0;
+				border-top: solid 1px #dedede;
+				border-bottom: solid 1px #efefef;
+			}
+			
+			.submenu .icon {
+				display: inline-block;
+				width: 16px; height: 16px;
+				vertical-align: middle;
+			}
+			
+			.menu-icon {
+				background-image: url('file:///D:/Icon%20Collections/icons_ns10.png');
+			}
+			
+			.report1 { background-position: -22px -22px; }			
+			.report2 { background-position: -41px -22px; }
+			.email { background-position: 0px -41px; }
+			.sms { background-position: -79px -41px; }
+			.phone { background-position: -42px -41px; }
+		</style>
+		
+		<script>
+			$put(
+				'test',
+				new function() {
+					
+					this.menuModel = {
+						fetch: function(p) {
+							if( !p ) 
+								return [
+									{id:'file',caption:'File'},
+									{id:'reports',caption:'Reports'},
+									{caption:'Transactions'},
+									{caption:'Help'}
+								];
+							if( p.id == 'file' )
+								return [
+									{caption:'Send Email',iconClass:'menu-icon email', href:'#sendmail'},
+									{caption:'Send SMS',iconClass:'menu-icon sms'},
+									{caption:'Call',iconClass:'menu-icon phone'},
+									{caption:'Exit',separator:'before'}
+								];
+							if( p.id == 'reports' )
+								return [
+									{caption:'Sales Report',separator:'before', iconClass: 'menu-icon report1'},
+									{caption:'Inventory Report',separator:'after', iconClass: 'menu-icon report2'},
+									{caption:'Purchases Report',separator:'before'},
+									{caption:'Purchases Report2'}
+								];
+						}
+					};
+					
+				}
+			);
+			
+			BindingUtils.handlers.div_menu = function(elem,controller,index) {
+				if( !R.attr(elem,'model') ) return;
+				
+				var model = controller.get(R.attr(elem,'model'));				
+				model.fetch = model.fetch || function(){};
+				var div = $(elem).addClass('menu');
+				
+				var items = model.fetch() || [];
+				if( items && items.length > 0 ) {
+					loadItems(items, div);
+				}
+				
+				if( !$(window).data('menu.listenersAttached') ) {
+					$(window)
+					 .data('menu.listenersAttached', true)
+					 .bind('resize', function(){
+						hide_currentSub();
+					 });
+					$(document).bind('click', function(e) {
+						if( !$(window).data('menu.clickConsumed') )
+							hide_currentSub();
+						else
+							$(window).removeData('menu.clickConsumed');
+					});
+				}
+				
+				function hide_currentSub() {
+					if( $(window).data('menu.activeSub') ) {
+						$(window).data('menu.activeSub').hide()
+						 .data('_submenu.owner').removeClass('opened');
+						$(window).removeData('menu.activeSub');
+					}
+				}
+				
+				function a_click(e) {					
+					var a = $(this);
+					var item = a.data('_item');
+					e.preventDefault();
+					console.log('clicked');
+					
+					if( !a.data('_loaded') ) {
+						a.data('_loaded', true);
+						var items = model.fetch(item);
+						if( items && items.length > 0 ) {
+							var div = $('<div></div>')
+							          .addClass('menu submenu')
+									  .css('position', 'absolute')
+									  .hide();
+							loadItems(items, div, true);
+							a.data('_submenu', div);
+						}
+					}
+					
+					hide_currentSub();
+					if( a.data('_submenu') ) {
+						var sub = a.data('_submenu');
+						var loc = getLocation(a[0]);
+						sub.css({top: loc.y+a[0].offsetHeight, left: loc.x})
+						 .remove().appendTo('body').show()
+						 .data('_submenu.owner', a);
+						a.addClass('opened');
+						$(window)
+						 .data('menu.activeSub', sub)
+						 .data('menu.clickConsumed', true);
+					}
+				}
+				
+				function loadItems( items, div, addIconBox ) {
+					var ul = $('<ul></ul>').appendTo(div);
+					for(var i=0; i<items.length; ++i) {
+						var item = items[i];
+						
+						if( item.separator && item.separator == 'before' && i>0 ) {
+							if( !ul.find('li:last').hasClass('separator') )
+								ul.append('<li class="separator">&nbsp;</li>');
+						}
+						
+						var li = $('<li class="item"></li>')
+						         .append(
+						            $('<a href="#"></a>')
+									.click(a_click)
+									.data('_item', item)
+								);
+
+						if( i==0 ) 
+							li.addClass('first');
+						if( i==items.length-1 ) 
+							li.addClass('last');
+						
+						var a = li.find('a');
+						if( item.href ) a.attr('href', item.href);
+						if( addIconBox ) {
+							var icon = $('<span class="icon"></span>');
+							if( item.iconClass ) icon.addClass(item.iconClass);
+							a.append($('<div class="icon-box"></div>').append(icon));
+							a.append($('<div class="caption"></div>').append(item.caption));
+						}
+						else {
+							a.html(item.caption);
+						}
+						
+						ul.append(li);
+						
+						if( item.separator && item.separator == 'after' && i<items.length-1 )
+							ul.append('<li class="separator">&nbsp;</li>');
+					}
+				}
+				
+				function getLocation(e) {
+					var x=0,y=0;
+					while(e) {
+						x+=e.offsetLeft;
+						y+=e.offsetTop;
+						e = e.offsetParent;
+					}
+					return {x:x, y:y};
+				}
+			};
+		</script>
+	</head>
+
+	<body>
+		<div style="margin:0 auto;width:800px;">
+			<div r:context="test" r:type="menu" r:model="menuModel"></div>
+			<br/>
+			<br/>
+			<div r:context="test" r:type="menu" r:model="menuModel"></div>
+		</div>
+	</body>
+
+</html>
