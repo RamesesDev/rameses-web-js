@@ -1,71 +1,56 @@
-.week-calendar .maintbl{
+.week-calendar,
+.week-calendar table {
 	font-family:Arial;
-	border-collapse:collapse;
+	font-size: 9px;
 }
-.week-calendar .innertbl{
-	align: center;
-	border-collapse:collapse;
-	width:100%;
-	margin:auto;
+
+.week-calendar {
+	position: relative;
 }
-.week-calendar .hdr{
-	text-align:center;
-	height:30px;
-	font-family:Arial;
-	font-size:9px;
-	font-weight:normal;
+
+.week-calendar table {
+	border: solid 1px #555;
 }
-.week-calendar .tblhdr{
-	border-bottom: 1px solid;
-	height:20px;
-}
-.week-calendar .tbltd ,
-.week-calendar .tblhdr{
+
+.week-calendar th {
+	border-bottom: solid 1px #555;
+	border-right: solid 1px #555;
 	padding:5px;
+}
+
+.week-calendar td {
 	height:10px;
 	width:12.5%;
+	text-align:center;
+	border-bottom: solid 1px #ccc;
+	border-right: solid 1px #555;
 }
+
+.week-calendar td.row-header {
+	border-bottom: 1px solid #555;
+	border-right: 1px solid #555;
+	height: 40px;
+}
+
 .week-calendar .time{
 	vertical-align:top;
 	border-right: 1px solid;
 	width:100px;
-	font-size:9px;
 	text-align:right;
 }
-.week-calendar .top{
-	/* border-top:1px solid; */
-}
-.week-calendar .bottom{
-	border-bottom:1px solid;
-}
-.week-calendar .odd{
-	text-align:center;
-	border-bottom: 1px solid #CCC;
-}
-.week-calendar .even{
-	text-align:center;
-	border-bottom: 1px solid #CCC;
-}
-.week-calendar .pos{
-	position: absolute;
-	opacity:.7;
-	top: 55px;
-	left: 217px;
-	width:100px;
-	height:30px;
-	background-color:99FFFF;
-}
+
+.week-calendar th.bottom,
+.week-calendar td.bottom{ border-bottom:1px solid #000; }
 
 .week-calendar .schedbox {
-	border:1px groove #ccc;
+	border:1px solid #aaa;
 	position:absolute;
-	cursor: pointer;
-	opacity:.85;
+	opacity: 0.85; filter: alpha(opacity=85);
 }
 
 .week-calendar .schedbox-hover {
-	border-color: #888;
-	box-shadow: 0 3px 10px #888;
+	border-color: #555;
+	box-shadow: 0 3px 10px #666;
 	-webkit-box-shadow: 0 3px 10px #888;
 	-moz-box-shadow: 0 3px 10px #888;
 }
@@ -75,16 +60,36 @@
 	height:15px;
 }
 .week-calendar .content {
+	position: relative;
 	font-weight:bold;
-	font-family:Arial;
-	font-size:9px;
 	color:red;
 	text-align:center;
 }
-.week-calendar .subjecttime{
-	font-weight:normal;
-	font-family:Arial;
-	font-size:9px;
-	color:red;
-	text-align:center;
+
+.week-calendar .actions-container {
+	position: absolute;
+	top: 1px; right: 1px;
 }
+
+.week-calendar .actions {
+	float: right;
+	background: #000; color: #fff;
+	padding: 2px;
+	border-radius: 3px;
+	-webkit-border-radius: 3px;
+	-moz-border-radius: 3px;
+}
+
+.week-calendar .actions a {
+	float: right; margin-left: 3px;
+	color: #fff;
+	text-decoration: none;
+}
+
+.week-calendar .text {
+	text-align: center;
+	padding-top: 5px;
+	font-size: 10px;
+	overflow: hidden;
+}
+

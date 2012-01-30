@@ -1,51 +1,80 @@
+<!DOCTYPE html/>
 <html>
 	<head>
 		<link rel="stylesheet" href="../js/css/rameses-lib.css"/>
 		<link rel="stylesheet" href="../js/plugins/calendar/css/TimeWeekCalendar.css"/>
-		
+
 		<script type="text/javascript" src="../js/jquery-all.js" ></script>
 		<script type="text/javascript" src="../js/rameses-ext-lib.js" ></script>
 		<script type="text/javascript" src="../js/rameses-ui.js" ></script>
-		
+
 		<script type="text/javascript" src="../js/plugins/calendar/TimeWeekCalendar.js" ></script>
-		
-		<script type="text/javascript">	
+		<script type="text/javascript" src="../js/plugins/infobox.js" ></script>
+
+		<script type="text/javascript">
 			$register({id:'#schedule', context:'schedule'});
-			
+
 			$put(
 				'test',
-				new function() 
+				new function()
 				{
+					var self = this;
+					var ibox = new InfoBox('#infobox','right', {x:-10, y:20});
+					
+					this.selected = {};
+					
 					this.model = new TimeWeekCalendar({
-						onclick: function(sked, o) {
-							return new DropdownOpener('#schedule', {entity: sked});
+						onedit: function(sked) {},
+						onremove: function(sked) {
+							return true;
+						},
+						onmouseover: function(sked, elem) {
+							self.selected = sked;
+							ibox.show(elem);
 						}
 					});
+					
+					this.onload = function() {
+						this.model.add([
+							{day:'mon', from: 630, to: 800, caption:"Math 101", item: {}},
+							{day:'tue', from: 630, to: 800, caption:"Math 101", item: {}},
+							{day:'wed', from: 430, to: 630, caption:"Bio 101", item: {}},
+							{day:'tue', from: 730, to: 900, caption:"Zoo 101", item: {}}
+						]);
+					}
 
-					this.model.add({day:'mon', from:"06:30", to:"08:00", caption:"Math 101", item: {}});
-					this.model.add({day:'tue', from:"06:30", to:"08:00", caption:"Math 101", item: {}});
-					this.model.add({day:'wed', from:"04:30", to:"06:30", caption:"Bio 101", item: {}});
-					this.model.add({day:'tue', from:"07:30", to:"9:00", caption:"Zoo 101", item: {}});
+					this.refresh = function() {
+						this.model.load();
+					}
+
+					var time = 700;
+					this.add = function() {
+						this.model.add({day:'tue', from: time, to: time+100, caption:"Test Sked " + time, item: {}});
+						time += 100;
+					}
 				}
-				
-			);
-			
-			$put(
-				'schedule',
-				{
-					entity: {}				
-				}
+
 			);
 		</script>
-	</head>	
+		
+		<style>
+			body { font-family: arial; font-size: 11px; }
+			i { color: #444 }
+		</style>
+	</head>
 	<body>
+		<button r:context="test" r:name="refresh">Refresh</button>
+		<button r:context="test" r:name="add">Add</button>
 		<div id="tab"></div>
 		<div r:type="week_calendar" r:context="test" r:model="model"></div>
+
 		
-		<div id="schedule" style="display:none">
-			<div r:context="schedule" r:type="label">
-				Time: #{entity.from} - #{entity.to}<br/>
-				Subject: #{entity.caption}
+		<div id="infobox" style="display:none">
+			<div r:context="test" r:type="label">
+				Time: #{selected.from} - #{selected.to}<br/>
+				Subject: #{selected.caption}<br/>
+				Instructor: <i>Not yet assigned.</i><br/>
+				Room: <i>Not yet assigned.</i><br/>
 			</div>
 		</div>
 	</body>
