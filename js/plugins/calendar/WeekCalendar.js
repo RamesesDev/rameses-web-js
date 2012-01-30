@@ -228,7 +228,11 @@ function TimeWeekCalendar(options){
 	
 	function hideItem(item) {
 		container.find('.' + getKey(item))
-		 .animate({opacity:0},function(){ $(this).remove(); });
+		 .animate({opacity:0},function(){
+			//trigger mouseout on remove
+			//so that mouseout listeners will be fired
+			$(this).trigger('mouseout').remove(); 
+		});
 	}
 	
 	function getKey(item) {
