@@ -75,7 +75,7 @@ Array.prototype.find = function( func) {
 		return null;
 	}
 	else {
-		alert("Please pass a function when using find" );
+		alert("Please pass a function when using find","Error");
 	}
 };
 Array.prototype.contains = function( func) {
@@ -89,7 +89,7 @@ Array.prototype.contains = function( func) {
 		return false;
 	}
 	else {
-		alert("Please pass a function when using find" );
+		alert("Please pass a function when using find","Error");
 	}
 };
 Array.prototype.findAll = function( func ) {
@@ -104,7 +104,7 @@ Array.prototype.findAll = function( func ) {
 		return _arr;
 	}
 	else {
-		alert("Please pass a function when using findAll" );
+		alert("Please pass a function when using findAll","Error");
 	}
 };
 Array.prototype.collect = function( func ) {
@@ -118,8 +118,11 @@ Array.prototype.collect = function( func ) {
 		return _arr;
 	}
 	else {
-		alert("Please pass a function when using collect" );
+		alert("Please pass a function when using collect","Error");
 	}
+};
+Array.prototype.clear = function() {
+	return this.splice(0,this.length);
 };
 
 
@@ -154,6 +157,7 @@ String.prototype.evaluate = function( ctx ) {
 			with( ctx ) {
 				result = eval( str );
 			}
+			if(result == null || result == undefined) result = '';
 			return result+'';
 		}
 		catch(e) {
@@ -200,15 +204,18 @@ var KeyGen = new function() {
 var NumberUtils = new function() {
     this.toNumber = function( val ) {
         if(val==null || val=="") return null;
+		val = val.replace(',', '');
         var n = eval(val);
         return n;
     }
 
     this.toInteger = function( val ) {
+		val = val.replace(',', '');
         return parseInt(val);
     }
 
     this.toDecimal = function( val ) {
+		val = val.replace(',', '');
         if( val.indexOf( ".") < 0 ) {
             return eval(parseFloat(val).toFixed(2));
         }

@@ -1,0 +1,90 @@
+.week-calendar .maintbl{
+	font-family:Arial;
+	border-collapse:collapse;
+}
+.week-calendar .innertbl{
+	align: center;
+	border-collapse:collapse;
+	width:100%;
+	margin:auto;
+}
+.week-calendar .hdr{
+	text-align:center;
+	height:30px;
+	font-family:Arial;
+	font-size:9px;
+	font-weight:normal;
+}
+.week-calendar .tblhdr{
+	border-bottom: 1px solid;
+	height:20px;
+}
+.week-calendar .tbltd ,
+.week-calendar .tblhdr{
+	padding:5px;
+	height:10px;
+	width:12.5%;
+}
+.week-calendar .time{
+	vertical-align:top;
+	border-right: 1px solid;
+	width:100px;
+	font-size:9px;
+	text-align:right;
+}
+.week-calendar .top{
+	/* border-top:1px solid; */
+}
+.week-calendar .bottom{
+	border-bottom:1px solid;
+}
+.week-calendar .odd{
+	text-align:center;
+	border-bottom: 1px solid #CCC;
+}
+.week-calendar .even{
+	text-align:center;
+	border-bottom: 1px solid #CCC;
+}
+.week-calendar .pos{
+	position: absolute;
+	opacity:.7;
+	top: 55px;
+	left: 217px;
+	width:100px;
+	height:30px;
+	background-color:99FFFF;
+}
+
+.week-calendar .schedbox {
+	border:1px groove #ccc;
+	position:absolute;
+	cursor: pointer;
+	opacity:.85;
+}
+
+.week-calendar .schedbox-hover {
+	border-color: #888;
+	box-shadow: 0 3px 10px #888;
+	-webkit-box-shadow: 0 3px 10px #888;
+	-moz-box-shadow: 0 3px 10px #888;
+}
+
+.week-calendar .icon{
+	width:15px;
+	height:15px;
+}
+.week-calendar .content {
+	font-weight:bold;
+	font-family:Arial;
+	font-size:9px;
+	color:red;
+	text-align:center;
+}
+.week-calendar .subjecttime{
+	font-weight:normal;
+	font-family:Arial;
+	font-size:9px;
+	color:red;
+	text-align:center;
+}

@@ -37,9 +37,18 @@ function Notifier(sessionid, url) {
 		d.sessionid = sid;
 		if(self.tokenid) d.tokenid = self.tokenid;
 		
+		//set the poll url
+		var pollURL;
+		if( Notifier.contextPath ) {
+			pollURL = Notifier.contextPath + '/poll';
+		}
+		else {
+			pollURL = "poll";
+		}
+		
 		$.ajax( 
 			{
-				url: "poll",
+				url: pollURL,
 				type: "POST",
 				data: d,
 				error: function( xhr ) { 

@@ -1,0 +1,52 @@
+<html>
+	<head>
+		<link rel="stylesheet" href="../js/css/rameses-lib.css"/>
+		<link rel="stylesheet" href="../js/plugins/calendar/css/TimeWeekCalendar.css"/>
+		
+		<script type="text/javascript" src="../js/jquery-all.js" ></script>
+		<script type="text/javascript" src="../js/rameses-ext-lib.js" ></script>
+		<script type="text/javascript" src="../js/rameses-ui.js" ></script>
+		
+		<script type="text/javascript" src="../js/plugins/calendar/TimeWeekCalendar.js" ></script>
+		
+		<script type="text/javascript">	
+			$register({id:'#schedule', context:'schedule'});
+			
+			$put(
+				'test',
+				new function() 
+				{
+					this.model = new TimeWeekCalendar({
+						onclick: function(sked, o) {
+							return new DropdownOpener('#schedule', {entity: sked});
+						}
+					});
+
+					this.model.add({day:'mon', from:"06:30", to:"08:00", caption:"Math 101", item: {}});
+					this.model.add({day:'tue', from:"06:30", to:"08:00", caption:"Math 101", item: {}});
+					this.model.add({day:'wed', from:"04:30", to:"06:30", caption:"Bio 101", item: {}});
+					this.model.add({day:'tue', from:"07:30", to:"9:00", caption:"Zoo 101", item: {}});
+				}
+				
+			);
+			
+			$put(
+				'schedule',
+				{
+					entity: {}				
+				}
+			);
+		</script>
+	</head>	
+	<body>
+		<div id="tab"></div>
+		<div r:type="week_calendar" r:context="test" r:model="model"></div>
+		
+		<div id="schedule" style="display:none">
+			<div r:context="schedule" r:type="label">
+				Time: #{entity.from} - #{entity.to}<br/>
+				Subject: #{entity.caption}
+			</div>
+		</div>
+	</body>
+</html>

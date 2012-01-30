@@ -31,9 +31,7 @@ function DynamicProxy( context ) {
 		}
 
 		this.invoke = function( action, args, handler ) {
-			var contextPath = window.location.pathname.substring(1);
-			contextPath = contextPath.substring(0,contextPath.indexOf('/'));
-			var urlaction = "/" + contextPath + "/jsinvoker/"+this.name+ "."+action;
+			var urlaction = ProxyService.getContextPath() + "/jsinvoker/"+this.name+ "."+action;
 			
 			var err = null;			
 			var data = {};
@@ -78,9 +76,7 @@ var ProxyService = new function() {
 	this.lookup = function(name) {
 		if( this.services[name]==null ) {
 			var err = null;
-			var contextPath = window.location.pathname.substring(1);
-			contextPath = contextPath.substring(0,contextPath.indexOf('/'));
-			var urlaction = "/" + contextPath + "/remote-proxy/"+name + ".js";
+			var urlaction =  ProxyService.getContextPath() + "/remote-proxy/"+name + ".js";
 			var result = $.ajax( {
                 url:urlaction,
                 type:"POST",
@@ -94,3 +90,13 @@ var ProxyService = new function() {
 		return this.services[name];
 	}
 };
+
+//helper function
+ProxyService.getContextPath = function() {
+	if(ProxyService.contextPath) 
+		return ProxyService.contextPath;
+	
+	var contextPath = window.location.pathname.substring(1);
+	contextPath = contextPath.substring(0,contextPath.indexOf('/'));
+	return "/" + contextPath;
+}
