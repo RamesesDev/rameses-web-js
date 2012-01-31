@@ -37,7 +37,7 @@ var BindingUtils = new function() {
 			var ctxName = R.attr($e,'context');
 			try {
 				var res = expr.evaluate( $ctx(ctxName) );
-				isVisible = (res && res != 'false' && res != 'null' && res != 'undefined')
+				isVisible = (res && res != 'false' && res != 'null' && res != 'undefined' && res != '');
 			}
 			catch(e) {
 				if( window.console && R.DEBUG ) console.log('error evaluating visibleWhen: ' + e.message);
@@ -1335,7 +1335,8 @@ function DataTable( table, bean, controller ) {
 			}
 		}
 		
-		if( rows == -1 && list.length == 0 ) {
+		var collapseWhenEmpty = R.attr(table, 'collapseWhenEmpty');
+		if( collapseWhenEmpty != 'true' && rows == -1 && list.length == 0 ) {
 			createRow(i, null).appendTo( tbody );
 			status.index++;
 		}
