@@ -178,6 +178,8 @@ function TimeWeekCalendar(options){
 		if(!container) return;
 		
 		var td = container.find('.'+(item.day + item.from));
+		if(td.length==0) return;
+		
 		var loc = getLocation(td[0]);
 		var x = loc.x;
 		var y = loc.y;
