@@ -63,29 +63,28 @@ function InfoBox(selector, orientation, offset, delay)
 		var b, css;
 		var loc = getLocation(elem);
 		
+		var ibw = infobox.outerWidth();
+		var ibh = infobox.outerHeight();
+		var ew = $(elem).outerWidth();
+		var eh = $(elem).outerHeight();
+		var wh = $(window).height();
+		var ww = $(window).width();
+		
 		if( orientation == 'left' ) {
-			b = parseInt($(elem).css('border-left-width'));
-			b = isNaN(b)? 0 : b;
-			css = {left:loc.x - infobox.width() + b + 1, top:loc.y};
+			css = {left:loc.x - ibw + 1, top:loc.y};
 		}
 		else if( orientation == 'top' ) {
-			b = parseInt($(elem).css('border-top-width'));
-			b = isNaN(b)? 0 : b;
-			css = {left:loc.x, top:loc.y - infobox.height() + b + 1};
+			css = {left:loc.x, top:loc.y - ibh - eh + 1};
 		}
 		else if( orientation == 'right' ) {
-			b = parseInt($(elem).css('border-right-width'));
-			b = isNaN(b)? 0 : b;
-			css = {left:loc.x + elem.offsetWidth - b - 1, top:loc.y};
+			css = {left:loc.x + ew - 1, top:loc.y};
 		}
 		else {
-			b = parseInt($(elem).css('border-bottom-width'));
-			b = isNaN(b)? 0 : b;
-			css = {left:loc.x, top:loc.y + elem.offsetHeight - b - 1};
+			css = {left:loc.x, top:loc.y + eh - 1};
 		}
 		
 		if( _this.offset && _this.offset.x ) css.left += _this.offset.x;
-		if( _this.offset && _this.offset.y ) css.top += _this.offset.y;		
+		if( _this.offset && _this.offset.y ) css.top += _this.offset.y;	
 		
 		return css;
 	}

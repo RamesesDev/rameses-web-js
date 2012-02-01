@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<link href="../js/css/jquery-ui/jquery.css" rel="stylesheet" />
+		<link href="../js/css/rameses-lib.css" rel="stylesheet" />
+		
+		<script src="../js/jquery-all.js"></script>
+		<script src="../js/rameses-ext-lib.js"></script>
+		<script src="../js/rameses-ui.js"></script>
+		<script src="../js/plugins/infobox.js"></script>
+		
+		<script>
+			var ibox = new InfoBox('#ibox');
+			var ibox2 = new InfoBox('#ibox', 'top');
+			var ibox3 = new InfoBox('#ibox', 'right');
+			var ibox4 = new InfoBox('#ibox', 'left');
+		</script>
+	</head>
+
+	<body>
+		<br/>
+		<br/>
+		<br/>
+		<br/>
+		<a href="#" onmouseover="ibox.show(this)">Link 1</a><br/>
+		<a href="#" onmouseover="ibox2.show(this)">Link 2</a><br/>
+		<a href="#" onmouseover="ibox3.show(this)">Link 3</a><br/>
+		<a href="#" onmouseover="ibox4.show(this)">Link 3</a><br/>
+		
+		<div id="ibox" style="display:none">
+			This is the content of the ibox.
+		</div>
+	</body>
+
+</html>
