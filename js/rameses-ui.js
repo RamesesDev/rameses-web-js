@@ -161,7 +161,7 @@ var BindingUtils = new function() {
         else {
 			var tc = R.attr(elem,'textcase');
 			if( 'upper' == tc )
-				$(elem).css('text-transform', 'uppercase');
+			$(elem).css('text-transform', 'uppercase');
 			else if( 'lower' == tc )
 				$(elem).css('text-transform', 'lowercase');
 			
@@ -2439,13 +2439,16 @@ var MsgBox = {
 		else
 			title = arg1;
 		
-		this.showDialog(msg, 'ui-icon-help', {
+		MsgBox.showDialog(msg, 'ui-icon-help', {
 			title: title || 'Confirm',
 			modal: true,
 			buttons: {
 				'Ok' : function(){
 					$(this).dialog('close');
-					fn();
+					try { fn(); }
+					catch(e) {
+						MsgBox.error( e.message );
+					}
 				},
 				'Cancel' : function() {
 					$(this).dialog('close');
@@ -2454,7 +2457,7 @@ var MsgBox = {
 		});
 	},
 	"error": function(msg, title) {
-		this.showDialog(msg, 'ui-icon-alert', {
+		MsgBox.showDialog(msg, 'ui-icon-alert', {
 			title: title || 'Error', 
 			modal: true, 
 			buttons:{
@@ -2465,7 +2468,7 @@ var MsgBox = {
 		});
 	},
 	"alert": function(msg, title) {
-		this.showDialog(msg, 'ui-icon-info', {
+		MsgBox.showDialog(msg, 'ui-icon-info', {
 			title: title || 'Information', 
 			modal: true, 
 			buttons:{
