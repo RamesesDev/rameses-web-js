@@ -2420,3 +2420,76 @@ var Scroller = new function(){
 	}
 	
 };
+
+
+/*
+ * @author		jaycverg
+ * description	themable implementation of message box
+ */
+var MsgBox = {
+	/*
+	 * interfaces:
+	 *  - confirm(msg, title, callback)
+	 *  - confirm(msg, callback)
+	 */
+	"confirm": function(msg, arg1, arg2) {
+		var fn = arg2, title = '';
+		if( typeof arg1 == 'function' )
+			fn = arg1;
+		else
+			title = arg1;
+		
+		this.showDialog(msg, 'ui-icon-help', {
+			title: title || 'Confirm',
+			modal: true,
+			buttons: {
+				'Ok' : function(){
+					$(this).dialog('close');
+					fn();
+				},
+				'Cancel' : function() {
+					$(this).dialog('close');
+				}
+			}
+		});
+	},
+	"error": function(msg, title) {
+		this.showDialog(msg, 'ui-icon-alert', {
+			title: title || 'Error', 
+			modal: true, 
+			buttons:{
+				'Close' : function() {
+					$(this).dialog('close');
+				}
+			}
+		});
+	},
+	"alert": function(msg, title) {
+		this.showDialog(msg, 'ui-icon-info', {
+			title: title || 'Information', 
+			modal: true, 
+			buttons:{
+				'Close' : function() {
+					$(this).dialog('close');
+				}
+			}
+		});
+	},
+	"showDialog": function(msg, icon, options) {
+		msg = msg.replace(/\n/g, '<br/>');
+		var div = $('#rameses-message-box');
+		if(div.length==0) {
+			div = $('<div id="rameses-message-box"><p><span class="ui-icon" style="float:left; margin:0 7px 20px 0;"></span><span class="message"></span></p></div>')
+			       .hide().appendTo('body');
+		}
+		
+		div = div.clone().appendTo('body');
+		options.close = function(){ $(this).remove(); };
+		
+		div.find('.ui-icon').addClass(icon);
+		div.find('.message').html(msg);
+		div.dialog(options);
+	}
+};
+
+
