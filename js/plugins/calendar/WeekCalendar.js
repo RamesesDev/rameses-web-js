@@ -112,6 +112,15 @@ function TimeWeekCalendar(options){
 		
 		contentPane.html('');
 		var options = this.options || {};
+		
+		if(options.fetchList) {
+			var list = options.fetchList() || [];
+			this.clear();
+			list.each(function(s){
+				_this.add(s);
+			});
+		}
+		
 		$.each(this.schedules, function(key){	
 			var item = _this.schedules[key];
 			showItem(item, false);
