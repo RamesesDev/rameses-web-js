@@ -602,7 +602,7 @@ function Controller( code, pages ) {
             }
         }
         else {
-            this.navigate( "default" );
+            this.navigate( this.currentPage || "default" );
         }
     }
 	
@@ -621,7 +621,11 @@ var ContextManager = new function() {
             throw new Error("Please indicate a name");
         var c = new Controller( code, pages );
         if(code.onload!=null) {
-            BindingUtils.loaders.push( function() { code.onload() } );
+            BindingUtils.loaders.push( function() {
+				var result = code.onload() 
+				if( typeof result == 'string' )
+					c.currentPage = result;
+			});
         }
 		code._controller = c;
 		c.name = name;
