@@ -814,23 +814,44 @@ BindingUtils.handlers.input_checkbox = function(elem, controller, idx ) {
 	if( R.attr($(elem), "mode") == "set" ) {
 		try {
 			var checkedValue = R.attr($(elem), "checkedValue");
-
-			if( c.find( function(o) { return (o==checkedValue ) } ) !=null) {
-				elem.checked = true;
+			if( checkedValue ) {
+				if( c.find( function(o) { return (o==checkedValue ) } ) !=null) {
+					elem.checked = true;
+				}
+				else {
+					elem.checked = false;
+				}
 			}
 			else {
-				elem.checked = false;
+				var uncheckedValue = R.attr($(elem), "uncheckedValue");
+				if( c.find( function(o) { return (o==uncheckedValue ) } ) !=null) {
+					elem.checked = false;
+				}
+				else {
+					elem.checked = true;
+				}
 			}
 			elem.onclick = function () {
 				var _list = $get(controller.name).get(name);
 				var v = R.attr($(this),  "checkedValue" );
-				if( v == null ) alert("checkedValue in checkbox must be specified","Error");
-				if(this.checked) {
-					_list.push( v );
+				if(v) {
+					if(this.checked) {
+						_list.push( v );
+					}
+					else {
+						_list.removeAll( function(o) { return (o == v) } );
+					}
 				}
-				else {
-					_list.removeAll( function(o) { return (o == v) } );
-				}
+				else {	
+					v = R.attr($(this),  "uncheckedValue" );
+					if(this.checked) {
+						_list.removeAll( function(o) { return (o == v) } );
+					}
+					else {
+						_list.push( v );
+					}
+				}	
+				if(v==null) alert("checkedValue or uncheckedValue in checkbox must be specified","Error");
 			}
 		}
 		catch(e) {}
