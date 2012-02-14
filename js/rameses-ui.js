@@ -1595,7 +1595,7 @@ function DefaultTableModel() {
 	function doRefresh( fetch ) {
 		if( fetch == true ) {
 			if( _dataModel && $.isFunction( _dataModel.fetchList ) ) {
-				var result = _dataModel.fetchList( _listParam );
+				var result = _dataModel.fetchList( _listParam || {} );
 				_this.setList( result );
 				return;
 			}
