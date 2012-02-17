@@ -28,7 +28,7 @@ var BindingUtils = new function() {
     this.loaders = [];
     this.input_attributes = [];
 
-	var controlLoader =  function(idx, elem, force) {
+var controlLoader =  function(idx, elem, force) {
 		var $e = $(elem);
 		var isVisible = true;
 
@@ -809,6 +809,9 @@ BindingUtils.handlers.input_radio = function(elem, controller, idx ) {
 }
 
 BindingUtils.handlers.input_checkbox = function(elem, controller, idx ) {
+	if( $(elem).data('__ui_binded') ) return;
+	$(elem).data('__ui_binded', true); //just bind once
+	
 	var name = R.attr(elem, 'name');
 	var c = controller.get(name);
 	if( R.attr($(elem), "mode") == "set" ) {
@@ -831,7 +834,7 @@ BindingUtils.handlers.input_checkbox = function(elem, controller, idx ) {
 					elem.checked = true;
 				}
 			}
-			elem.onclick = function () {
+			$(elem).bind('change', function () {
 				var _list = $get(controller.name).get(name);
 				var v = R.attr($(this),  "checkedValue" );
 				if(v) {
@@ -852,7 +855,7 @@ BindingUtils.handlers.input_checkbox = function(elem, controller, idx ) {
 					}
 				}	
 				if(v==null) alert("checkedValue or uncheckedValue in checkbox must be specified","Error");
-			}
+			});
 		}
 		catch(e) {}
 	}
@@ -866,11 +869,11 @@ BindingUtils.handlers.input_checkbox = function(elem, controller, idx ) {
 			isChecked = true;
 		}
 		elem.checked = isChecked;
-		elem.onclick = function () {
+		$(elem).bind('change', function () {
 			var v = (R.attr($(this),  "checkedValue" )==null) ? true : R.attr($(this),  "checkedValue" );
 			var uv = (R.attr($(this),  "uncheckedValue" )==null) ? false : R.attr($(this),  "uncheckedValue" );
 			$get(controller.name).set(name, (this.checked) ? v : uv );
-		}
+		});
 	}
 }
 
@@ -1034,6 +1037,7 @@ BindingUtils.handlers.input_file = function( elem, controller, idx ) {
 	var labelExpr =  R.attr(infile, 'expression');
 	var name =       R.attr(infile, 'name');
 	var fieldValue = controller.get(name);
+	var params =     R.attr(infile, 'params');
 	
 	var multiFile =  fieldValue instanceof Array;
 
@@ -1162,11 +1166,24 @@ BindingUtils.handlers.input_file = function( elem, controller, idx ) {
 	}
 
 	function createForm( target, input ) {
-		return $('<form method="post" enctype="multipart/form-data"></form>')
-			    .attr({ 'target': target, 'action': R.attr(infile, 'url') })
-			    .append( input )
-			    .append( '<input type="hidden" name="file_id" value="' +target+ '"/>' )
-			    .hide();
+		var form = $('<form method="post" enctype="multipart/form-data"></form>')
+			       .attr({ 'target': target, 'action': R.attr(infile, 'url') })
+			       .append( input )
+			       .append( '<input type="hidden" name="file_id" value="' +target+ '"/>' )
+			       .hide();
+		if( params ) {
+			var txt = params.evaluate( controller.code );
+			var p = eval('('+txt+')');
+			if( p ) {
+				for(var i in p) {
+					$('<input type="hidden"/>')
+					 .attr('name', i).val(p[i])
+					 .appendTo(form);
+				}
+			}
+		}
+				   
+		return form;
 	}
 
 	//-- utility inner class for file status pulling --
