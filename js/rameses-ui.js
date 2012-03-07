@@ -2471,8 +2471,8 @@ var Scroller = new function(){
 var MsgBox = {
 	/*
 	 * interfaces:
-	 *  - confirm(msg, title, callback)
-	 *  - confirm(msg, callback)
+	 *  - MsgBox.confirm(msg, title, callback)
+	 *  - MsgBox.confirm(msg, callback)
 	 */
 	"confirm": function(msg, arg1, arg2) {
 		var fn = arg2, title = '';
@@ -2488,9 +2488,7 @@ var MsgBox = {
 				'Ok' : function(){
 					$(this).dialog('close');
 					try { fn(); }
-					catch(e) {
-						MsgBox.error( e.message );
-					}
+					catch(e) { MsgBox.error( e.message ); }
 				},
 				'Cancel' : function() {
 					$(this).dialog('close');
@@ -2498,24 +2496,50 @@ var MsgBox = {
 			}
 		});
 	},
-	"error": function(msg, title) {
+	/*
+	 * interfaces:
+	 *  - MsgBox.error(msg, title, callback)
+	 *  - MsgBox.error(msg, callback)
+	 */
+	"error": function(msg, arg1, arg2) {
+		var fn = arg2, title = '';
+		if( typeof arg1 == 'function' )
+			fn = arg1;
+		else
+			title = arg1;
+		
 		MsgBox.showDialog(msg, 'ui-icon-alert', {
 			title: title || 'Error', 
 			modal: true, 
 			buttons:{
 				'Close' : function() {
 					$(this).dialog('close');
+					try { fn(); }
+					catch(e) { MsgBox.error( e.message ); }
 				}
 			}
 		});
 	},
-	"alert": function(msg, title) {
+	/*
+	 * interfaces:
+	 *  - MsgBox.alert(msg, title, callback)
+	 *  - MsgBox.alert(msg, callback)
+	 */
+	"alert": function(msg, arg1, arg2) {
+		var fn = arg2, title = '';
+		if( typeof arg1 == 'function' )
+			fn = arg1;
+		else
+			title = arg1;
+	
 		MsgBox.showDialog(msg, 'ui-icon-info', {
 			title: title || 'Information', 
 			modal: true, 
 			buttons:{
 				'Close' : function() {
 					$(this).dialog('close');
+					try { fn(); }
+					catch(e) { MsgBox.error( e.message ); }
 				}
 			}
 		});
