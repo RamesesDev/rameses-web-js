@@ -9,7 +9,6 @@
 		<script type="text/javascript" src="../js/rameses-ui.js" ></script>
 
 		<script type="text/javascript" src="../js/plugins/calendar/WeekCalendar.js" ></script>
-		<script type="text/javascript" src="../js/plugins/infobox.js" ></script>
 
 		<script type="text/javascript">
 			$register({id:'#schedule', context:'schedule'});
@@ -31,17 +30,16 @@
 						onmouseover: function(sked, elem) {
 							self.selected = sked;
 							ibox.show(elem);
+						},
+						fetchList: function() {
+							return [
+								{day:'mon', from: 630, to: 800, caption:"Math 101", color: 'red'},
+								{day:'tue', from: 630, to: 800, caption:"Eng 2", color: 'green'},
+								{day:'wed', from: 430, to: 630, caption:"Bio 101", color: 'orange'},
+								{day:'fri', from: 730, to: 900, caption:"Zoo 101", color: 'blue'}
+							];
 						}
 					});
-					
-					this.onload = function() {
-						this.model.add([
-							{day:'mon', from: 630, to: 800, caption:"Math 101", item: {}},
-							{day:'tue', from: 630, to: 800, caption:"Math 101", item: {}},
-							{day:'wed', from: 430, to: 630, caption:"Bio 101", item: {}},
-							{day:'fri', from: 730, to: 900, caption:"Zoo 101", item: {}}
-						]);
-					}
 
 					this.refresh = function() {
 						this.model.load();
@@ -66,7 +64,10 @@
 		<button r:context="test" r:name="refresh">Refresh</button>
 		<button r:context="test" r:name="add">Add</button>
 		<div id="tab"></div>
-		<div r:type="week_calendar" r:context="test" r:model="model"></div>
+		<div r:type="week_calendar" r:context="test" r:model="model" r:varName="sked">
+			#{sked.caption}<br/>
+			#{sked.from} - #{sked.to}
+		</div>
 
 		
 		<div id="infobox" style="display:none">

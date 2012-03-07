@@ -9,20 +9,24 @@
 		<script src="../js/plugins/datetime.js"></script>
 		
 		<script>
-			$put(
-				"test",
-				new function() {
-				
-				},
-				{
-					'default':'test_1.html'
-				}
-			);
+			$(function(){
+				$('#dialog').dialog({
+					buttons: {
+						'Ok' : {id:'btn1', class:"btn"}
+					}
+				});
+			});
 		</script>
 	</head>
 
 	<body>
-		<div r:controller="test"></div>
+		<div id="dialog">
+			Content...
+			<div class="d-buttons">
+				<button>Ok</button>
+				<button>Cancel</button>
+			</div>
+		</div>
 	</body>
 
 </html>

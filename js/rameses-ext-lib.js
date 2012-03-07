@@ -140,8 +140,11 @@ String.prototype.evaluate = function( ctx ) {
 
     ctx = ctx? ctx : window;
 
-    var str = this, match;
-    while( (match = str.match(/\\?[\$|#]{([^{}]+)}/)) ) {
+    var str = this, 
+	    match,
+	    expr_token = /\\?[\$|#]{([^{}]+)}/;
+	
+    while( (match = str.match(expr_token)) ) {
 		if( match[0].length > 3 && match[0][0] == '\\' )
 			str = str.replace( match[0], '@@' + match[0].substring(2) );
 		else
@@ -161,7 +164,9 @@ String.prototype.evaluate = function( ctx ) {
 			return result+'';
 		}
 		catch(e) {
-			if( String.DEBUG_EVAL && window.console ) console.log( 'Error: ' + e.message + ', expr: ' + str );
+			if( String.DEBUG_EVAL && window.console )
+				console.log( 'Error: ' + e.message + ', expr: ' + str );
+			
 			return '';
 		}
     }
@@ -340,5 +345,23 @@ Date.prototype.format = function (mask, utc) {
 	return dateFormat(this, mask, utc);
 };
 
+
+//template support
+function $template( template, data, repeat ) {
+	var tpl = (typeof template == 'string')? $('#' + template) : $(template);
+	var varName = tpl.attr('r:varName');
+	
+	var result = [], ctx = {}, html;
+	
+	if( !repeat ) data = [data];
+	
+	data.each(function(obj){
+		ctx[ varName || 'it' ] = obj;
+		html = unescape(tpl.html()).evaluate( ctx );
+		result.push(html);
+	});
+	
+	return result.join('');
+}
 
 
