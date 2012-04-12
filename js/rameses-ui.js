@@ -2276,10 +2276,11 @@ function PopupOpener( id, params, options )
 	function DropdownWindow( elem, options ) {
 
 		var source = $(elem);
-		var div = $('<div class="dropdown-window" style="position: absolute; z-index: 999999; top: 0; left: 0;"></div>');
+		var div = $('<div class="dropdown-window" style="position: absolute; z-index: 1000; top: 0; left: 0;"></div>');
 		var dynamic = false;
 		
 		if( options.styleClass ) div.addClass( options.styleClass );
+		if( options.resizable )  div.resizable();
 		
 		this.show = function( page, params, callback ) {
 			var reshow = arguments.length == 0;
@@ -2487,7 +2488,9 @@ var MsgBox = {
 			buttons: {
 				'Ok' : function(){
 					$(this).dialog('close');
-					try { fn(); }
+					try { 
+						if(fn) fn(); 
+					}
 					catch(e) { MsgBox.error( e.message ); }
 				},
 				'Cancel' : function() {
@@ -2514,7 +2517,9 @@ var MsgBox = {
 			buttons:{
 				'Close' : function() {
 					$(this).dialog('close');
-					try { fn(); }
+					try { 
+						if(fn) fn(); 
+					}
 					catch(e) { MsgBox.error( e.message ); }
 				}
 			}
@@ -2538,8 +2543,44 @@ var MsgBox = {
 			buttons:{
 				'Close' : function() {
 					$(this).dialog('close');
-					try { fn(); }
+					try { 
+						if(fn) fn(); 
+					}
 					catch(e) { MsgBox.error( e.message ); }
+				}
+			}
+		});
+	},
+	/*
+	 * interfaces:
+	 *  - MsgBox.prompt(msg, title, callback)
+	 *  - MsgBox.prompt(msg, callback)
+	 */
+	"prompt": function(msg, arg1, arg2) {
+		var fn = arg2, title = '';
+		if( typeof arg1 == 'function' )
+			fn = arg1;
+		else
+			title = arg1;
+			
+		msg = '<div>' + msg + '</div>';
+		msg += '<div><input type="text" style="width:100%" class="ui-helper-clearfix"/></div>';
+	
+		MsgBox.showDialog(msg, '', {
+			title: title || 'Prompt', 
+			modal: true,
+			open: function() { $(this).find('input:text').focus(); },
+			buttons:{
+				'Ok' : function() {
+					$(this).dialog('close');
+					var text = $(this).find('input:text').val();
+					try {  
+						if( fn ) fn(text);  
+					}
+					catch(e) { MsgBox.error( e.message ); }
+				},
+				'Cancel' : function() {
+					$(this).dialog('close');
 				}
 			}
 		});
@@ -2555,7 +2596,11 @@ var MsgBox = {
 		div = div.clone().appendTo('body');
 		options.close = function(){ $(this).remove(); };
 		
-		div.find('.ui-icon').addClass(icon);
+		if( icon )
+			div.find('.ui-icon').addClass(icon);
+		else
+			div.find('.ui-icon').hide();
+		
 		div.find('.message').html(msg);
 		div.dialog(options);
 	}
