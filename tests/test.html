@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html>
 	<head>
 		<link href="../js/css/jquery-ui/jquery.css" rel="stylesheet" />
@@ -9,24 +10,20 @@
 		<script src="../js/plugins/datetime.js"></script>
 		
 		<script>
-			$(function(){
-				$('#dialog').dialog({
-					buttons: {
-						'Ok' : {id:'btn1', class:"btn"}
+			$put(
+				'test',
+				new function() {
+					this.save = function() {
+						alert( this.date );
 					}
-				});
-			});
+				}
+			);
 		</script>
+		
 	</head>
 
 	<body>
-		<div id="dialog">
-			Content...
-			<div class="d-buttons">
-				<button>Ok</button>
-				<button>Cancel</button>
-			</div>
-		</div>
+		<span r:context="test" r:type="datetime" r:name="date" r:options="{mode:'date'}"></span>
+		<button r:context="test" r:name="save">Save</button>
 	</body>
-
 </html>

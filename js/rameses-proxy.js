@@ -98,5 +98,5 @@ ProxyService.getContextPath = function() {
 	
 	var contextPath = window.location.pathname.substring(1);
 	contextPath = contextPath.substring(0,contextPath.indexOf('/'));
-	return "/" + contextPath;
+	return contextPath? "/" + contextPath : "";
 }
