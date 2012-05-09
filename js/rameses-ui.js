@@ -1306,6 +1306,12 @@ function DataTable( table, bean, controller ) {
 	
 		if( table.css('display') == 'table' ) {
 			tbody.hide().empty();
+			
+			//evaluate expressions on the table header
+			table.find('thead td, thead th').each(function(i,e){
+				e.innerHTML = e.innerHTML.trim().evaluate( bean );
+			});
+			
 			tabIdx = table.data('index');
 			status.index = 0;
 			
