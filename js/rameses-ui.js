@@ -622,7 +622,7 @@ var ContextManager = new function() {
         var c = new Controller( code, pages );
         if(code.onload!=null) {
             BindingUtils.loaders.push( function() {
-				var result = code.onload() 
+				var result = code.onload(); 
 				if( typeof result == 'string' )
 					c.currentPage = result;
 			});

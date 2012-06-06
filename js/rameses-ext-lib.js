@@ -142,7 +142,7 @@ String.prototype.evaluate = function( ctx ) {
 
     var str = this, 
 	    match,
-	    expr_token = /\\?[\$|#]{([^{}]+)}/;
+	    expr_token = /\\?#{([^{}]+)}/;
 	
     while( (match = str.match(expr_token)) ) {
 		if( match[0].length > 3 && match[0][0] == '\\' )
