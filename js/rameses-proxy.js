@@ -34,10 +34,15 @@ function DynamicProxy( context ) {
 			var urlaction = ProxyService.getContextPath() + "/jsinvoker/"+this.name+ "."+action;
 			
 			var err = null;			
-			var data = {};
-			if( args )     { data.args = $.toJSON( args ); }
+			var data = [];
+			if( args ) { 
+				data.push('args=' + escape($.toJSON( args )));
+			}
+			if( Env ) {
+				data.push('env=' + escape($.toJSON( Env )));
+			}
 			
-			data.env = $.toJSON( Env );
+			data = data.join('&');
 			
 			if(handler==null) {
 				var result = $.ajax( {
