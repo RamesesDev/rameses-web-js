@@ -28,7 +28,7 @@ var BindingUtils = new function() {
     this.loaders = [];
     this.input_attributes = [];
 
-var controlLoader =  function(idx, elem, force) {
+	var controlLoader =  function(idx, elem, force) {
 		var $e = $(elem);
 		var isVisible = true;
 
@@ -1369,10 +1369,15 @@ function DataTable( table, bean, controller ) {
 			status.index++;
 		};
 		
-		if( appendtype == 'before' )
-			$(rows).prependTo(tbody);
-		else
-			$(rows).appendTo(tbody);
+		if( appendtype == 'before' ) {
+			//loop back
+			for( var i=rows.length-1; i>=0; --i ) {
+				tbody.prepend(rows[i]);
+			}
+		}
+		else {
+			rows.each(function(elm){ tbody.append(elm); });
+		}
 
 		var rows = model.getRows();
 		if( rows != -1 && list.length < rows ) {
