@@ -1157,8 +1157,22 @@ BindingUtils.handlers.input_file = function( elem, controller, idx ) {
 		var fibox = $('<div class="file"></div>').appendTo( listBox );
 		if( frame ) fibox.append( frame );
 		if( form )  fibox.append( form );
-		fibox.append('<div class="label">' + (pBar && input? input.val() : getCaption( value )) + '</div>')
+		fibox.append('<div class="label">' + (pBar && input? extractFilename(input.val()) : getCaption( value )) + '</div>')
 		if( pBar )  fibox.append( pBar );
+	}
+	
+	function extractFilename( filename ) {
+		//*nix filename
+		var idx = filename.lastIndexOf('/');
+		if( idx >= 0 ) 
+			return filename.substr(idx+1);
+
+		//windows filename
+		idx = filename.lastIndexOf('\\');
+		if( idx >= 0 ) 
+			return filename.substr(idx+1);
+		
+		return filename;
 	}
 
 	function createFrame( id ) {
