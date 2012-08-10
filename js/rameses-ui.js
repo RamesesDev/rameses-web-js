@@ -136,7 +136,8 @@ var BindingUtils = new function() {
     *     all will broadcast to to reset dependent controls values, (those with depends attribute)
     * customFunc = refers to the custom function for additional decorations
     */
-    this.initInput = function( elem, controller, customFunc ) {
+    this.initInput = function( elem, controller, customFunc ) 
+	{
         var fldName = R.attr(elem, 'name');
         if( fldName==null || fldName=='' ) return;
         var c = controller.get(fldName);
@@ -146,19 +147,25 @@ var BindingUtils = new function() {
         }
         elem.value = (c ? c : "" );
         var dtype = R.attr(o, "datatype");
-        if(dtype=="decimal") {
+        if(dtype=="decimal") 
+		{
 			$(elem).css('text-align', 'right');
             elem.onchange = function () { controller.set(fldName, NumberUtils.toDecimal(this.value), this ); }
+			elem.onkeypress = function(evt) { return checkNumericInput(evt, this, true); };
         }
-        else if( dtype=="integer") {
+        else if( dtype=="integer") 
+		{
 			$(elem).css('text-align', 'right');
             elem.onchange = function () { controller.set(fldName, NumberUtils.toInteger(this.value), this ); }
+			elem.onkeypress = function(evt){ return checkNumericInput(evt, this); };
         }
-        else if( dtype == "date" ){
+        else if( dtype == "date" )
+		{
 			o.datepicker({dateFormat:"yy-mm-dd"});
             elem.onchange = function () { controller.set(fldName, this.value, this ); }
         }
-        else {
+        else 
+		{
 			var tc = R.attr(elem,'textcase');
 			if( 'upper' == tc )
 			$(elem).css('text-transform', 'uppercase');
@@ -187,6 +194,32 @@ var BindingUtils = new function() {
         //    function(idx,func) { func(elem, controller); }
         //)
     };
+
+	function checkNumericInput(evt, elem, allowPeriod)
+	{
+		var charCode = (evt.which) ? evt.which : event.keyCode;
+		var allowed = (charCode==45 || (charCode >= 48 && charCode <= 57));
+		
+		if( allowPeriod ) 
+			allowed = allowed  || charCode==46;
+		
+		if (allowed) 
+		{
+			//a period character 
+			if (charCode == 46) 
+			{
+				if (!elem) return true;
+			
+				var s = (elem.value ? elem.value : ''); 
+				if (s.length == 0) return false;
+				if (s.indexOf('.') >= 0) return false; 
+			} 
+		
+			return true; 
+		} 
+		else 	
+			return false; 
+	}
 
 	this.notifyDependents = function(dependName, selector) {
 		var idx = 0;

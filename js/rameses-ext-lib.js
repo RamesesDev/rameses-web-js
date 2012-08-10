@@ -210,22 +210,21 @@ var NumberUtils = new function() {
     this.toNumber = function( val ) {
         if(val==null || val=="") return null;
 		val = val.replace(',', '');
-        var n = eval(val);
-        return n;
+        return eval(val);
     }
 
     this.toInteger = function( val ) {
 		val = val.replace(',', '');
-        return parseInt(val);
+        return parseInt(val, 10); //use base 10 numeric notation
     }
 
     this.toDecimal = function( val ) {
 		val = val.replace(',', '');
         if( val.indexOf( ".") < 0 ) {
-            return eval(parseFloat(val).toFixed(2));
+            return parseFloat(parseFloat(val).toFixed(2)+'');
         }
         else {
-            return eval(val);
+            return parseFloat(val);
         }
     }
 }
