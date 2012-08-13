@@ -1706,17 +1706,18 @@ function DefaultTableModel() {
 			{
 				try 
 				{
+					if( _listParam ) {
+						if( _isLast ) return;
+						_listParam._start += _listParam._limit-1;
+					}
+					
+					var fetchParam = _listParam || {};
 					var fetchStyle = _dataModel.fetchStyle;
 					
-					var last = null;
-					
 					if( 'prepend' == _dataModel.fetchStyle )
-						last = _list.length > 0 ? _list[0] : null;
+						fetchParam._last = _list.length > 0 ? _list[0] : null;
 					else
-						last = _list.length > 0 ? _list[ _list.length-1 ] : null;
-					
-					var fetchParam = { _last: last };
-					if( _listParam ) fetchParam._limit = _listParam._limit;
+						fetchParam._last = _list.length > 0 ? _list[ _list.length-1 ] : null;
 					
 					var result = _dataModel.fetchList( fetchParam );
 					if( result ) {
@@ -1771,6 +1772,17 @@ function DefaultTableModel() {
 	
 	function appendAll( list ) {
 		if( !list ) return;
+		
+		if( _listParam ) {
+			if( list.length == _listParam._limit ) {
+				list.length = _listParam._limit-1;
+				_isLast = false;
+			}
+			else {
+				_isLast = true;
+			}
+		}
+		
 		if( $.isFunction( _this.onAddItems ) ) {
 			_this.getList().addAll( list );
 			_this.onAddItems( list, 'append' );
@@ -1783,6 +1795,17 @@ function DefaultTableModel() {
 	
 	function prependAll( list ) {
 		if( !list ) return;
+		
+		if( _listParam ) {
+			if( list.length == _listParam._limit ) {
+				list.length = _listParam._limit-1;
+				_isLast = false;
+			}
+			else {
+				_isLast = true;
+			}
+		}
+		
 		if( $.isFunction( _this.onAddItems ) ) {
 			_this.getList();
 			_list = list.concat( _list );
