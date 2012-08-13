@@ -1323,10 +1323,18 @@ function DataTable( table, bean, controller ) {
 
 	if( R.attr(table, 'items') ) {
 		model.setList( controller.get(R.attr(table, 'items')) );
+		model.setUseCached( true );
 	}
-	if( R.attr(table, 'model') ) {
+	else if( R.attr(table, 'model') ) {
 		model.setDataModel( controller.get(R.attr(table, 'model')) );
 		table.data('_has_model', model);
+	}
+	
+	//set the selected if specified on the controller
+	var selected = name? controller.get(name) : null;
+	if( selected ) {
+		model.clearSelection();
+		model.select( selected );
 	}
 
 	var status = {prevItem: null, nextItem: null};
@@ -1343,6 +1351,8 @@ function DataTable( table, bean, controller ) {
 		checkTableVisibility();
 		renderItemsAdded(list, type, animate, true);
 	};
+	
+	//load the model
 	model.load();
 
 	var tabIdx;
@@ -1393,7 +1403,12 @@ function DataTable( table, bean, controller ) {
 	
 	function renderItemsAdded( list, type, animate, bindItems ) {
 		animate = (animate!=null)? animate : true;
+		
+		if( model.getSelectedItem() ) {
+			controller.set(name, model.getSelectedItem());
+		}
 		var selected = name? controller.get(name) : null;
+		
 		var selectedTds = [];
 		var fetchStyle = type? type : R.attr(table, 'fetchStyle');
 
@@ -1584,6 +1599,9 @@ function DefaultTableModel() {
 	var _dataModel;
 	var _listParam = null;
 	
+	//used as flag when the whole list is specified
+	var _isUseCached = false;
+	
 	var _isLast = false;
 	var _isFetching = false;
 
@@ -1593,9 +1611,16 @@ function DefaultTableModel() {
 	this.onRefresh;
 	this.onAddItems;
 
+	
 	this.select = function(idx) {
-		if( idx >=0 && idx < _list.length )
-			_selectedItems.push( _list[idx] );
+		if( typeof idx == 'object' ) {
+			_selectedItems.push( idx );
+		}
+		else if( typeof idx == 'number' ) 
+		{
+			if( idx >=0 && idx < _list.length )
+				_selectedItems.push( _list[idx] );
+		}
 	};
 
 	this.unselect = function(idx) {
@@ -1605,6 +1630,19 @@ function DefaultTableModel() {
 		}
 
 		if( idx >= 0 ) _selectedItems.splice(idx, 1);
+	};
+	
+	this.clearSelection = function() {
+		_selectedItems = [];
+	}
+	
+	this.getSelectedItems = function() {
+		return _selectedItems;
+	};
+	
+	this.getSelectedItem = function() {
+		var len = _selectedItems.length;
+		return len > 0? _selectedItems[len-1] : null;
 	};
 
 	this.getRows = function() {
@@ -1619,8 +1657,12 @@ function DefaultTableModel() {
 	this.getDataModel = function() { return _dataModel; };
 
 	this.setList = function( list ) {
+		var selected = this.getSelectedItem();
+		var oldidx = selected && _list ? _list.indexOf( selected ) : -1;
+		
 		_list = list || [];
 		_selectedItems = [];
+		
 		if( _listParam ) {
 			if( _list.length == _listParam._limit ) {
 				_list.length = _listParam._limit-1;
@@ -1630,6 +1672,13 @@ function DefaultTableModel() {
 				_isLast = true;
 			}
 		}
+		
+		if( oldidx == -1 && selected )
+			oldidx = _list.indexOf( selected );
+
+		oldidx = (oldidx >= 0 && oldidx < _list.length) ? oldidx : 0;
+		_this.select( oldidx );
+		
 		doRefresh(false);
 	};
 
@@ -1644,23 +1693,19 @@ function DefaultTableModel() {
 
 	this.load = function() {
 		if( _listParam ) _listParam._start = 0;
+		_isLast = false;
 		doRefresh(true);
 	};
-	
-	this.getSelectedItems = function() {
-		return _selectedItems;
-	};
-	
-	this.getSelectedItem = function() {
-		var len = _selectedItems.length;
-		return len > 0? _selectedItems[len-1] : null;
+
+	this.setUseCached = function( useCached ) {
+		_isUseCached = useCached;
 	};
 	
 	this.refresh = doRefresh;
 
 	//if fetch flag is set to true, this method fetches data from the callback
 	function doRefresh( fetch ) {
-		if( fetch == true ) 
+		if( !_isUseCached && fetch == true ) 
 		{
 			if( _dataModel && $.isFunction( _dataModel.fetchList ) ) 
 			{
@@ -1676,7 +1721,7 @@ function DefaultTableModel() {
 						_this.setList( result );
 					}
 					catch(e) {
-						if( window.console ) console.log(e);
+						if( window.console ) console.log( e.stack || e );
 						throw e;
 					}
 					finally {
@@ -1742,7 +1787,7 @@ function DefaultTableModel() {
 		if( _dataModel.fetchStyle && _dataModel.fetchStyle != 'paging' )
 			throw new Error('You cannot invoke moveFirst() if fetchStyle is not paging.');
 		
-		_listParam._start = 0;
+		if( _listParam ) _listParam._start = 0;
 		doRefresh(true);
 	}
 	
@@ -1753,6 +1798,7 @@ function DefaultTableModel() {
 		if( _listParam && !_isLast ) {
 			_listParam._start += _listParam._limit-1;
 		}
+
 		doRefresh(true);
 	}
 	
@@ -1763,9 +1809,10 @@ function DefaultTableModel() {
 		if( _listParam && _listParam._start > 0 ) {
 			_listParam._start -= _listParam._limit-1;
 		}
+
 		doRefresh(true);
 	}
-	
+
 	function appendItem( item ) {
 		appendAll( [item] );
 	}
@@ -1841,6 +1888,7 @@ function DefaultTableModel() {
 		_dataModel.appendAll = appendAll;
 		_dataModel.prependItem = prependItem;
 		_dataModel.prependAll = prependAll;
+		_dataModel.hasMore = function() { return !_isLast; };
 
 		_dataModel.getSelectedItem = function() {
 			var len = _selectedItems.length;
@@ -1849,9 +1897,14 @@ function DefaultTableModel() {
 
 		_dataModel.getSelectedItems = function() { return _selectedItems; };
 
-		if( _dataModel.rows ) {
+		var rows = 10;
+		if( typeof _dataModel.rows == 'number' ) {
+			rows = _dataModel.rows;
+		}
+		
+		if( rows > 0 ) {
 			_listParam = {};
-			_listParam._limit = _dataModel.rows+1;
+			_listParam._limit = rows+1;
 			_listParam._start = 0;
 		}
 	}
