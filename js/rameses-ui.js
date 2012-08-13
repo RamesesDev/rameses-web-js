@@ -1300,17 +1300,16 @@ BindingUtils.handlers.input_file = function( elem, controller, idx ) {
  * @author jaycverg
  *-----------------------------------*/
 BindingUtils.handlers.table = function( elem, controller, idx, force ) {
-	if( $(elem).data('_has_model') ) {
-		var model = $(elem).data('_has_model');
-		if( model ) model.refresh( (force == true) );
+	var tbl = $(elem);
+	
+	//if already has a model, just refresh the model
+	if( tbl.data('_has_model') ) {
+		var model = tbl.data('_has_model');
+		if( model ) model.refresh( (force==true) );
 		return;
 	}
-	if( !window.___table_ctr ) window.___table_ctr = 0;
 
-	var tbl = $(elem);
-	if( !tbl.data('index') ) tbl.data('index', ( window.___table_ctr += 1000));
 	new DataTable( tbl, $ctx(controller.name), controller );
-
 };
 
 /*------ DataTable class ---------*/
@@ -1340,7 +1339,7 @@ function DataTable( table, bean, controller ) {
 	}
 
 	model.onRefresh = doRender;
-	model.onAppend = function(list, type, animate) {
+	model.onAddItems = function(list, type, animate) {
 		checkTableVisibility();
 		renderItemsAdded(list, type, animate, true);
 	};
@@ -1396,7 +1395,7 @@ function DataTable( table, bean, controller ) {
 		animate = (animate!=null)? animate : true;
 		var selected = name? controller.get(name) : null;
 		var selectedTds = [];
-		var appendtype = type? type : R.attr(table, 'appendtype');
+		var fetchStyle = type? type : R.attr(table, 'fetchStyle');
 
 		//render the rows
 		var rows = [];
@@ -1416,8 +1415,8 @@ function DataTable( table, bean, controller ) {
 			status.index++;
 		};
 		
-		if( appendtype == 'before' ) {
-			//loop back
+		if( fetchStyle == 'prepend' ) {
+			//loop backwards
 			for( var i=rows.length-1; i>=0; --i ) {
 				tbody.prepend(rows[i]);
 			}
@@ -1584,50 +1583,42 @@ function DefaultTableModel() {
 	var _list;
 	var _dataModel;
 	var _listParam = null;
+	
 	var _isLast = false;
+	var _isFetching = false;
 
 	var _selectedItems = [];
 
 	//on refresh callback
-	_this.onRefresh;
-	_this.onAppend;
+	this.onRefresh;
+	this.onAddItems;
 
-	_this.select = function(idx) {
+	this.select = function(idx) {
 		if( idx >=0 && idx < _list.length )
 			_selectedItems.push( _list[idx] );
 	};
 
-	_this.unselect = function(idx) {
+	this.unselect = function(idx) {
 		var obj = _list[idx];
 		if( _selectedItems.indexOf ) {
 			idx = _selectedItems.indexOf( obj );
-		}
-		//in case indexOf is not supported by the browser
-		else {
-			idx = -1;
-			for(var i=0; i<_selectedItems.length; ++i) {
-				if( obj == _selectedItems[i] ) {
-					idx = i;
-					break;
-				}
-			}
 		}
 
 		if( idx >= 0 ) _selectedItems.splice(idx, 1);
 	};
 
-	_this.getRows = function() {
+	this.getRows = function() {
 		return _listParam? _listParam._limit-1 : -1;
 	};
 
-	_this.setDataModel = function( mdl ) {
+	this.setDataModel = function( mdl ) {
 		_dataModel = mdl;
 		initDataModel();
 	};
 
-	_this.getDataModel = function() { return _dataModel; };
+	this.getDataModel = function() { return _dataModel; };
 
-	_this.setList = function( list ) {
+	this.setList = function( list ) {
 		_list = list || [];
 		_selectedItems = [];
 		if( _listParam ) {
@@ -1642,62 +1633,122 @@ function DefaultTableModel() {
 		doRefresh(false);
 	};
 
-	_this.getList = function() {
+	this.getList = function() {
 		if( typeof _list == 'undefined' ) _list = [];
 		return _list;
 	};
 	
-	_this.isEmpty = function() {
+	this.isEmpty = function() {
 		return !_list || _list.length == 0;
 	};
 
-	_this.load = function() {
+	this.load = function() {
 		if( _listParam ) _listParam._start = 0;
 		doRefresh(true);
 	};
 	
-	_this.getSelectedItems = function() {
+	this.getSelectedItems = function() {
 		return _selectedItems;
 	};
 	
-	_this.getSelectedItem = function() {
+	this.getSelectedItem = function() {
 		var len = _selectedItems.length;
 		return len > 0? _selectedItems[len-1] : null;
 	};
 	
-	_this.refresh = doRefresh;
+	this.refresh = doRefresh;
 
+	//if fetch flag is set to true, this method fetches data from the callback
 	function doRefresh( fetch ) {
-		if( fetch == true ) {
-			if( _dataModel && $.isFunction( _dataModel.fetchList ) ) {
-				var result = _dataModel.fetchList( _listParam || {} );
-				_this.setList( result );
-				return;
+		if( fetch == true ) 
+		{
+			if( _dataModel && $.isFunction( _dataModel.fetchList ) ) 
+			{
+				if( _this._isFetching ) return;
+				
+				_this._isFetching = true;
+				setTimeout(function()
+				{
+					try 
+					{
+						var fetchParam = _listParam || {};
+						var result = _dataModel.fetchList( fetchParam );
+						_this.setList( result );
+					}
+					catch(e) {
+						if( window.console ) console.log(e);
+						throw e;
+					}
+					finally {
+						_this._isFetching = false;
+					}
+				}, 1 );
+				
 			}
 		}
-		if( $.isFunction( _this.onRefresh ) )
+		else if( $.isFunction( _this.onRefresh ) ) 
+		{
 			_this.onRefresh();
+		}
 	}
 	
-	function fetchNext() {
-		if( _dataModel && $.isFunction( _dataModel.fetchList ) ) {
-			var last = _list? _list[ _list.length-1 ] : null;
-			var result = _dataModel.fetchList({}, last);
-			if( result ) {
-				if( $.isFunction( _this.onAppend ) ) {
-					_this.getList().addAll( result );
-					_this.onAppend( result );
+	function fetchNext() 
+	{
+		if( 'prepend' != _dataModel.fetchStyle && 'append' != _dataModel.fetchStyle )
+			throw new Error('You cannot invoke fetchNext() if fetchStyle is not either append or prepend.');
+		
+		if( _dataModel && $.isFunction( _dataModel.fetchList ) ) 
+		{
+			if( _this._isFetching ) return;
+			
+			_this._isFetching = true;
+			setTimeout(function() 
+			{
+				try 
+				{
+					var fetchStyle = _dataModel.fetchStyle;
+					
+					var last = null;
+					
+					if( 'prepend' == _dataModel.fetchStyle )
+						last = _list.length > 0 ? _list[0] : null;
+					else
+						last = _list.length > 0 ? _list[ _list.length-1 ] : null;
+					
+					var fetchParam = { _last: last };
+					if( _listParam ) fetchParam._limit = _listParam._limit;
+					
+					var result = _dataModel.fetchList( fetchParam );
+					if( result ) {
+						if( 'prepend' == fetchStyle )
+							prependAll( result );
+						else
+							appendAll( result );
+					}
 				}
-			}
+				catch(e) {
+					if( window.console ) console.log( e );
+					throw e;
+				}
+				finally {
+					_this._isFetching = false;
+				}
+			}, 1 );
 		}
 	}
 	
 	function moveFirst() {
+		if( _dataModel.fetchStyle && _dataModel.fetchStyle != 'paging' )
+			throw new Error('You cannot invoke moveFirst() if fetchStyle is not paging.');
+		
 		_listParam._start = 0;
 		doRefresh(true);
 	}
 	
 	function moveNext() {
+		if( _dataModel.fetchStyle && _dataModel.fetchStyle != 'paging' )
+			throw new Error('You cannot invoke moveNext() if fetchStyle is not paging.');
+		
 		if( _listParam && !_isLast ) {
 			_listParam._start += _listParam._limit-1;
 		}
@@ -1705,6 +1756,9 @@ function DefaultTableModel() {
 	}
 	
 	function movePrev() {
+		if( _dataModel.fetchStyle && _dataModel.fetchStyle != 'paging' )
+			throw new Error('You cannot invoke movePrev() if fetchStyle is not paging.');
+		
 		if( _listParam && _listParam._start > 0 ) {
 			_listParam._start -= _listParam._limit-1;
 		}
@@ -1717,9 +1771,9 @@ function DefaultTableModel() {
 	
 	function appendAll( list ) {
 		if( !list ) return;
-		if( $.isFunction( _this.onAppend ) ) {
+		if( $.isFunction( _this.onAddItems ) ) {
 			_this.getList().addAll( list );
-			_this.onAppend( list, 'after' );
+			_this.onAddItems( list, 'append' );
 		}
 	}
 	
@@ -1729,10 +1783,10 @@ function DefaultTableModel() {
 	
 	function prependAll( list ) {
 		if( !list ) return;
-		if( $.isFunction( _this.onAppend ) ) {
+		if( $.isFunction( _this.onAddItems ) ) {
 			_this.getList();
 			_list = list.concat( _list );
-			_this.onAppend( list, 'before' );
+			_this.onAddItems( list, 'prepend' );
 		}
 	}
 
@@ -1750,6 +1804,7 @@ function DefaultTableModel() {
 
 		_listParam = null;
 
+		//inject handlers to the map table model from the codebean
 		_dataModel.setList = _this.setList;
 		_dataModel.getList = _this.getList;
 		_dataModel.isEmpty = _this.isEmpty;
