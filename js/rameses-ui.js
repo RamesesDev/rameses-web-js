@@ -1305,7 +1305,7 @@ BindingUtils.handlers.table = function( elem, controller, idx, force ) {
 	//if already has a model, just refresh the model
 	if( tbl.data('_has_model') ) {
 		var model = tbl.data('_has_model');
-		if( model ) model.refresh( (force==true) );
+		if( model && force ) model.refresh(true);
 		return;
 	}
 

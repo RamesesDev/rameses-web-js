@@ -4,41 +4,75 @@
 		<link href="../js/css/jquery-ui/jquery.css" rel="stylesheet" />
 		<link href="../js/css/rameses-lib.css" rel="stylesheet" />
 		
-		<script src="../js/jquery-all2.js"></script>
+		<script src="../js/jquery-all.js"></script>
+		<script src="../js/rameses-ext-lib.js"></script>
+		<script src="../js/rameses-ui.js"></script>
 		
 		<script>
 			$(function(){
-				$('#test').dialog({modal:true});
+				//$('#test').dialog({modal:true});
 			});
-		</script>
-		
-		<style>
-			.ui-dialog {
-				overflow: visible;
-				box-shadow: 0 2px 10px rgb(0,0,0);
-				box-shadow: 0 2px 10px rgba(0,0,0,0.6);
-				border: solid 4px #666;
-			}
 			
-			.ui-dialog .ui-dialog-titlebar-close {
-				right: -15px;
-				top: -5px;
-				z-index: 100000;
-			}
-			
-			.ui-dialog-titlebar {
-				height: 0px;
-				line-height: 0px;
-				border: none;
-				background: none;
-				border-radius: 0;
-			}
-		</style>		
+			$put(
+				'test',
+				new function() 
+				{
+					this.intnum;
+					this.decnum;
+					
+					this.display = function() {
+						alert( "int value: " + this.intnum + ", decimal value: " + this.decnum );
+					};
+				}
+			);
+		</script>	
 	</head>
 
 	<body>
-		<div id="test" title="">This is the content</div>
-		Sample content. Sample content. Sample content. Sample content. Sample content. 
-		Sample content. Sample content. Sample content. Sample content. Sample content. 
+		Integer: <input type="text" r:context="test" r:datatype="integer" r:name="intnum" placeholder="0"/><br/>
+		Decimal: <input type="text" r:context="test" r:datatype="decimal" r:name="decnum" placeholder="0.00"/><br/>
+		<button r:context="test" r:name="display">Show Values</button>
+		
+		
+		<!--
+		<br/>
+		<input type="text" id="input-text"/>
+		<script>
+			$("#input-text").keypress(function(event) {
+				if(event.which < 46 || event.which > 59) {
+					event.preventDefault();
+				} // prevent if not number/dot
+
+				if(event.which == 46 && $(this).val().indexOf('.') != -1) {
+					event.preventDefault();
+				} // prevent if already dot
+			});
+		</script>
+		
+		<br/><br/>
+		<input type="text" id="input-text2" onkeypress="return isDecimalNumberKey(event, this)"/>
+		<script>
+			function isDecimalNumberKey(evt, elem){  
+				var charCode = (evt.which) ? evt.which : event.keyCode;
+				var chk = (charCode==45 || charCode==46 || (charCode >= 48 && charCode <= 57));
+				if (chk) 
+				{
+					//a period character 
+					if (charCode == 46) 
+					{
+						if (!elem) return true;
+					
+						var s = (elem.value ? elem.value : ''); 
+						if (s.length == 0) return false;
+						if (s.indexOf('.') >= 0) return false; 
+					} 
+				
+					return true; 
+				} 
+				else 	
+					return false; 
+			}
+		</script>
+		-->
 	</body>
 </html>
