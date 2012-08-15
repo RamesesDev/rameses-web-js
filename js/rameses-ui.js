@@ -2492,9 +2492,6 @@ function PopupOpener( id, params, options )
 			$.extend(posConfig, defaultConfig, options.position);
 			posConfig.of = source;
 
-			if( isFixedPositioned( posConfig.of ) )
-				div.css('position', 'fixed');
-			
 			if( !reshow ) {
 				dynamic = (typeof page == 'string');
 				if( dynamic ) {
@@ -2514,7 +2511,7 @@ function PopupOpener( id, params, options )
 			
 			//-- show helper
 			function initDailog(){
-				div.appendTo('body')
+				div.insertAfter(posConfig.of)
 				 .position( posConfig )
 				 .show();
 				 
@@ -2532,11 +2529,6 @@ function PopupOpener( id, params, options )
 		this.close = function() { hide(); };
 		this.getSource = function() { return source[0]; }
 		
-		function isFixedPositioned( elem ) {
-			return elem.css('position') == 'fixed' || 
-				  (elem[0].offsetParent && isFixedPositioned( $(elem[0].offsetParent) ));
-		}
-
 		function hide() {
 			div.animate({height: 0}, 200, function() {
 				if( !dynamic ) {
