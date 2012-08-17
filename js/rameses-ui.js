@@ -1441,7 +1441,10 @@ function DataTable( table, bean, controller ) {
 		}
 
 		var rows = model.getRows();
-		if( rows != -1 && list.length < rows ) {
+		
+		//add only extra rows if rows is specified on the model
+		//and the fetchStyle is 'paging'
+		if( (!fetchStyle || fetchStyle == 'paging') && rows > 0 && list.length < rows ) {
 			//add extra rows if the items size is less than the no. of rows
 			for(var i=list.length; i<rows; ++i ) {
 				createRow(i, null).appendTo( tbody );
@@ -2891,3 +2894,20 @@ function InfoBox(selector, orientation, offset, delay)
 		return {x:x, y:y};
 	}
 }
+
+
+
+/**
+ * @author			jaycverg <jaycverg@gmail.com>
+ * @description		server side utility for rameses-ui library
+ */
+ 
+function $invoke( url, params, callback, type ) {
+	$.ajax({
+		url: url,
+		data: params,
+		type: type || 'post',
+		complete: callback
+	});
+}
+
